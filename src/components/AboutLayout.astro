@@ -1,0 +1,86 @@
+---
+import ContactForm from './ContactForm.astro';
+
+interface Props {
+  about?: {
+    about1?: string;
+    about1Image?: string;
+    about2?: string;
+    about2Image?: string;
+    contact?: string;
+  };
+}
+
+const { about } = Astro.props;
+---
+
+<div class="flex flex-wrap justify-between gap-3 p-4 sm:p-10">
+  <div class="flex flex-col gap-3">
+    <p class="text-gray-900 text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em]">
+      The Path & The Connection
+    </p>
+    <p class="text-gray-500 text-base font-normal leading-normal">
+      Learn more about the blog and get in touch with us.
+    </p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-5 gap-12 p-4 sm:p-10">
+  <div class="lg:col-span-3 flex flex-col gap-10">
+    {about?.about1 && (
+      <div class="flex flex-col gap-4">
+        <div>
+          <h2 class="text-gray-900 text-[22px] font-bold leading-tight tracking-[-0.015em] pb-3 pt-5">
+            About This Blog
+          </h2>
+          <p class="text-gray-700 text-base font-normal leading-relaxed pb-3 pt-1">
+            {about.about1}
+          </p>
+        </div>
+        {about.about1Image && (
+          <img 
+            src={about.about1Image} 
+            alt="About Blog" 
+            class="w-full rounded-lg object-cover h-64 sm:h-72"
+          />
+        )}
+      </div>
+    )}
+    
+    {about?.about2 && (
+      <>
+        <hr class="border-gray-200"/>
+        <div class="flex flex-col gap-4">
+          <div>
+            <h2 class="text-gray-900 text-[22px] font-bold leading-tight tracking-[-0.015em] pb-3 pt-5">
+              About the Author
+            </h2>
+            <p class="text-gray-700 text-base font-normal leading-relaxed pb-3 pt-1">
+              {about.about2}
+            </p>
+          </div>
+          {about.about2Image && (
+            <img 
+              src={about.about2Image} 
+              alt="Author" 
+              class="w-full rounded-lg object-cover h-64 sm:h-72"
+            />
+          )}
+        </div>
+      </>
+    )}
+  </div>
+
+  <div class="lg:col-span-2">
+    <div class="bg-[#F7F7F2] p-8 rounded-xl h-full sticky top-10 border border-gray-200">
+      <h2 class="text-gray-900 text-[22px] font-bold leading-tight tracking-[-0.015em] pb-5">
+        Get in Touch
+      </h2>
+      <!-- Replaced static form with interactive ContactForm component -->
+      <ContactForm />
+      {about?.contact && (
+        <p class="text-gray-600 text-sm mt-4">{about.contact}</p>
+      )}
+    </div>
+  </div>
+</div>

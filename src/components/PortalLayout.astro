@@ -1,0 +1,234 @@
+---
+import Header from './Header.astro';
+import Footer from './Footer.astro';
+import CloudflareBeacon from './CloudflareBeacon.astro';
+
+interface Props {
+  title?: string;
+  hero: {
+    image1?: string;
+    image2?: string;
+    image3?: string;
+    image4?: string;
+    image5?: string;
+    title?: string;
+    subtitle?: string;
+  };
+}
+
+const { title, hero } = Astro.props;
+
+// Prefer hero.slides (new schema). Fallback to legacy imageN fields
+const slides = (hero?.slides && hero.slides.length > 0)
+  ? hero.slides.map((s, i) => ({ src: s.image, title: s.title, subtitle: s.subtitle, leftTitle: s.leftTitle, rightTitle: s.rightTitle, alt: s.title || `Hero Slide ${i+1}` }))
+  : [
+      { src: hero.image1, alt: 'Hero Image 1', title: hero.title, subtitle: hero.subtitle },
+      { src: hero.image2, alt: 'Hero Image 2', title: hero.title, subtitle: hero.subtitle },
+      { src: hero.image3, alt: 'Hero Image 3', title: hero.title, subtitle: hero.subtitle },
+      { src: hero.image4, alt: 'Hero Image 4', title: hero.title, subtitle: hero.subtitle },
+      { src: hero.image5, alt: 'Hero Image 5', title: hero.title, subtitle: hero.subtitle },
+    ].filter(s => s.src);
+
+// clone first slide for seamless looping
+if (slides.length > 0) {
+  slides.push({ ...slides[0], alt: (slides[0].alt || slides[0].title) + ' (Clone)' });
+}
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>{title || 'Japanese "Do"=Way & Spirituality - reflections on Japanese culture, Shinto-ism and the subtle aesthetics seen through the eyes of a Kyoto native who spent years in London and Paris.'}</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+  {slides && slides[0] && (
+    <link rel="preload" as="image" href={slides[0].src} />
+  )}
+  {slides && slides[0] && (
+    <link rel="preload" as="image" href={slides[0].src} />
+  )}
+  <style>
+    @keyframes slide {
+      0% { transform: translate3d(0%, 0, 0); }
+      14% { transform: translate3d(0%, 0, 0); }
+      16% { transform: translate3d(-100%, 0, 0); }
+      30% { transform: translate3d(-100%, 0, 0); }
+      32% { transform: translate3d(-200%, 0, 0); }
+      46% { transform: translate3d(-200%, 0, 0); }
+      48% { transform: translate3d(-300%, 0, 0); }
+      62% { transform: translate3d(-300%, 0, 0); }
+      64% { transform: translate3d(-400%, 0, 0); }
+      78% { transform: translate3d(-400%, 0, 0); }
+      80% { transform: translate3d(-500%, 0, 0); }
+      100% { transform: translate3d(-500%, 0, 0); }
+    }
+    .animate-slide {
+      animation: slide 30s linear infinite;
+      animation-fill-mode: both;
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+    }
+
+    /* Respect user preference for reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .animate-slide { animation: none !important; }
+    }
+
+    /* Helper classes for overlay contrast and title readability */
+    .hero-overlay-bg { background-color: rgba(0,0,0,0.6); }
+    .hero-title { text-shadow: 0 2px 8px rgba(0,0,0,0.7); white-space: pre-wrap; }
+    .hero-subtitle { text-shadow: 0 1px 6px rgba(0,0,0,0.6); white-space: pre-wrap; }
+
+    /* Carousel behavior helpers */
+    .carousel-slide-img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .animate-slide:hover { animation-play-state: paused; }
+    @media (prefers-reduced-motion: reduce) {
+      .animate-slide { animation: none !important; }
+    }
+
+
+  </style>
+</head>
+<body class="bg-[#F8F5F2] font-serif text-gray-700">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <Header />
+    <a href="#main-content" class="sr-only sr-only-focusable">Skip carousel</a>
+    
+    <main id="main-content" class="py-12 md:py-20">
+      <section role="region" aria-roledescription="carousel" aria-label="Portal carousel" class="relative rounded-lg overflow-hidden mb-16 md:mb-24 h-80 md:h-[500px]">
+        <div id="carousel-slides" class="w-full h-full flex" style="animation-duration: 25s;">
+          {slides.map((slide, idx) => (
+            <div class="w-full h-full flex-shrink-0 relative min-w-full" style={idx === 0 ? `background-image: url(${slide.src}); background-size: cover; background-position: center;` : ''}>
+              <img alt={slide.alt} class="carousel-slide-img w-full h-full object-cover" src={slide.src} loading={idx === 0 ? 'eager' : 'lazy'} decoding="async" />
+              <div class="absolute inset-0 hero-overlay-bg flex items-center justify-center">
+                <div class="text-center text-white px-4 w-full sm:w-[65%] md:w-[80%] lg:w-auto">
+                  <h2 class="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 hero-title">{slide.title || hero.title}</h2>
+                  <p class="text-lg md:text-xl max-w-2xl mx-auto hero-subtitle">{slide.subtitle || hero.subtitle}</p>
+                </div>
+                {slide.leftTitle && (
+                  <div class="absolute left-6 top-1/2 -translate-y-1/2 text-white opacity-90 hidden md:block">
+                    <div class="text-xl font-semibold">{slide.leftTitle}</div>
+                  </div>
+                )}
+                {slide.rightTitle && (
+                  <div class="absolute right-6 top-1/2 -translate-y-1/2 text-white opacity-90 hidden md:block text-right">
+                    <div class="text-xl font-semibold">{slide.rightTitle}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <script type="text/javascript">
+        (function() {
+          try {
+            const slides = document.getElementById('carousel-slides');
+            if (!slides) return;
+
+            const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (prefersReduced) {
+              // stop animation and do not attach interactive handlers
+              slides.classList.remove('animate-slide');
+              return;
+            }
+
+            // Pause on hover (desktop)
+            // Pause on hover (desktop) using animation-play-state to avoid restarting animation
+            slides.addEventListener('mouseover', function() {
+              slides.style.animationPlayState = 'paused';
+            });
+            slides.addEventListener('mouseout', function() {
+              slides.style.animationPlayState = 'running';
+            });
+
+            // Pause while touching (mobile) — pause while touch is active
+            let touching = false;
+            slides.addEventListener('touchstart', function() {
+              touching = true;
+              slides.style.animationPlayState = 'paused';
+            }, { passive: true });
+            slides.addEventListener('touchend', function() {
+              if (touching) {
+                slides.style.animationPlayState = 'running';
+              }
+              touching = false;
+            });
+            slides.addEventListener('touchcancel', function() {
+              slides.style.animationPlayState = 'running';
+              touching = false;
+            });
+
+            // Wait for images to load before starting animation, retry failed loads
+            const imgs = Array.from(slides.querySelectorAll('img.carousel-slide-img'));
+            function startIfReady() {
+              // If any image is not yet loaded, wait
+              const notReady = imgs.some(i => !i.complete || i.naturalWidth === 0);
+              if (!notReady) {
+                // add animation class and force a reflow so the animation starts cleanly
+                slides.classList.add('animate-slide');
+                // force reflow
+                // @ts-ignore
+                void slides.offsetWidth;
+                slides.style.animationPlayState = 'running';
+                return true;
+              }
+              return false;
+            }
+
+            imgs.forEach(img => {
+              img.style.display = 'block';
+              // retry load if seems to have failed
+              if (!img.complete || img.naturalWidth === 0) {
+                setTimeout(() => { try { img.src = img.getAttribute('src'); } catch(e){} }, 500);
+              }
+              img.addEventListener('error', () => {
+                img.style.opacity = '0.35';
+                img.alt = img.alt || 'Hero image could not be loaded';
+              });
+              img.addEventListener('load', () => {
+                // once any image loads, try to start when all are ready
+                startIfReady();
+              });
+            });
+
+            // Repeatedly attempt to start the animation until images are ready, then stop trying
+            let attempts = 0;
+            const maxAttempts = 10;
+            const attemptInterval = setInterval(() => {
+              attempts += 1;
+              if (startIfReady() || attempts >= maxAttempts) {
+                clearInterval(attemptInterval);
+                // If we reached max attempts and images still not ready, start anyway as a fallback
+                if (attempts >= maxAttempts && !slides.classList.contains('animate-slide')) {
+                  slides.classList.add('animate-slide');
+                  // @ts-ignore
+                  void slides.offsetWidth;
+                  slides.style.animationPlayState = 'running';
+                }
+              }
+            }, 500);
+
+            // Also try once after a short initial delay in case images load quickly
+            setTimeout(() => { startIfReady(); }, 300);
+
+          } catch (err) {
+            // fail silently
+            console.error('Carousel script error', err);
+          }
+        })();
+      </script>
+
+      <slot />
+    </main>
+
+    <Footer />
+  </div>
+  <CloudflareBeacon />
+</body>
+</html>

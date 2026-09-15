@@ -1,0 +1,151 @@
+fragment PortalParts on Portal {
+  __typename
+  title
+  hero {
+    __typename
+    slides {
+      __typename
+      image
+      title
+      subtitle
+      leftTitle
+      rightTitle
+    }
+    image1
+    image2
+    image3
+    image4
+    image5
+    title
+    subtitle
+  }
+  introTitle
+  introText
+  displayCount
+  featuredItems {
+    __typename
+    item {
+      ... on Blog {
+        __typename
+        title
+        description
+        pubDate
+        heroImage
+        japaneseText
+        body
+      }
+      ... on ContentPage {
+        __typename
+        title
+        pubDate
+        updatedDate
+        hero {
+          __typename
+          image1
+          title
+          subtitle
+        }
+        japaneseText
+        contentSections {
+          __typename
+          ... on ContentPageContentSectionsTextBlock {
+            bodyText
+          }
+          ... on ContentPageContentSectionsImageGrid {
+            images {
+              __typename
+              src
+              label
+              caption
+            }
+          }
+        }
+      }
+      ... on Document {
+        _sys {
+          filename
+          basename
+          hasReferences
+          breadcrumbs
+          path
+          relativePath
+          extension
+        }
+        id
+      }
+    }
+  }
+}
+
+fragment BlogParts on Blog {
+  __typename
+  title
+  description
+  pubDate
+  heroImage
+  japaneseText
+  body
+}
+
+fragment ContentPageParts on ContentPage {
+  __typename
+  title
+  pubDate
+  updatedDate
+  hero {
+    __typename
+    image1
+    title
+    subtitle
+  }
+  japaneseText
+  contentSections {
+    __typename
+    ... on ContentPageContentSectionsTextBlock {
+      bodyText
+    }
+    ... on ContentPageContentSectionsImageGrid {
+      images {
+        __typename
+        src
+        label
+        caption
+      }
+    }
+  }
+}
+
+fragment GlobalParts on Global {
+  __typename
+  ... on GlobalConfig {
+    siteTitle
+    navLinks {
+      __typename
+      label
+      href
+    }
+    lpLogo
+    lpUrl
+    socialLinks {
+      __typename
+      platform
+      href
+    }
+    footerText
+  }
+  ... on GlobalAbout {
+    mainTitle
+    subTitle
+    aboutBlogTitle
+    aboutBlogText
+    aboutAuthorTitle
+    aboutAuthorText
+    contactTitle
+  }
+}
+
+fragment PageParts on Page {
+  __typename
+  title
+  body
+}

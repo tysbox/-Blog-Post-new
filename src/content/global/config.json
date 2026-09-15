@@ -1,0 +1,35 @@
+{
+  "siteTitle": "間　MA (Vide Signifiant)",
+  "navLinks": [
+    {
+      "label": "Home",
+      "href": "/"
+    },
+    {
+      "label": "Latest Writing",
+      "href": "/latest"
+    },
+    {
+      "label": "About & Contact",
+      "href": "/about"
+    }
+  ],
+  "lpLogo": "/images/Logo1.png",
+  "lpUrl": "https://bisen-kyoto.com/",
+  "socialLinks": [
+    {
+      "platform": "Instagram",
+      "href": "#"
+    },
+    {
+      "platform": "Pinterest",
+      "href": "#"
+    },
+    {
+      "platform": "Main Page",
+      "href": "#"
+    }
+  ],
+  "footerText": "© 2025 BiScène Kyoto. All rights reserved.",
+  "_template": "config"
+}

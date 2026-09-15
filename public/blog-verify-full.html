@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hidden Treasure Kyoto Blog</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<style>
+@keyframes slide{0%{transform:translate3d(0,0,0)}14%{transform:translate3d(0,0,0)}16%{transform:translate3d(-100%,0,0)}30%{transform:translate3d(-100%,0,0)}32%{transform:translate3d(-200%,0,0)}46%{transform:translate3d(-200%,0,0)}48%{transform:translate3d(-300%,0,0)}62%{transform:translate3d(-300%,0,0)}64%{transform:translate3d(-400%,0,0)}78%{transform:translate3d(-400%,0,0)}80%{transform:translate3d(-500%,0,0)}100%{transform:translate3d(-500%,0,0)}}
+.animate-slide{animation:slide 30s linear infinite;will-change:transform;transform:translate3d(0,0,0)}
+.hero-overlay-bg{background-color:rgba(0,0,0,0.6)}
+.hero-title{text-shadow:0 2px 8px rgba(0,0,0,0.7);white-space:pre-wrap}
+.hero-subtitle{text-shadow:0 1px 6px rgba(0,0,0,0.6);white-space:pre-wrap}
+.carousel-slide-img{display:block;width:100%;height:100%;object-fit:cover}
+.animate-slide:hover{animation-play-state:paused}
+</style>
+</head>
+<body class="bg-[#F8F5F2] font-serif text-gray-700">
+<header class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
+<h1 class="text-2xl font-bold">Hidden Treasure Kyoto</h1>
+<nav class="space-x-6 text-sm"><a href="#">About</a><a href="#">Blog</a><a href="#">Contact</a></nav>
+</header>
+<main id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<section class="relative w-full h-[66vh] overflow-hidden rounded-xl mb-16">
+<div class="animate-slide flex w-full h-full">
+<img alt="Hero" class="carousel-slide-img flex-shrink-0 w-full h-full" src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1600"/>
+<img alt="Hero" class="carousel-slide-img flex-shrink-0 w-full h-full" src="https://images.unsplash.com/photo-1528164344705-47542687000d?w=1600"/>
+</div>
+<div class="absolute inset-0 hero-overlay-bg flex items-center justify-center">
+<div class="text-center text-white px-6">
+<h2 class="hero-title text-4xl md:text-6xl font-bold mb-4">Hidden Treasure Kyoto</h2>
+<p class="hero-subtitle text-xl md:text-2xl">Reflections on Japanese culture, Shinto and aesthetics</p>
+</div>
+</div>
+</section>
+<article class="max-w-3xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 p-8 md:p-12">
+<h2 class="font-serif text-3xl md:text-4xl font-bold mb-6">修正後ブログ確認</h2>
+<p class="text-lg text-gray-600 mb-8 leading-relaxed">Tailwindカスタム設定と重複削除後のレイアウトを完全反映しています。</p>
+<div class="flex gap-3 mb-8">
+<span class="px-3 py-1 rounded-full bg-[#1a1a1a] text-white text-xs">Primary</span>
+<span class="px-3 py-1 rounded-full bg-[#f5f5f5] text-[#1a1a1a] text-xs border">Secondary</span>
+<span class="px-3 py-1 rounded-full bg-[#c0a062] text-white text-xs">Accent</span>
+</div>
+</article>
+</main>
+<footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-sm text-gray-400">© Hidden Treasure Kyoto Blog</footer>
+</body>
+</html>

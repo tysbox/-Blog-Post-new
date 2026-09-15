@@ -1,0 +1,96 @@
+---
+import { getEntry, getCollection } from 'astro:content';
+
+const globalConfig = await getEntry('global', 'config');
+const { siteTitle, navLinks, lpLogo, lpUrl } = globalConfig?.data || { siteTitle: '道 The Way', navLinks: [], lpLogo: null, lpUrl: null };
+
+// Normalize lpLogo once so we can both render and debug it easily
+let lpLogoSrc = null;
+if (lpLogo) {
+  if (typeof lpLogo === 'string') {
+    lpLogoSrc = lpLogo;
+  } else if (typeof lpLogo === 'object') {
+    lpLogoSrc = lpLogo.src || lpLogo.value || lpLogo.path || lpLogo.filename || null;
+  }
+  if (lpLogoSrc && !lpLogoSrc.match(/^https?:\/\//)) {
+    lpLogoSrc = lpLogoSrc.startsWith('/') ? lpLogoSrc : `/${lpLogoSrc}`;
+  }
+}
+// Fallback: if Tina's runtime value is missing, import the JSON file directly
+if (!lpLogoSrc) {
+  try {
+    const staticConfig = await import('../content/global/config.json');
+    const staticData = staticConfig?.default || staticConfig;
+    let staticLogo = staticData?.lpLogo;
+    // also capture static lpUrl if present
+    var staticLpUrl = staticData?.lpUrl;
+    if (staticLogo) {
+      if (typeof staticLogo !== 'string') {
+        staticLogo = staticLogo.src || staticLogo.value || staticLogo.path || staticLogo.filename || null;
+      }
+      if (staticLogo) {
+        lpLogoSrc = staticLogo.startsWith('/') ? staticLogo : `/${staticLogo}`;
+      }
+    }
+  } catch (e) {
+    // ignore import errors
+  }
+}
+// Server-side debug log so we can inspect what value is being read during SSR
+// Debug logs removed
+
+// Get latest content (blog post or page) for the "Latest Writing" link
+const allPosts = await getCollection('blog');
+const allPages = await getCollection('page');
+
+const combinedContent = [
+  ...allPosts.map(post => ({
+    date: new Date(post.data.updatedDate || post.data.pubDate).valueOf(),
+    href: `/blog/${post.id}`
+  })),
+  ...allPages.map(page => ({
+    date: page.data.pubDate ? new Date(page.data.pubDate).valueOf() : 0,
+    href: `/${page.id}`
+  }))
+];
+
+const sortedContent = combinedContent.sort((a, b) => b.date - a.date);
+const latestContent = sortedContent[0];
+const latestContentUrl = latestContent ? latestContent.href : '/';
+---
+<header class="flex justify-between items-center py-6 border-b border-gray-200">
+  <h1 class="text-2xl font-bold text-gray-900">
+    <a href="/" class="hover:text-[#A36A4F] transition-colors">{siteTitle}</a>
+  </h1>
+  <nav class="hidden md:flex items-center space-x-8">
+    {navLinks?.map((link) => {
+      const href = link.href === '/latest' ? latestContentUrl : link.href;
+      return (
+        <a class="hover:text-[#A36A4F] transition-colors" href={href}>{link.label}</a>
+      );
+    })}
+  </nav>
+  <div class="flex items-center space-x-4">
+    {
+      (() => {
+        const src = lpLogoSrc;
+        if (src) {
+          const finalHref = lpUrl || (typeof staticLpUrl === 'string' ? staticLpUrl : undefined) || '/';
+          const isExternal = String(finalHref).match(/^https?:\/\//);
+          const target = isExternal ? '_blank' : undefined;
+          const rel = isExternal ? 'noopener noreferrer' : undefined;
+          return (<div>
+            <a href={finalHref} target={target} rel={rel} class="block w-[105px] h-[60px]">
+              <img src={src} alt="LP" class="w-[105px] h-[60px] object-contain" width="105" height="60" />
+            </a>
+            
+          </div>);
+        }
+        return (<div class="w-[105px] h-[60px] bg-gray-300 rounded flex items-center justify-center text-sm text-gray-500">Logo</div>);
+      })()
+    }
+    <button class="md:hidden p-2 rounded-full hover:bg-gray-200 transition-colors">
+      <span class="material-icons-outlined text-gray-600">menu</span>
+    </button>
+  </div>
+</header>

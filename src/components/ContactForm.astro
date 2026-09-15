@@ -1,0 +1,58 @@
+---
+const accessKey = import.meta.env.PUBLIC_WEB3FORMS_ACCESS_KEY || '';
+const cities = ["Japan","Tokyo","Kyoto","Osaka","Nara"];
+---
+
+<section id="contact-section" class="contact-section">
+  <h1>Contact</h1>
+  <form id="contact-form" class="contact-form" method="post" novalidate data-access-key={accessKey}>
+    <div class="flex flex-col gap-2">
+      <label class="text-gray-600 text-sm font-medium" for="name">Name (optional)</label>
+      <input class="w-full rounded border-gray-300 bg-white focus:border-[#17cf54] focus:ring-[#17cf54]/50 text-gray-900 transition-colors duration-300 p-2 border" style="width:100%;padding:.5rem;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#111;" id="name" name="name" type="text" autocomplete="off" />
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="text-gray-600 text-sm font-medium" for="email">Email (optional)</label>
+      <input class="w-full rounded border-gray-300 bg-white focus:border-[#17cf54] focus:ring-[#17cf54]/50 text-gray-900 transition-colors duration-300 p-2 border" style="width:100%;padding:.5rem;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#111;" id="email" name="email" type="email" autocomplete="off" />
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="text-gray-600 text-sm font-medium" for="message">Message</label>
+      <textarea class="w-full rounded border-gray-300 bg-white focus:border-[#17cf54] focus:ring-[#17cf54]/50 text-gray-900 transition-colors duration-300 p-2 border" style="width:100%;padding:.5rem;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#111;" id="message" name="message" rows="6" required></textarea>
+    </div>
+
+    <div class="flex flex-col gap-2 quiz-field">
+      <label id="quiz-label" class="text-gray-600 text-sm font-medium">Quiz: </label>
+      <input class="w-24 rounded border-gray-300 bg-white focus:border-[#17cf54] focus:ring-[#17cf54]/50 text-gray-900 transition-colors duration-300 p-2 border" style="width:4.5rem;padding:.5rem;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#111;" id="quiz" name="quiz" type="text" maxlength="1" required aria-describedby="quiz-desc" />
+      <div id="quiz-desc" class="hint text-sm text-gray-500">Enter the <strong>first letter</strong> of the city shown (case-insensitive).</div>
+    </div>
+
+    <!-- Honeypot hidden checkbox (visually hidden, non-focusable) -->
+    <input type="checkbox" name="botcheck" class="botcheck" aria-hidden="true" tabindex="-1" style="display:none" />
+
+    <!-- Hidden subject set via JS to avoid Gmail threading -->
+    <input type="hidden" name="subject" id="subject" value="" />
+
+    <div class="actions">
+      <button class="w-full bg-[#17cf54] text-white font-bold py-2.5 px-4 rounded-lg hover:bg-[#17cf54]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#F7F7F2] focus:ring-[#17cf54] transition-colors duration-300" style="width:100%;background:#17cf54;color:#fff;padding:.625rem 1rem;border-radius:8px;font-weight:700;" type="submit" id="submit-btn">Send</button>
+    </div>
+
+    <div id="form-alert" role="status" aria-live="polite" class="form-alert"></div>
+  </form>
+
+  <script>
+    // Inline fallback to ensure quiz label renders even if external script fails to load
+    (function(){
+      try{
+        const cities = ["Japan","Tokyo","Kyoto","Osaka","Nara"];
+        const idx = Math.floor(Math.random()*cities.length);
+        const city = cities[idx];
+        const quizLabel = document.getElementById('quiz-label');
+        if(quizLabel) quizLabel.innerHTML = `Quiz: Which city is selected? <strong>${city}</strong>`;
+        const form = document.getElementById('contact-form');
+        if(form) form.dataset.quizAnswer = city.charAt(0).toLowerCase();
+      }catch(e){/* noop */}
+    })();
+  </script>
+  <script type="module" src="/scripts/contact-form.js"></script>
+</section>

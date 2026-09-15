@@ -1,0 +1,39 @@
+{
+  "header": {
+    "logo": "道 The Way",
+    "logoImage": null,
+    "links": [
+      {
+        "label": "About",
+        "url": "/about"
+      },
+      {
+        "label": "Contact",
+        "url": "/about"
+      },
+      {
+        "label": "Latest Writing",
+        "url": "/"
+      }
+    ]
+  },
+  "footer": {
+    "logo": "Wabi-Sabi Blog",
+    "logoImage": null,
+    "links": [
+      {
+        "label": "Instagram",
+        "url": "#"
+      },
+      {
+        "label": "Pinterest",
+        "url": "#"
+      },
+      {
+        "label": "Main Page",
+        "url": "/"
+      }
+    ],
+    "copyright": "© 2024 BiScène Kyoto. All rights reserved."
+  }
+}
