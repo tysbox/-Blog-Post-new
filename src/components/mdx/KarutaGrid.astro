@@ -1,0 +1,201 @@
+---
+// カルタ カルーセル — /tmp/mablogx/src/App.tsx L675-776 のカード視覚仕様に準拠
+// 全ブログ記事共通。1ページ3枚・カルーセル方式（上限100枚）。
+// データは独立編集ページ src/content/karuta/karuta.json から読む。
+import { getEntry } from 'astro:content';
+
+interface KarutaCard {
+  number?: string;
+  kanjiNum?: string;
+  tag?: string;
+  romaji?: string;
+  titleJp?: string;
+  titleEn?: string;
+  image?: string;
+  alt?: string;
+  folioId?: string;
+  category?: string;
+  icon?: string;
+  bodyJp?: string;
+  bodyEn?: string;
+  title?: string;
+  hoverText?: string;
+  link?: string;
+}
+
+interface Props {
+  title?: string;
+  cards?: KarutaCard[];
+}
+
+const { title, cards } = Astro.props as Props;
+
+// 優先順位：記事固有の karutaGrid > 全記事共通の編集データ（karuta.json）
+const karutaEntry = await getEntry('karuta', 'karuta');
+const karutaData: any = karutaEntry?.data || {};
+
+const source: KarutaCard[] =
+  Array.isArray(cards) && cards.length > 0 ? cards : ((karutaData.cards ?? []) as KarutaCard[]);
+
+const max = Number(karutaData.max) > 0 ? Number(karutaData.max) : 100;
+const all = source
+  .filter((c) => c && (c.image || c.titleJp || c.title || c.hoverText))
+  .slice(0, max);
+
+const perPage = Number(karutaData.perPage) > 0 ? Number(karutaData.perPage) : 3;
+const pageCount = Math.max(1, Math.ceil(all.length / perPage));
+const num = (n: number) => String(n).padStart(2, '0');
+---
+
+{all.length > 0 && (
+  <section id="section-karuta" class="scroll-mt-28 space-y-6 pt-8 border-t border-[#d6c3ba]/40">
+    <div class="space-y-1">
+      <span class="font-sans text-xs uppercase tracking-[0.2em] text-[#865138] font-semibold">
+        Card Folio • 空間語彙のカルタ
+      </span>
+      <h2 class="font-serif text-2xl sm:text-3xl text-[#1b1c1a] font-normal">
+        {title || 'Three Spatial Lexicons: The Sacred Karuta Folio'}
+      </h2>
+      <p class="font-serif text-sm sm:text-base text-[#51443d]">
+        Tap or hover over each consecrated archetype to reveal its spatial mechanics and philosophical gloss.
+        (各カルタをクリックまたはホバーすると、空間構造と注釈が開きます)
+      </p>
+    </div>
+
+    {/* カルーセル: 1ページ3枚 / 上限100枚 */}
+    <div class="relative" data-karuta-carousel data-page-size={perPage}>
+      {Array.from({ length: pageCount }, (_, pageIdx) => {
+        const pageCards = all.slice(pageIdx * perPage, pageIdx * perPage + perPage);
+        return (
+          <div
+            class={`karuta-page ${pageIdx === 0 ? '' : 'hidden'}`}
+            data-karuta-page={pageIdx}
+            aria-hidden={pageIdx === 0 ? 'false' : 'true'}
+          >
+            <div class="flex flex-wrap lg:flex-nowrap justify-center gap-6 pt-4">
+              {pageCards.map((card) => {
+                const idx = all.indexOf(card);
+                const n = card.number || num(idx + 1);
+                const jp = card.titleJp || card.title;
+                const en = card.titleEn;
+                const bodyJp = card.bodyJp || card.hoverText;
+                const tag = card.tag || 'Folio';
+                const folioId = card.folioId || `FOLIO ${n}`;
+
+                const inner = (
+                  <div class="karuta-card w-[300px] h-[400px] shrink-0 relative bg-[#f0edea] overflow-hidden shadow-md group cursor-pointer border border-[#d6c3ba]/40 transition-all">
+                    <div class="w-full h-full overflow-hidden">
+                      {card.image && (
+                        <img
+                          src={card.image}
+                          alt={card.alt || jp || `Karuta card ${n}`}
+                          class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          loading="lazy"
+                        />
+                      )}
+                    </div>
+
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-between p-6 transition-opacity duration-300 group-hover:opacity-20">
+                      <div class="flex justify-between items-start">
+                        <span class="font-serif text-2xl text-white tracking-widest">{card.kanjiNum || n}</span>
+                        <span class="font-sans text-[10px] uppercase tracking-widest text-white/90 bg-black/40 px-2 py-0.5">{tag}</span>
+                      </div>
+                      <div class="space-y-1 text-white">
+                        {card.romaji && (
+                          <span class="font-sans text-[10px] uppercase tracking-widest text-[#f8b897] block">{card.romaji}</span>
+                        )}
+                        <h3 class="font-serif text-xl font-medium">{jp}</h3>
+                        {en && <p class="font-serif text-xs text-white/80">{en}</p>}
+                      </div>
+                    </div>
+
+                    <div class="karuta-overlay absolute inset-0 bg-white/95 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-6 flex flex-col justify-between pointer-events-none group-hover:pointer-events-auto">
+                      <div class="space-y-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 karuta-content">
+                        <div class="flex justify-between items-baseline">
+                          <span class="font-serif text-2xl text-[#6f4229] font-bold">{card.kanjiNum || n}</span>
+                          <span class="font-sans text-[10px] uppercase tracking-widest text-[#84746c]">{folioId}</span>
+                        </div>
+                        <h4 class="font-serif text-lg font-semibold text-[#1b1c1a]">{jp}</h4>
+                        {en && (
+                          <span class="font-sans text-[11px] tracking-wider uppercase text-[#865138] block">{en}</span>
+                        )}
+                        {bodyJp && (
+                          <p class="font-serif text-xs sm:text-sm text-[#4f4d48] pt-2 leading-relaxed">{bodyJp}</p>
+                        )}
+                        {card.bodyEn && (
+                          <p class="font-serif italic text-xs text-[#51443d] pt-1 leading-relaxed border-t border-[#d6c3ba]/40">{card.bodyEn}</p>
+                        )}
+                      </div>
+                      <div class="pt-2 flex items-center justify-between text-[#84746c] text-[10px] font-sans uppercase tracking-widest">
+                        <span>{card.category || 'Folio'}</span>
+                        {card.icon && (
+                          <span class="material-symbols-outlined text-[16px] text-[#6f4229]">{card.icon}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+
+                return card.link ? (
+                  <a href={card.link} class="block" aria-label={jp || `Karuta card ${n}`}>{inner}</a>
+                ) : (
+                  inner
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+
+
+      {pageCount > 1 && (
+        <div class="flex items-center justify-center gap-4 pt-6">
+          <button type="button" data-karuta-prev class="p-2 text-[#6f4229] hover:bg-[#6f4229]/10 transition-colors" aria-label="Previous cards">
+            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+          </button>
+          <div class="flex items-center gap-2">
+            {Array.from({ length: pageCount }, (_, p) => (
+              <button
+                type="button"
+                data-karuta-dot={p}
+                class={`w-2 h-2 rounded-full transition-colors ${p === 0 ? 'bg-[#6f4229]' : 'bg-[#d6c3ba] hover:bg-[#8b593e]'}`}
+                aria-label={`Page ${p + 1}`}
+              />
+            ))}
+          </div>
+          <button type="button" data-karuta-next class="p-2 text-[#6f4229] hover:bg-[#6f4229]/10 transition-colors" aria-label="Next cards">
+            <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+          </button>
+        </div>
+      )}
+    </div>
+  </section>
+)}
+
+<script>
+  document.querySelectorAll('[data-karuta-carousel]').forEach((root) => {
+    const pages = Array.from(root.querySelectorAll('[data-karuta-page]'));
+    const dots = Array.from(root.querySelectorAll('[data-karuta-dot]'));
+    const prev = root.querySelector('[data-karuta-prev]');
+    const next = root.querySelector('[data-karuta-next]');
+    if (pages.length <= 1) return;
+    let current = 0;
+    const show = (i) => {
+      current = (i + pages.length) % pages.length;
+      pages.forEach((p, idx) => {
+        p.classList.toggle('hidden', idx !== current);
+        p.setAttribute('aria-hidden', idx === current ? 'false' : 'true');
+      });
+      dots.forEach((d, idx) => {
+        d.className = `w-2 h-2 rounded-full transition-colors ${idx === current ? 'bg-[#6f4229]' : 'bg-[#d6c3ba] hover:bg-[#8b593e]'}`;
+      });
+    };
+    prev?.addEventListener('click', () => show(current - 1));
+    next?.addEventListener('click', () => show(current + 1));
+    dots.forEach((d, idx) => d.addEventListener('click', () => show(idx)));
+    root.querySelectorAll('.karuta-card').forEach((card) => {
+      card.addEventListener('click', () => card.classList.toggle('active'));
+    });
+  });
+</script>
+

@@ -3,6 +3,7 @@
 // all pages through the use of the <BaseHead /> component.
 import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
+import config from '../content/config/config.json';
 
 interface Props {
 	title: string;
@@ -17,7 +18,9 @@ try {
   canonicalURL = null;
 }
 
-const { title, description, image = '/blog-placeholder-1.jpg' } = Astro.props;
+// サイト既定値（Keystatic「SEO / ナビゲーション設定」）をフォールバックに使う。
+const { title, description } = Astro.props;
+const ogImage = Astro.props.image || config.seo?.ogImage || '';
 ---
 
 <!-- Global Metadata -->
@@ -43,14 +46,14 @@ const { title, description, image = '/blog-placeholder-1.jpg' } = Astro.props;
 <meta property="og:url" content={Astro.url} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-<meta property="og:image" content={new URL(image, Astro.url)} />
+<meta property="og:image" content={ogImage ? new URL(ogImage, Astro.url) : ''} />
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:url" content={Astro.url} />
 <meta property="twitter:title" content={title} />
 <meta property="twitter:description" content={description} />
-<meta property="twitter:image" content={new URL(image, Astro.url)} />
+<meta property="twitter:image" content={ogImage ? new URL(ogImage, Astro.url) : ''} />
 
 
 <ClientRouter />

@@ -1,38 +1,40 @@
 {
   "seo": {
-    "title": "Astro Blog + Tina",
-    "description": "Welcome to my website!",
-    "siteOwner": "Your name here"
+    "title": "間　MA (Vide Signifiant)",
+    "description": "A contemplative editorial journal exploring the interval, spatial negative space, Japanese aesthetics, and contemporary thought in Kyoto.",
+    "siteOwner": "Shun Yamamoto - 山本 俊",
+    "ogImage": "/images/IMG_0581_DxO.webp"
   },
-  "nav": [
+  "archive": {
+    "title": "間 MA — Vide Signifiant",
+    "description": "Quiet essays and photography on Japanese culture, Shinto, and the aesthetics of the interval."
+  },
+  "navLinks": [
     {
-      "title": "Home",
-      "link": "/"
+      "label": "Home",
+      "href": "/"
     },
     {
-      "title": "Blog",
-      "link": "/blog"
+      "label": "Latest Writing",
+      "href": "/latest"
     },
     {
-      "title": "About",
-      "link": "/about"
+      "label": "About & Contact",
+      "href": "/about"
     }
   ],
-  "contactLinks": [
+  "socialLinks": [
     {
-      "title": "Twitter",
-      "link": "https://x.com/tinacms",
-      "icon": "TbBrandTwitter"
+      "label": "Instagram",
+      "url": "#"
     },
     {
-      "title": "Docs",
-      "link": "https://tina.io/docs",
-      "icon": "TbBook2"
+      "label": "Pinterest",
+      "url": "#"
     },
     {
-      "title": "GitHub",
-      "link": "https://github.com/tinacms/tinacms",
-      "icon": "TbBrandGithub"
+      "label": "Main Page",
+      "url": "/"
     }
   ]
 }

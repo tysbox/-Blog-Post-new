@@ -1,89 +1,77 @@
 ---
 import { getEntry, getCollection } from 'astro:content';
+import config from '../content/config/config.json';
 
+// 新ポータル準拠: Home / Latest Writing(最新記事へ) / About & Contact + BiScèneロゴ
+// 既存テキスト・画像の書き換えなし。リンク先のみ既存データから解決する。
+// ナビの文言と URL は Keystatic「SEO / ナビゲーション設定」navLinks から読む。
 const globalConfig = await getEntry('global', 'config');
-const { siteTitle, navLinks, lpLogo, lpUrl } = globalConfig?.data || { siteTitle: '道 The Way', navLinks: [], lpLogo: null, lpUrl: null };
+const { siteTitle, lpLogo, lpUrl } = globalConfig?.data || { siteTitle: '間　MA (Vide Signifiant)', lpLogo: null, lpUrl: null };
 
-// Normalize lpLogo once so we can both render and debug it easily
-let lpLogoSrc = null;
+const navLinks = (config?.navLinks ?? []).filter((l) => l?.label && l?.href);
+
+let lpLogoSrc: string | null = null;
 if (lpLogo) {
   if (typeof lpLogo === 'string') {
     lpLogoSrc = lpLogo;
   } else if (typeof lpLogo === 'object') {
-    lpLogoSrc = lpLogo.src || lpLogo.value || lpLogo.path || lpLogo.filename || null;
+    const o = lpLogo as Record<string, unknown>;
+    const v = o.src || o.value || o.path || o.filename;
+    if (typeof v === 'string') lpLogoSrc = v;
   }
   if (lpLogoSrc && !lpLogoSrc.match(/^https?:\/\//)) {
     lpLogoSrc = lpLogoSrc.startsWith('/') ? lpLogoSrc : `/${lpLogoSrc}`;
   }
 }
-// Fallback: if Tina's runtime value is missing, import the JSON file directly
-if (!lpLogoSrc) {
-  try {
-    const staticConfig = await import('../content/global/config.json');
-    const staticData = staticConfig?.default || staticConfig;
-    let staticLogo = staticData?.lpLogo;
-    // also capture static lpUrl if present
-    var staticLpUrl = staticData?.lpUrl;
-    if (staticLogo) {
-      if (typeof staticLogo !== 'string') {
-        staticLogo = staticLogo.src || staticLogo.value || staticLogo.path || staticLogo.filename || null;
-      }
-      if (staticLogo) {
-        lpLogoSrc = staticLogo.startsWith('/') ? staticLogo : `/${staticLogo}`;
-      }
-    }
-  } catch (e) {
-    // ignore import errors
-  }
-}
-// Server-side debug log so we can inspect what value is being read during SSR
-// Debug logs removed
 
-// Get latest content (blog post) for the "Latest Writing" link
 const allPosts = await getCollection('blog');
+const sortedContent = allPosts
+  .map((post) => ({
+    date: new Date(post.data.updatedDate || post.data.pubDate).valueOf(),
+    href: `/blog/${post.id}`,
+  }))
+  .sort((a, b) => b.date - a.date);
+const latestContentUrl = sortedContent[0] ? sortedContent[0].href : '/';
 
-const combinedContent = allPosts.map(post => ({
-  date: new Date(post.data.updatedDate || post.data.pubDate).valueOf(),
-  href: `/blog/${post.id}`
-}));
-
-const sortedContent = combinedContent.sort((a, b) => b.date - a.date);
-const latestContent = sortedContent[0];
-const latestContentUrl = latestContent ? latestContent.href : '/';
+// /latest は「最新の記事」そのものを指すため、実際のURLに解決する。
+const resolveHref = (href: string) => (href === '/latest' ? latestContentUrl : href);
 ---
 <header class="flex justify-between items-center py-6 border-b border-gray-200">
-  <h1 class="text-2xl font-bold text-gray-900">
-    <a href="/" class="hover:text-[#A36A4F] transition-colors">{siteTitle}</a>
-  </h1>
-  <nav class="hidden md:flex items-center space-x-8">
-    {navLinks?.map((link) => {
-      const href = link.href === '/latest' ? latestContentUrl : link.href;
-      return (
-        <a class="hover:text-[#A36A4F] transition-colors" href={href}>{link.label}</a>
-      );
-    })}
+  <div class="flex items-center gap-6">
+    <h1 class="text-2xl font-bold text-gray-900">
+      <a href="/" class="hover:text-[#A36A4F] transition-colors">{siteTitle || '間　MA (Vide Signifiant)'}</a>
+    </h1>
+  </div>
+  <nav class="hidden md:flex items-center space-x-8 text-sm font-medium">
+    {navLinks.map((link: any, i: number) => (
+      <a
+        href={resolveHref(link.href)}
+        class={i === 0 ? 'text-[#A36A4F] font-semibold transition-colors' : 'text-gray-600 hover:text-[#A36A4F] transition-colors'}
+      >
+        {link.label}
+      </a>
+    ))}
   </nav>
   <div class="flex items-center space-x-4">
-    {
-      (() => {
-        const src = lpLogoSrc;
-        if (src) {
-          const finalHref = lpUrl || (typeof staticLpUrl === 'string' ? staticLpUrl : undefined) || '/';
-          const isExternal = String(finalHref).match(/^https?:\/\//);
-          const target = isExternal ? '_blank' : undefined;
-          const rel = isExternal ? 'noopener noreferrer' : undefined;
-          return (<div>
-            <a href={finalHref} target={target} rel={rel} class="block w-[105px] h-[60px]">
-              <img src={src} alt="LP" class="w-[105px] h-[60px] object-contain" width="105" height="60" />
-            </a>
-            
-          </div>);
-        }
-        return (<div class="w-[105px] h-[60px] bg-gray-300 rounded flex items-center justify-center text-sm text-gray-500">Logo</div>);
-      })()
-    }
-    <button class="md:hidden p-2 rounded-full hover:bg-gray-200 transition-colors">
-      <span class="material-icons-outlined text-gray-600">menu</span>
-    </button>
+    {lpLogoSrc ? (
+      <a
+        href={lpUrl || 'https://bisen-kyoto.com/'}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="block w-[95px] sm:w-[105px] h-[50px] sm:h-[60px] flex items-center justify-center transition-transform hover:scale-105"
+      >
+        <img src={lpLogoSrc} alt="BiScène" class="w-[95px] sm:w-[105px] h-[50px] sm:h-[60px] object-contain" width="105" height="60" />
+      </a>
+    ) : (
+      <a
+        href="https://bisen-kyoto.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="block w-[95px] sm:w-[105px] h-[50px] sm:h-[60px] flex items-center justify-center transition-transform hover:scale-105"
+      >
+        <img src="/images/Logo1.png" alt="BiScène" class="w-[95px] sm:w-[105px] h-[50px] sm:h-[60px] object-contain" width="105" height="60" />
+      </a>
+    )}
   </div>
 </header>
+

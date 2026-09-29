@@ -1,60 +1,43 @@
 ---
+// 記事内画像グリッド — /tmp/mablogx/src/App.tsx L631-671 100% 準拠
+// 既存テキスト（label / caption）は変更しない。
 interface ImageItem {
-	src: string;
-	label?: string;
-	caption?: string;
+  src: string;
+  label?: string;
+  caption?: string;
 }
 
 interface Props {
-	images?: ImageItem[];
+  images?: ImageItem[];
+  figureOffset?: number;
 }
 
-const { images } = Astro.props as Props;
-const list = Array.isArray(images) ? images.filter(Boolean) : [];
+const { images, figureOffset = 0 } = Astro.props as Props;
+const list = (Array.isArray(images) ? images : []).filter(Boolean);
 ---
 
-{/* 画像が1枚の場合は横長（3:2）中央寄せで表示する */}
-{
-	list.length === 1 && (
-		<div class="flex justify-center w-full">
-			<div class="flex flex-col gap-2 w-full md:w-3/4">
-				<img
-					alt={list[0].label || 'Content Image'}
-					class="w-full aspect-[3/2] object-cover rounded-lg shadow-sm"
-					src={list[0].src}
-					loading="lazy"
-				/>
-				{(list[0].label || list[0].caption) && (
-					<div class="text-sm text-gray-500 text-center">
-						{list[0].label && <span class="font-bold block">{list[0].label}</span>}
-						{list[0].caption && <span>{list[0].caption}</span>}
-					</div>
-				)}
-			</div>
-		</div>
-	)
-}
-
-{
-	list.length > 1 && (
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-			{list.map((img) => (
-				<div class="flex flex-col gap-2">
-					<img
-						alt={img.label || 'Content Image'}
-						class="w-full aspect-square object-cover rounded-lg"
-						src={img.src}
-						loading="lazy"
-					/>
-					{(img.label || img.caption) && (
-						<div class="text-sm text-gray-500">
-							{img.label && <span class="font-bold block">{img.label}</span>}
-							{img.caption && <span>{img.caption}</span>}
-						</div>
-					)}
-				</div>
-			))}
-		</div>
-	)
-}
-
+{list.length > 0 && (
+  <div class={`grid grid-cols-1 ${list.length > 1 ? 'md:grid-cols-2' : 'max-w-2xl mx-auto'} gap-6 my-8`}>
+    {list.map((img, imgIdx) => (
+      <div class="flex flex-col space-y-2 group">
+        <div class="aspect-square w-full bg-[#f0edea] overflow-hidden shadow-sm relative">
+          <img
+            src={img.src}
+            alt={img.label || 'Article image'}
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+          <div class="absolute top-3 left-3 bg-[#fcf9f5]/90 backdrop-blur-sm px-2 py-1">
+            <span class="font-sans text-[10px] uppercase tracking-wider text-[#1b1c1a] font-semibold">
+              FIG. {String(figureOffset + imgIdx + 1).padStart(2, '0')}
+            </span>
+          </div>
+        </div>
+        <div class="flex flex-col space-y-1">
+          {img.label && <span class="font-sans text-xs font-semibold text-[#1b1c1a]">{img.label}</span>}
+          {img.caption && <span class="font-serif text-xs text-[#51443d] leading-relaxed">{img.caption}</span>}
+        </div>
+      </div>
+    ))}
+  </div>
+)}

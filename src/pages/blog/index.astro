@@ -1,115 +1,114 @@
 ---
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import CloudflareBeacon from '../../components/CloudflareBeacon.astro';
-import config from '../../content/config/config.json';
+// ブログ一覧 — mablogx otideマ insistence の編集デザインに統一
+// （記事ページと同じ fixed header / editorial footer を使う）
 import { getCollection } from 'astro:content';
-import FormattedDate from '../../components/FormattedDate.astro';
-import { richTextToHtmlInline, stripMarkdown } from '../../utils/richText';
+import BlogPost from '../../layouts/BlogPost.astro';
+import { stripMarkdown } from '../../utils/richText';
+import config from '../../content/config/config.json';
 
 const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 
+const [lead, ...rest] = posts;
+
+const readMinutes = (p: (typeof posts)[number]) => {
+  const chars = (p.data.description || '').replace(/\s+/g, '').length;
+  return Math.max(1, Math.round(chars / 700));
+};
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={config.seo.title} description={config.seo.description} />
-		<style>
-			main {
-				width: 960px;
-			}
-			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-			}
-			ul li {
-				width: calc(50% - 1rem);
-			}
-			ul li * {
-				text-decoration: none;
-				transition: 0.2s ease;
-			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
-			}
-			ul li a {
-				display: block;
-			}
-			.title {
-				margin: 0;
-				color: rgb(var(--black));
-				line-height: 1;
-			}
-			.date {
-				margin: 0;
-				color: rgb(var(--gray));
-			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
-			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
-			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
-				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
-				}
-			}
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main>
-			<section>
-				<ul>
-					{
-						posts.map((post) => (
-							<li>
-								<a href={`/blog/${post.id}/`}>
-									<img width={720} height={360} src={post.data.heroImage} alt={stripMarkdown(post.data.title) || 'Blog post image'} />
-									<h4 class="title" set:html={richTextToHtmlInline(post.data.title)} />
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-								</a>
-							</li>
-						))
-					}
-				</ul>
-			</section>
-		</main>
-		<Footer />
-		<CloudflareBeacon />
-	</body>
-</html>
+<BlogPost title={config.seo?.title || '間 MA (Vide Signifiant)'} description={config.seo?.description}>
+  <section class="max-w-4xl mx-auto w-full px-6 md:px-12 lg:px-0 pt-8 pb-6">
+    <div class="space-y-1.5 border-b border-[#d6c3ba]/40 pb-4">
+      <span class="font-sans text-xs uppercase tracking-[0.2em] text-[#865138] font-semibold">Journal</span>
+      <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl text-[#1b1c1a] font-normal tracking-tight leading-[1.15]">
+        {config.archive?.title || '間 MA — Vide Signifiant'}
+      </h1>
+      {config.archive?.description && (
+        <p class="font-serif text-sm italic text-[#51443d] pt-1">
+          {config.archive.description}
+        </p>
+      )}
+    </div>
+  </section>
+
+  <article class="max-w-4xl mx-auto w-full px-6 md:px-12 lg:px-0 space-y-16">
+    {/* Lead article */}
+    {lead && (
+      <section class="scroll-mt-28 space-y-6 pt-4">
+        <a href={`/blog/${lead.id}`} class="block group">
+          <div class="w-full relative bg-[#f6f3f0] overflow-hidden mb-6">
+            <div class="w-full h-[300px] sm:h-[420px] overflow-hidden">
+              {lead.data.heroImage && (
+                <img
+                  src={lead.data.heroImage}
+                  alt={stripMarkdown(lead.data.title)}
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+              )}
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
+          </div>
+          <div class="space-y-1.5 border-b border-[#d6c3ba]/40 pb-3.5">
+            <span class="font-sans text-xs uppercase tracking-[0.2em] text-[#865138] font-semibold">
+              Latest Essay
+            </span>
+            <h2 class="font-serif text-2xl sm:text-3xl text-[#1b1c1a] font-normal leading-snug group-hover:text-[#6f4229] transition-colors">
+              {stripMarkdown(lead.data.title)}
+            </h2>
+          </div>
+          {lead.data.description && (
+            <p class="font-serif text-base sm:text-lg text-[#1b1c1a] leading-relaxed mt-4 line-clamp-3">
+              {stripMarkdown(lead.data.description)}
+            </p>
+          )}
+        </a>
+      </section>
+    )}
+
+    {/* Archive grid */}
+    {rest.length > 0 && (
+      <section class="pt-8 border-t border-[#d6c3ba]/40 space-y-10">
+        <div class="flex items-baseline justify-between pb-3 border-b border-[#d6c3ba]/40">
+          <h2 class="font-serif text-2xl text-[#1b1c1a] font-normal">Archive</h2>
+          <span class="text-[11px] font-sans uppercase tracking-widest text-[#84746c]">
+            {String(rest.length).padStart(2, '0')} Entries
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {rest.map((post) => (
+            <a href={`/blog/${post.id}`} class="group flex flex-col">
+              <div class="aspect-[3/2] w-full bg-[#f0edea] overflow-hidden shadow-sm relative">
+                {post.data.heroImage && (
+                  <img
+                    src={post.data.heroImage}
+                    alt={stripMarkdown(post.data.title)}
+                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                )}
+              </div>
+              <div class="flex flex-col space-y-1 pt-4">
+                <div class="flex items-center gap-2 text-[10px] font-sans uppercase tracking-[0.2em] text-[#865138]">
+                  <span>{new Date(post.data.pubDate).getFullYear()}</span>
+                  <span class="text-[#d6c3ba]">•</span>
+                  <span>{readMinutes(post)} min read</span>
+                </div>
+                <h3 class="font-serif text-lg text-[#1b1c1a] group-hover:text-[#6f4229] transition-colors leading-snug">
+                  {stripMarkdown(post.data.title)}
+                </h3>
+                {post.data.description && (
+                  <span class="font-serif text-xs text-[#51443d] leading-relaxed line-clamp-2">
+                    {stripMarkdown(post.data.description)}
+                  </span>
+                )}
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+  </article>
+</BlogPost>

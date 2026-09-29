@@ -1,158 +1,484 @@
 ---
+// 記事ページ — /tmp/mablogx/src/App.tsx 100% 準拠
+// 既存テキスト/画像は変更しない（frontmatter と contentSections をそのまま使う）。
 import { getCollection } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
-import FormattedDate from '../../components/FormattedDate.astro';
 import ImageGrid from '../../components/mdx/ImageGrid.astro';
-import JapaneseAccordion from '../../components/react/JapaneseAccordion';
-import PostNav from '../../components/react/PostNav';
-import { richTextToHtml, richTextToHtmlInline, stripMarkdown } from '../../utils/richText';
+import KarutaGrid from '../../components/mdx/KarutaGrid.astro';
+import { richTextToHtml, stripMarkdown } from '../../utils/richText';
+import { extractToc, addHeadingIds } from '../../utils/toc';
 
 export async function getStaticPaths() {
-	const posts = await getCollection('blog');
+  const posts = await getCollection('blog');
 
-	// 前後の記事ナビ用に、日付降順で並び替えた一覧を用意する。
-	const sorted = [...posts].sort(
-		(a, b) => new Date(b.data.pubDate).valueOf() - new Date(a.data.pubDate).valueOf(),
-	);
+  // 前後の記事ナビは【日付ではなく Index（章順）】に従う。
+  // Index と同じ並び = 公開日の昇順（第一回目が先頭）。
+  //   sorted[i-1] = 1 つ前の記事 → prev（←）
+  //   sorted[i+1] = 1 つ後の記事 → next（→）
+  const sorted = [...posts].sort(
+    (a, b) => new Date(a.data.pubDate).valueOf() - new Date(b.data.pubDate).valueOf(),
+  );
 
-	return posts.map((post) => {
-		const index = sorted.findIndex((p) => p.id === post.id);
-		// index が新しい側=次の記事、古い側=前の記事。
-		const newer = index > 0 ? sorted[index - 1] : null;
-		const older = index >= 0 && index < sorted.length - 1 ? sorted[index + 1] : null;
-		const toNav = (entry) =>
-			entry
-				? { id: entry.id, title: stripMarkdown(entry.data.title), href: `/blog/${entry.id}` }
-				: null;
+  return posts.map((post) => {
+    const index = sorted.findIndex((p) => p.id === post.id);
+    const before = index > 0 ? sorted[index - 1] : null; // 1 つ前の記事
+    const after = index >= 0 && index < sorted.length - 1 ? sorted[index + 1] : null; // 1 つ後の記事
+    const toNav = (entry: any) =>
+      entry
+        ? { id: entry.id, title: stripMarkdown(entry.data.title), href: `/blog/${entry.id}` }
+        : null;
 
-		return {
-			params: { slug: post.id },
-			props: { post, prev: toNav(older), next: toNav(newer) },
-		};
-	});
+    return {
+      params: { slug: post.id },
+      props: { post, prev: toNav(before), next: toNav(after) },
+    };
+  });
 }
 
-const { post, prev, next } = Astro.props;
+const { post, prev, next } = Astro.props as any;
 
 const {
-	title,
-	description,
-	pubDate,
-	updatedDate,
-	heroImage,
-	heroTitle,
-	heroSubtitle,
-	japaneseText,
-	contentSections = [],
+  title,
+  description,
+  pubDate,
+  heroImage,
+  heroTitle,
+  heroSubtitle,
+  contentSections = [],
 } = post.data;
 
-// タイトルは Markdown として解釈する（**太字** や *斜体* が使えるようにする）。
-// 見出しの内側なので、段落タグで包む marked.parse ではなく parseInline を使う。
-const headingHtml = richTextToHtmlInline(heroTitle || title);
 const headingPlain = stripMarkdown(heroTitle || title);
-const subtitleHtml = richTextToHtmlInline(heroSubtitle);
+const subtitlePlain = stripMarkdown(heroSubtitle || description);
+
+// Overline 用の日本語タイトル: japaneseText の先頭見出しから抽出する。
+// h1（headingPlain）と重複させないため、既存本文を書き換えず表示のみ差し替える。
+const headingJp = (() => {
+  const raw = post.data.japaneseText;
+  const text = typeof raw === 'string' ? raw : '';
+  if (!text) return '';
+  const m = text.match(/^###?\s*\*\*(.+?)\*\*/m) || text.match(/^###?\s*(.+)$/m);
+  return m ? stripMarkdown(m[1]) : '';
+})();
+
+// Index は textBlock の見出しから自動生成（既存本文の書き換えなし）。
+const tocEntries = extractToc(contentSections);
+// カルタは全記事共通で必ず出力されるため、Index にも常に載せる。
+const hasKaruta = true;
+
+// Index のアンカーと本文見出し id を対応させる
+const tocIdsBySection = new Map<number, string[]>();
+tocEntries.forEach((entry) => {
+  const list = tocIdsBySection.get(entry.sectionIndex) ?? [];
+  list.push(entry.id);
+  tocIdsBySection.set(entry.sectionIndex, list);
+});
+
+// 読了時間（本文の文字数ベース）
+const readMinutes = (() => {
+  const all = (contentSections || [])
+    .map((s: any) => (typeof s?.bodyText === 'string' ? s.bodyText : ''))
+    .join(' ');
+  const chars = all.replace(/\s+/g, '').length;
+  return Math.max(1, Math.round(chars / 700));
+})();
+
+// Index（目次）: 第1回目から最新まで、公開順に全記事を列挙する。
+const allPosts = (await getCollection('blog')).sort(
+  (a, b) => new Date(a.data.pubDate).valueOf() - new Date(b.data.pubDate).valueOf(),
+);
+
+const indexArticles = allPosts.map((p, i) => ({
+  id: p.id,
+  href: `/blog/${p.id}`,
+  number: String(i + 1).padStart(2, '0'),
+  // Index は目次なので記事の正式タイトル（title）を使う。heroTitle はヒーロー用見出しのため使わない。
+  title: stripMarkdown(p.data.title || p.data.heroTitle),
+  date: p.data.pubDate
+    ? new Date(p.data.pubDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+      }).toUpperCase()
+    : '',
+  isCurrent: p.id === post.id,
+}));
+
+// Index トリガーのラベル（全記事数を表す）
+const indexRange = `All Articles · ${indexArticles.length}`;
+
+// 読了時間（本文の文字数ベース）
 ---
 
-<BlogPost title={headingPlain} description={description} pubDate={pubDate} updatedDate={updatedDate}>
-	<article class="blog-post">
-		{heroImage && (
-			<header class="hero">
-				<img class="hero-image" src={heroImage} alt={headingPlain || 'Hero image'} />
-				<div class="hero-overlay">
-					{headingHtml && <h1 class="hero-title" set:html={headingHtml} />}
-					{subtitleHtml && <p class="hero-subtitle" set:html={subtitleHtml} />}
-				</div>
-			</header>
-		)}
+<BlogPost title={headingPlain} description={description}>
+  {/* Article Header Meta & Main Title — App.tsx L158-225 */}
+  <section class="max-w-4xl mx-auto w-full px-6 md:px-12 lg:px-0 pt-8 pb-6">
+    <div class="flex flex-col space-y-3">
+      <div class="flex flex-wrap items-center gap-2 text-xs font-sans tracking-widest text-[#865138] uppercase">
+        <span class="bg-[#f0edea] px-2.5 py-1 font-semibold text-[#6f4229]">Essay</span>
+        <span class="text-[#d6c3ba]">•</span>
+        <span class="text-[#51443d]">{pubDate ? new Date(pubDate).getFullYear() : ''}</span>
+        <span class="text-[#d6c3ba]">•</span>
+        <span class="text-[#51443d]">{readMinutes} min read</span>
+      </div>
 
-		{(pubDate || updatedDate) && (
-			<p class="date">
-				{pubDate && <FormattedDate date={pubDate} />}
-				{updatedDate && <span class="last-updated-on"> · Updated <FormattedDate date={updatedDate} /></span>}
-			</p>
-		)}
+      <div class="pt-2">
+        {headingJp && (
+          <span class="font-sans text-xs uppercase tracking-[0.25em] text-[#6f4229] font-medium block mb-2">
+            {headingJp}
+          </span>
+        )}
+        <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl text-[#1b1c1a] font-normal tracking-tight leading-[1.15]">
+          {headingPlain}
+        </h1>
+        {subtitlePlain && (
+          <p class="font-serif text-lg md:text-xl text-[#51443d] italic font-light pt-3 leading-relaxed whitespace-pre-line">
+            {subtitlePlain}
+          </p>
+        )}
+      </div>
 
-		{japaneseText && (
-			<div class="japanese">
-				<JapaneseAccordion content={japaneseText} client:load />
-			</div>
-		)}
+      <div class="flex items-center justify-between pt-6 border-t border-[#d6c3ba]/30 mt-4 text-[#51443d]">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-[#eae8e4] flex items-center justify-center font-serif text-lg text-[#1b1c1a]">間</div>
+          <div class="flex flex-col">
+            <span class="font-sans text-xs font-semibold text-[#1b1c1a] tracking-wide">間 MA Editorial</span>
+            <span class="font-sans text-[11px] text-[#51443d]">BiScène Kyoto</span>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3 text-xs font-sans tracking-widest">
+          <span class="uppercase hidden sm:inline">
+            {pubDate ? new Date(pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : ''}
+          </span>
+          <button type="button" data-bookmark class="p-2 hover:text-[#6f4229] transition-colors text-[#51443d]" title="Bookmark">
+            <span class="material-symbols-outlined text-[20px]">bookmark_border</span>
+          </button>
+          <button type="button" data-share class="p-2 hover:text-[#6f4229] transition-colors text-[#51443d]" title="Share">
+            <span class="material-symbols-outlined text-[20px]">share</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
 
-		<div class="prose">
-			{contentSections.map((section) => {
-				if (section._template === 'imageGrid') {
-					return <ImageGrid images={section.images ?? []} />;
-				}
-				return (
-					<div
-						class="section-text"
-						set:html={richTextToHtml(section.bodyText)}
-					/>
-				);
-			})}
-		</div>
-	</article>
-	<PostNav client:load prev={prev} next={next} />
+  {/* Hero Image Showcase — App.tsx L228-262 */}
+  {heroImage && (
+    <section class="max-w-4xl mx-auto w-full px-6 md:px-12 lg:px-0">
+      <div class="w-full relative bg-[#f6f3f0] overflow-hidden">
+        <div class="w-full h-[360px] sm:h-[480px] md:h-[520px] overflow-hidden">
+          <img src={heroImage} alt={headingPlain || 'Hero image'} class="w-full h-full object-cover" />
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
+      </div>
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between py-2.5 text-xs text-[#51443d] font-sans gap-1 border-b border-[#d6c3ba]/30">
+        <div class="flex items-center space-x-2">
+          <span class="w-1.5 h-1.5 bg-[#6f4229] rounded-full shrink-0"></span>
+          <span class="tracking-wide">{headingPlain}</span>
+        </div>
+        <span class="text-[11px] tracking-widest uppercase text-[#84746c] shrink-0">FIG. 00 / ARCHIVE</span>
+      </div>
+    </section>
+  )}
+
+  {/* Interactive Trigger Bar — App.tsx L265-327 */}
+  <section id="toc-container" class="max-w-4xl mx-auto w-full px-6 md:px-12 lg:px-0 relative my-6">
+    <div class="w-full bg-[#f6f3f0] flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-2 shadow-sm gap-2 border border-[#d6c3ba]/40">
+      <button
+        type="button"
+        id="toc-trigger-btn"
+        class="flex items-center space-x-3 px-4 py-2.5 bg-[#fcf9f5] text-[#1b1c1a] hover:bg-[#f0edea] transition-colors text-left group"
+      >
+        <span class="material-symbols-outlined text-[18px] text-[#6f4229] transition-transform group-hover:scale-110">menu</span>
+        <span class="font-sans text-xs uppercase tracking-widest font-semibold">= INDEX</span>
+        <span class="font-sans text-xs text-[#51443d] font-normal">({indexRange})</span>
+      </button>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          id="lang-trigger-btn"
+          class="flex items-center justify-between space-x-3 px-4 py-2.5 bg-[#fcf9f5] text-[#51443d] hover:text-[#1b1c1a] hover:bg-[#f0edea] transition-colors"
+        >
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-[#865138]"></span>
+            <span class="font-sans text-xs uppercase tracking-wider font-semibold text-[#865138]">
+              日本語バージョン (Japanese Script)
+            </span>
+          </div>
+          <span id="lang-chevron" class="material-symbols-outlined text-[18px] transition-transform duration-300">expand_more</span>
+        </button>
+      </div>
+    </div>
+
+    {/* Accordion Drawer: Japanese Original Script — App.tsx L330-358 */}
+    <div id="lang-drawer" class="hidden w-full bg-[#f0edea] p-6 mt-2 shadow-md border border-[#d6c3ba]/60 animate-fade-in">
+      <div class="flex items-baseline justify-between mb-3 border-b border-[#d6c3ba]/40 pb-2">
+        <span class="font-sans text-xs uppercase tracking-widest font-semibold text-[#865138]">Original Text / 日本語原文</span>
+        <span class="font-sans text-xs text-[#51443d]">間 MA 編集室（BiScène Kyoto）</span>
+      </div>
+      <div class="font-serif text-sm sm:text-base text-[#1b1c1a] leading-relaxed mb-4 font-light whitespace-pre-wrap bear-prose">
+        {(post.data.japaneseText as string) || ''}
+      </div>
+    </div>
+
+    {/* Frosted Glass TOC Drawer — 透過75%(不透明度25%) / 幅500px / App.tsx L362-369 */}
+    <div
+      id="toc-drawer"
+      class="hidden absolute top-full left-0 z-30 w-full sm:w-[500px] shadow-[0_16px_40px_rgba(0,0,0,0.12)] mt-2 p-6 animate-fade-in border border-[#8b593e]/30 select-text"
+      style="background-color: rgba(252, 249, 245, 0.25); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);"
+    >
+      <div class="flex items-center justify-between pb-3 border-b border-[#8b593e]/20 mb-4">
+        <span class="font-serif font-semibold text-lg text-[#1b1c1a] tracking-wide">CONTENTS / 目次</span>
+        <button type="button" id="toc-close-btn" class="p-1 text-[#51443d] hover:text-[#1b1c1a] transition-colors" aria-label="Close Table of Contents">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <div class="mb-4">
+        <div class="text-[10px] font-sans uppercase tracking-[0.2em] text-[#6f4229] font-bold mb-2">
+          All Articles · 全記事（{indexArticles.length}）
+        </div>
+        <div class="space-y-1">
+          {indexArticles.map((entry) => (
+            <a
+              href={entry.href}
+              data-toc-link
+              aria-current={entry.isCurrent ? 'page' : undefined}
+              class={`flex items-start space-x-3 p-2 transition-colors group ${
+                entry.isCurrent ? 'bg-[#6f4229]/10' : 'hover:bg-[#6f4229]/10'
+              }`}
+            >
+              <span class={`w-1.5 h-1.5 shrink-0 mt-2 ${entry.isCurrent ? 'bg-[#6f4229]' : 'bg-[#8b593e]'}`}></span>
+              <div>
+                <div class="font-sans text-[11px] uppercase tracking-wider text-[#8b593e] font-semibold">
+                  NO. {entry.number}
+                  {entry.date && <span class="text-[#84746c]"> — {entry.date}</span>}
+                </div>
+                <div class={`font-serif text-sm font-medium transition-colors ${
+                  entry.isCurrent ? 'text-[#6f4229]' : 'text-[#1b1c1a] group-hover:text-[#6f4229]'
+                }`}>
+                  {entry.title}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {/* 現在記事内のセクション */}
+      {tocEntries.length > 0 && (
+        <div class="pt-2 border-t border-[#8b593e]/20 space-y-1">
+          <div class="text-[10px] font-sans uppercase tracking-[0.2em] text-[#6f4229] font-bold mb-2 mt-3">
+            In This Article · 本文内
+          </div>
+          {tocEntries.map((entry, i) => (
+            <a href={`#${entry.id}`} data-toc-link class="flex items-start space-x-3 p-2 hover:bg-[#6f4229]/10 transition-colors group">
+              <span class="w-1.5 h-1.5 bg-[#d6c3ba] shrink-0 mt-2"></span>
+              <div>
+                <div class="font-sans text-[11px] uppercase tracking-wider text-[#8b593e] font-semibold">
+                  SECTION {String(i + 1).padStart(2, '0')}
+                </div>
+                <div class="font-serif text-sm font-medium text-[#1b1c1a] group-hover:text-[#6f4229] transition-colors">
+                  {entry.text}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+
+      {hasKaruta && (
+        <div class="pt-2 border-t border-[#8b593e]/20 space-y-1">
+          <a href="#section-karuta" data-toc-link class="flex items-center space-x-3 p-2 hover:bg-[#6f4229]/10 transition-colors text-xs font-sans uppercase tracking-wider text-[#51443d] hover:text-[#1b1c1a] font-medium">
+            <span class="material-symbols-outlined text-[16px] text-[#6f4229]">style</span>
+            <span class="font-medium text-[#1b1c1a]">Card Folio: 空間語彙のカルタ</span>
+          </a>
+        </div>
+      )}
+
+      <div class="pt-4 text-[10px] text-[#84746c] font-sans tracking-widest uppercase border-t border-[#d6c3ba]/30 mt-3">
+        ISSN 2814-9902 • Kyoto Dispatch
+      </div>
+    </div>
+  </section>
+
+  {/* Article Body Content — App.tsx L533-673 */}
+  <article class="max-w-4xl mx-auto w-full px-6 md:px-12 lg:px-0 space-y-16">
+    {/* 本文ブロック（karutaGrid は下文で全記事共通に出力するため除外） */}
+    {contentSections.map((section: any, sectionIndex: number) => {
+      if (!section) return null;
+      if (section._template === 'imageGrid') {
+        return <ImageGrid images={section.images ?? []} />;
+      }
+      if (section._template === 'karutaGrid') return null;
+
+      const ids = (tocIdsBySection.get(sectionIndex) ?? []) as string[];
+      const sectionHeading = tocEntries.find(
+        (e) => e.sectionIndex === sectionIndex && e.level === 2,
+      );
+
+      return (
+        <section id={sectionHeading?.id} class="scroll-mt-28 space-y-6 pt-4">
+          {sectionHeading && (
+            <div class="space-y-1.5 border-b border-[#d6c3ba]/40 pb-3.5">
+              <span class="font-sans text-xs uppercase tracking-[0.2em] text-[#865138] font-semibold">
+                SECTION {String(tocEntries.indexOf(sectionHeading) + 1).padStart(2, '0')}
+              </span>
+              <h2 class="font-serif text-2xl sm:text-3xl text-[#1b1c1a] font-normal leading-snug">
+                {sectionHeading.text}
+              </h2>
+            </div>
+          )}
+          <div
+            class="article-body space-y-5 font-serif text-base sm:text-lg text-[#1b1c1a] leading-relaxed"
+            set:html={addHeadingIds(richTextToHtml(section.bodyText), ids)}
+          />
+        </section>
+      );
+    })}
+
+    {/* Card Folio: 全ブログ記事共通（1ページ3枚・カルーセル / 上限100枚） */}
+    <KarutaGrid />
+
+    {/* Connected Articles Navigation — App.tsx L781-849 */}
+    {(prev || next) && (
+      <nav aria-label="Article Pagination" class="pt-8 pb-12">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {prev ? (
+            <a href={prev.href} class="bg-[#f6f3f0] p-6 flex flex-col justify-between group hover:bg-[#f0edea] transition-colors border border-[#d6c3ba]/40">
+              <div class="space-y-2">
+                <span class="font-sans text-[11px] uppercase tracking-widest text-[#84746c] group-hover:text-[#6f4229] transition-colors flex items-center gap-1 font-semibold">
+                  <span class="material-symbols-outlined text-[14px]">arrow_back</span>
+                  PREVIOUS ARTICLE
+                </span>
+                <h3 class="font-serif text-lg text-[#1b1c1a] group-hover:text-[#6f4229] transition-colors">
+                  {prev.title}
+                </h3>
+              </div>
+            </a>
+          ) : (
+            <div class="bg-[#f6f3f0] p-6 border border-[#d6c3ba]/40 opacity-40"></div>
+          )}
+
+          {next && (
+            <a href={next.href} class="bg-[#f6f3f0] p-6 flex flex-col justify-between group hover:bg-[#f0edea] transition-colors border border-[#d6c3ba]/40 text-left md:text-right">
+              <div class="space-y-2">
+                <div class="flex items-center justify-start md:justify-end gap-1">
+                  <span class="font-sans text-[11px] uppercase tracking-widest text-[#84746c] group-hover:text-[#6f4229] transition-colors flex items-center gap-1 font-semibold">
+                    NEXT ARTICLE
+                    <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  </span>
+                </div>
+                <h3 class="font-serif text-lg text-[#1b1c1a] group-hover:text-[#6f4229] transition-colors">
+                  {next.title}
+                </h3>
+              </div>
+            </a>
+          )}
+        </div>
+      </nav>
+    )}
+  </article>
 </BlogPost>
 
 <style>
-	.blog-post {
-		width: 100%;
-	}
-	.hero {
-		position: relative;
-		width: 100%;
-	}
-	.hero-image {
-		display: block;
-		width: 100%;
-		height: 66vh;
-		object-fit: cover;
-	}
-	.hero-overlay {
-		position: absolute;
-		inset: 0;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		text-align: center;
-		padding: 0 1rem;
-		background-color: rgba(0, 0, 0, 0.1);
-	}
-	.hero-title {
-		margin: 0;
-		color: #fff;
-		font-size: clamp(1.75rem, 6vw, 3.5rem);
-		font-weight: 700;
-		line-height: 1.05;
-	}
-	.hero-subtitle {
-		margin-top: 0.5rem;
-		color: #fff;
-		font-size: 1.125rem;
-		white-space: pre-wrap;
-	}
-	.date {
-		margin: 1.5rem auto 0;
-		max-width: 720px;
-		padding: 0 1em;
-		color: rgb(var(--gray));
-	}
-	.japanese {
-		max-width: 896px;
-		margin: 2rem auto 0;
-		padding: 0 1rem;
-	}
-	.prose {
-		width: 720px;
-		max-width: calc(100% - 2em);
-		margin: 1em auto;
-		padding: 1em;
-		color: rgb(var(--gray-dark));
-	}
-	.prose :global(h2) {
-		margin-top: 2em;
-	}
+  /* 本文組版（mablogx の article body に相当） */
+  .article-body p {
+    margin-bottom: 0;
+  }
+  .article-body p:first-child::first-letter {
+    font-family: 'Noto Serif', 'Noto Serif JP', serif;
+    font-size: 3rem;
+    line-height: 1;
+    float: left;
+    margin-right: 0.75rem;
+    color: #6f4229;
+  }
+  .article-body h2,
+  .article-body h3 {
+    font-weight: 400;
+    color: #1b1c1a;
+    line-height: 1.3;
+  }
+  .article-body h2 {
+    font-size: 1.5rem;
+  }
+  .article-body h3 {
+    font-size: 1.25rem;
+  }
+  .bear-prose strong,
+  .bear-prose b {
+    color: #1b1c1a;
+  }
 </style>
 
+<script>
+  // --- Index (Frosted Glass TOC) ---
+  const tocBtn = document.getElementById('toc-trigger-btn');
+  const tocDrawer = document.getElementById('toc-drawer');
+  const tocClose = document.getElementById('toc-close-btn');
+
+  const closeToc = () => tocDrawer?.classList.add('hidden');
+  tocBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    tocDrawer?.classList.toggle('hidden');
+  });
+  tocClose?.addEventListener('click', closeToc);
+  document.querySelectorAll('[data-toc-link]').forEach((link) => {
+    link.addEventListener('click', closeToc);
+  });
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (tocDrawer && !tocDrawer.classList.contains('hidden') && !target.closest('#toc-container')) {
+      closeToc();
+    }
+  });
+
+  // --- 日本語ドロワー ---
+  const langBtn = document.getElementById('lang-trigger-btn');
+  const langDrawer = document.getElementById('lang-drawer');
+  const langChevron = document.getElementById('lang-chevron');
+  langBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const hidden = langDrawer?.classList.toggle('hidden');
+    if (langChevron) {
+      langChevron.style.transform = hidden ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+  });
+
+  // --- Toast ---
+  const showToast = (msg: string) => {
+    const el = document.getElementById('ma-toast');
+    if (!el) return;
+    el.querySelector('span:last-child')!.textContent = msg;
+    el.classList.remove('hidden');
+    window.setTimeout(() => el.classList.add('hidden'), 3000);
+  };
+
+  // --- Bookmark ---
+  const bookmarkBtn = document.querySelector('[data-bookmark]');
+  let bookmarked = false;
+  bookmarkBtn?.addEventListener('click', () => {
+    bookmarked = !bookmarked;
+    const icon = bookmarkBtn.querySelector('span');
+    if (icon) icon.textContent = bookmarked ? 'bookmark' : 'bookmark_border';
+    bookmarkBtn.classList.toggle('text-[#6f4229]', bookmarked);
+    showToast(bookmarked ? 'Article bookmarked (保存しました)' : 'Bookmark removed');
+  });
+
+  // --- Share ---
+  const shareBtn = document.querySelector('[data-share]');
+  shareBtn?.addEventListener('click', async () => {
+    const url = window.location.href;
+    const nav = navigator as any;
+    if (nav.share) {
+      try {
+        await nav.share({ title: document.title, url });
+      } catch {
+        /* cancelled */
+      }
+    } else {
+      await nav.clipboard?.writeText(url);
+      showToast('Link copied to clipboard (クリップボードにコピーしました)');
+    }
+  });
+</script>

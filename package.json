@@ -13,12 +13,10 @@
     "deps:localize": "bash ./scripts/externalize-node-modules.sh --restore",
     "backup:icloud": "bash ./scripts/sync-icloud-backup.sh",
     "preinstall": "node ./scripts/check-node-version.mjs",
-    "tina:serve": "PATH=\"$PWD/node_modules/.bin:$PATH\" TINA_DEV_PORT=7788 TINA_GRAPHQL_PORT=9001 NODE_OPTIONS='--dns-result-order=ipv4first' tinacms dev --port 7777 -c \"astro dev\"",
-    "dev": "npm run tina:serve",
-    "tina:dev": "bash ./scripts/start-tina-dev.sh",
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1",
+    "dev:keystatic": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1",
     "images:convert": "node scripts/convert-images.cjs",
-    "dev:alternate": "bash ./scripts/start-tina-dev.sh",
-    "clean:caches": "rm -rf node_modules/.vite node_modules/@tinacms/app/node_modules/.vite",
+    "clean:caches": "rm -rf node_modules/.vite",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
@@ -40,11 +38,9 @@
     "react-dom": "18.3.1",
     "react-icons": "5.5.0",
     "tailwindcss": "3.4.19",
-    "tinacms": "2.10.1",
     "typescript": "5.9.3"
   },
   "devDependencies": {
-    "@tinacms/cli": "2.0.5",
     "@types/node": "22.18.12",
     "prettier": "3.7.4"
   }

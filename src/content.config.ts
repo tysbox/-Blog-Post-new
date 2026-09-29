@@ -37,6 +37,33 @@ const blog = defineCollection({
               )
               .optional(),
           }),
+          z.object({
+            _template: z.literal("karutaGrid"),
+            karutaTitle: z.string().optional(),
+            karutaCards: z
+              .array(
+                z.object({
+                  number: z.string().optional(),
+                  kanjiNum: z.string().optional(),
+                  tag: z.string().optional(),
+                  romaji: z.string().optional(),
+                  titleJp: z.string().optional(),
+                  titleEn: z.string().optional(),
+                  image: z.string().optional(),
+                  alt: z.string().optional(),
+                  folioId: z.string().optional(),
+                  category: z.string().optional(),
+                  icon: z.string().optional(),
+                  bodyJp: z.string().optional(),
+                  bodyEn: z.string().optional(),
+                  // 後方互換（旧スキーマ）
+                  title: z.string().optional(),
+                  hoverText: z.string().optional(),
+                  link: z.string().optional(),
+                })
+              )
+              .optional(),
+          }),
         ])
       )
       .optional(),
@@ -84,19 +111,16 @@ const portal = defineCollection({
   schema: z.object({
     title: z.string(),
     hero: z.object({
-      image1: z.string().optional(),
-      image2: z.string().optional(),
-      image3: z.string().optional(),
-      image4: z.string().optional(),
-      image5: z.string().optional(),
       title: z.string().optional(),
       subtitle: z.string().optional(),
-      slides: z.array(z.object({
+      // FUSUMA 画像（最大5件）: 襖が開いた後に表示される背景画像
+      fusumaImages: z.array(z.object({
         image: z.string().optional(),
+      })).optional(),
+      // FUSUMA テキスト（最大5件）: 暗転中に表示されるタイトルとサブタイトル
+      fusumaTexts: z.array(z.object({
         title: z.string().optional(),
         subtitle: z.string().optional(),
-        leftTitle: z.string().optional(),
-        rightTitle: z.string().optional(),
       })).optional(),
     }).optional(),
     introTitle: z.string().optional(),
@@ -104,6 +128,87 @@ const portal = defineCollection({
     featuredItems: z.array(z.object({
       item: z.union([z.string(), z.object({ collection: z.string(), id: z.string() })])
     })).optional(),
+    // Step3-2: ポータル Index バンドルスロット（任意のみ・既存互換）
+    slotMode: z.enum(['hybrid', 'manual', 'auto']).optional(),
+    displayCount: z.number().optional(),
+    closeupLandscape: z.string().optional(),
+    closeupPortraits: z.array(z.object({
+      item: z.union([z.string(), z.object({ collection: z.string(), id: z.string() })])
+    })).optional(),
+    shelfTitle: z.string().optional(),
+    shelfSubtitle: z.string().optional(),
+    volumes: z.array(z.object({
+      title: z.string().optional(),
+      badge: z.string().optional(),
+      subtitle: z.string().optional(),
+      chapters: z.array(z.object({
+        title: z.string().optional(),
+        description: z.string().optional(),
+        article: z.string().optional(),
+      })).optional(),
+    })).optional(),
+    // Vol. I Bundle（2記事）
+    bundleItems: z.array(z.object({
+      item: z.union([z.string(), z.object({ collection: z.string(), id: z.string() })]),
+    })).optional(),
+    // 6. Dispatches from Kyoto（ニュースレター）
+    newsletter: z.object({
+      enabled: z.boolean().optional(),
+      eyebrow: z.string().optional(),
+      heading: z.string().optional(),
+      body: z.string().optional(),
+      note: z.string().optional(),
+      successTitle: z.string().optional(),
+      successBody: z.string().optional(),
+      buttonLabel: z.string().optional(),
+      placeholder: z.string().optional(),
+    }).optional(),
+  }),
+});
+
+// Folio（Collected Volumes & Archives）: フロントページ下部のデッキを独立編集する。
+// 1行に2デッキが並び、各デッキには2列×3段＝最大6枚のカードを積む。
+const folio = defineCollection({
+  loader: glob({ pattern: "**/*.json", base: "./src/content/folio" }),
+  schema: z.object({
+    title: z.string().optional(),
+    volumes: z.array(z.object({
+      title: z.string().optional(),
+      badge: z.string().optional(),
+      chapters: z.array(z.object({
+        title: z.string().optional(),
+        description: z.string().optional(),
+        article: z.string().optional(),
+      })).optional(),
+    })).optional(),
+    _template: z.string().optional(),
+  }),
+});
+
+// Karuta（空間語彙のカルタ）: 全ブログ記事共通で表示（1ページ3枚・カルーセル）。
+// ブログ記事とは別に独立編集する。
+const karuta = defineCollection({
+  loader: glob({ pattern: "**/*.json", base: "./src/content/karuta" }),
+  schema: z.object({
+    title: z.string().optional(),
+    perPage: z.number().optional(),
+    max: z.number().optional(),
+    cards: z.array(z.object({
+      number: z.string().optional(),
+      kanjiNum: z.string().optional(),
+      tag: z.string().optional(),
+      romaji: z.string().optional(),
+      titleJp: z.string().optional(),
+      titleEn: z.string().optional(),
+      image: z.string().optional(),
+      alt: z.string().optional(),
+      folioId: z.string().optional(),
+      category: z.string().optional(),
+      icon: z.string().optional(),
+      bodyJp: z.string().optional(),
+      bodyEn: z.string().optional(),
+    })).optional(),
+    _template: z.string().optional(),
   }),
 });
 
@@ -118,7 +223,26 @@ const pageMd = defineCollection({
 
 const siteConfig = defineCollection({
   loader: glob({ pattern: "**/*.json", base: "./src/content/config" }),
-  schema: z.any(),
+  schema: z.object({
+    seo: z.object({
+      title: z.string().optional(),
+      description: z.string().optional(),
+      siteOwner: z.string().optional(),
+      ogImage: z.string().optional(),
+    }).optional(),
+    archive: z.object({
+      title: z.string().optional(),
+      description: z.string().optional(),
+    }).optional(),
+    navLinks: z.array(z.object({
+      label: z.string().optional(),
+      href: z.string().optional(),
+    })).optional(),
+    socialLinks: z.array(z.object({
+      label: z.string().optional(),
+      url: z.string().optional(),
+    })).optional(),
+  }),
 });
 
-export const collections = { blog, global, portal, pageMd, siteConfig };
+export const collections = { blog, global, portal, folio, karuta, pageMd, siteConfig };

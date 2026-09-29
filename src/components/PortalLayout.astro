@@ -2,15 +2,23 @@
 import Header from './Header.astro';
 import Footer from './Footer.astro';
 import CloudflareBeacon from './CloudflareBeacon.astro';
+import { getEntry, getCollection } from 'astro:content';
+import '../styles/global.css';
+
+interface FusumaImage {
+  image?: string;
+}
+
+interface FusumaText {
+  title?: string;
+  subtitle?: string;
+}
 
 interface Props {
   title?: string;
-  hero: {
-    image1?: string;
-    image2?: string;
-    image3?: string;
-    image4?: string;
-    image5?: string;
+  hero?: {
+    fusumaImages?: FusumaImage[];
+    fusumaTexts?: FusumaText[];
     title?: string;
     subtitle?: string;
   };
@@ -18,21 +26,40 @@ interface Props {
 
 const { title, hero } = Astro.props;
 
-// Prefer hero.slides (new schema). Fallback to legacy imageN fields
-const slides = (hero?.slides && hero.slides.length > 0)
-  ? hero.slides.map((s, i) => ({ src: s.image, title: s.title, subtitle: s.subtitle, leftTitle: s.leftTitle, rightTitle: s.rightTitle, alt: s.title || `Hero Slide ${i+1}` }))
-  : [
-      { src: hero.image1, alt: 'Hero Image 1', title: hero.title, subtitle: hero.subtitle },
-      { src: hero.image2, alt: 'Hero Image 2', title: hero.title, subtitle: hero.subtitle },
-      { src: hero.image3, alt: 'Hero Image 3', title: hero.title, subtitle: hero.subtitle },
-      { src: hero.image4, alt: 'Hero Image 4', title: hero.title, subtitle: hero.subtitle },
-      { src: hero.image5, alt: 'Hero Image 5', title: hero.title, subtitle: hero.subtitle },
-    ].filter(s => s.src);
+// "Latest Writing" は Blog の最新記事へ解決する。
+const allPosts = await getCollection('blog');
+const latestUrl = (() => {
+  const sorted = [...allPosts].sort(
+    (a, b) =>
+      new Date(b.data.updatedDate || b.data.pubDate).valueOf() -
+      new Date(a.data.updatedDate || a.data.pubDate).valueOf(),
+  );
+  return sorted[0] ? `/blog/${sorted[0].id}` : '/';
+})();
 
-// clone first slide for seamless looping
-if (slides.length > 0) {
-  slides.push({ ...slides[0], alt: (slides[0].alt || slides[0].title) + ' (Clone)' });
-}
+// FUSUMA は画像とテキストを分けて管理する。どちらも最大5件。
+// 画像とテキストは同じ添字で対になり、1 → 5 → 1 のサイクルで巡回する。
+const MAX_FUSUMA = 5;
+
+const imageEntries = (hero?.fusumaImages ?? [])
+  .map((s) => s?.image)
+  .filter((src): src is string => Boolean(src))
+  .slice(0, MAX_FUSUMA);
+
+const textEntries = (hero?.fusumaTexts ?? []).slice(0, MAX_FUSUMA);
+
+// 画像とテキストを添字で揃える。画像が無い添字はテキストだけ単独で使う。
+const cycleSize = Math.max(imageEntries.length, textEntries.length);
+
+const slides = Array.from({ length: cycleSize }, (_, i) => ({
+  src: imageEntries[i] ?? '',
+  title: textEntries[i]?.title ?? '',
+  subtitle: textEntries[i]?.subtitle ?? '',
+  alt: textEntries[i]?.title || `FUSUMA ${i + 1}`,
+})).filter((s) => s.src || s.title);
+
+const firstSlide = slides[0];
+const slideCount = slides.length;
 ---
 
 <!DOCTYPE html>
@@ -40,191 +67,75 @@ if (slides.length > 0) {
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>{title || 'Japanese "Do"=Way & Spirituality - reflections on Japanese culture, Shinto-ism and the subtle aesthetics seen through the eyes of a Kyoto native who spent years in London and Paris.'}</title>
+  <title>{title || 'Hidden Treasure Kyoto Blog – Reflections on Japanese Culture, Shinto and Aesthetics'}</title>
   <link href="https://fonts.googleapis.com" rel="preconnect"/>
   <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Noto+Serif+JP:wght@400;700&family=Manrope:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
-  {slides && slides[0] && (
-    <link rel="preload" as="image" href={slides[0].src} />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"/>
+  {firstSlide && (
+    <link rel="preload" as="image" href={firstSlide.src} />
   )}
-  {slides && slides[0] && (
-    <link rel="preload" as="image" href={slides[0].src} />
-  )}
-  <style>
-    @keyframes slide {
-      0% { transform: translate3d(0%, 0, 0); }
-      14% { transform: translate3d(0%, 0, 0); }
-      16% { transform: translate3d(-100%, 0, 0); }
-      30% { transform: translate3d(-100%, 0, 0); }
-      32% { transform: translate3d(-200%, 0, 0); }
-      46% { transform: translate3d(-200%, 0, 0); }
-      48% { transform: translate3d(-300%, 0, 0); }
-      62% { transform: translate3d(-300%, 0, 0); }
-      64% { transform: translate3d(-400%, 0, 0); }
-      78% { transform: translate3d(-400%, 0, 0); }
-      80% { transform: translate3d(-500%, 0, 0); }
-      100% { transform: translate3d(-500%, 0, 0); }
-    }
-    .animate-slide {
-      animation: slide 30s linear infinite;
-      animation-fill-mode: both;
-      will-change: transform;
-      transform: translate3d(0, 0, 0);
-    }
-
-    /* Respect user preference for reduced motion */
-    @media (prefers-reduced-motion: reduce) {
-      .animate-slide { animation: none !important; }
-    }
-
-    /* Helper classes for overlay contrast and title readability */
-    .hero-overlay-bg { background-color: rgba(0,0,0,0.6); }
-    .hero-title { text-shadow: 0 2px 8px rgba(0,0,0,0.7); white-space: pre-wrap; }
-    .hero-subtitle { text-shadow: 0 1px 6px rgba(0,0,0,0.6); white-space: pre-wrap; }
-
-    /* Carousel behavior helpers */
-    .carousel-slide-img { display: block; width: 100%; height: 100%; object-fit: cover; }
-    .animate-slide:hover { animation-play-state: paused; }
-    @media (prefers-reduced-motion: reduce) {
-      .animate-slide { animation: none !important; }
-    }
-
-
-  </style>
 </head>
-<body class="bg-[#F8F5F2] font-serif text-gray-700">
+<body class="min-h-screen bg-[#F8F5F2] font-serif text-gray-700 selection:bg-[#8B593E]/20">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <Header />
     <a href="#main-content" class="sr-only sr-only-focusable">Skip carousel</a>
     
-    <main id="main-content" class="py-12 md:py-20">
-      <section role="region" aria-roledescription="carousel" aria-label="Portal carousel" class="relative rounded-lg overflow-hidden mb-16 md:mb-24 h-80 md:h-[500px]">
-        <div id="carousel-slides" class="w-full h-full flex" style="animation-duration: 25s;">
-          {slides.map((slide, idx) => (
-            <div class="w-full h-full flex-shrink-0 relative min-w-full" style={idx === 0 ? `background-image: url(${slide.src}); background-size: cover; background-position: center;` : ''}>
-              <img alt={slide.alt} class="carousel-slide-img w-full h-full object-cover" src={slide.src} loading={idx === 0 ? 'eager' : 'lazy'} decoding="async" />
-              <div class="absolute inset-0 hero-overlay-bg flex items-center justify-center">
-                <div class="text-center text-white px-4 w-full sm:w-[65%] md:w-[80%] lg:w-auto">
-                  <h2 class="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 hero-title">{slide.title || hero.title}</h2>
-                  <p class="text-lg md:text-xl max-w-2xl mx-auto hero-subtitle">{slide.subtitle || hero.subtitle}</p>
-                </div>
-                {slide.leftTitle && (
-                  <div class="absolute left-6 top-1/2 -translate-y-1/2 text-white opacity-90 hidden md:block">
-                    <div class="text-xl font-semibold">{slide.leftTitle}</div>
-                  </div>
-                )}
-                {slide.rightTitle && (
-                  <div class="absolute right-6 top-1/2 -translate-y-1/2 text-white opacity-90 hidden md:block text-right">
-                    <div class="text-xl font-semibold">{slide.rightTitle}</div>
-                  </div>
-                )}
-              </div>
+    <main id="main-content" class="py-8 sm:py-12 md:py-16">
+      <div class="flex flex-col w-full">
+      <section id="hero-container" role="region" aria-roledescription="carousel" aria-label="Portal hero" class="relative w-full max-w-[1200px] mx-auto aspect-[3/2] bg-[#070714] rounded-sm overflow-hidden shadow-2xl flex items-center justify-center select-none" data-slide-count={slideCount} data-slides-json={JSON.stringify(slides.map((s) => ({ title: s.title || '', subtitle: s.subtitle || '' })))}>
+        <div id="fusuma-wrapper" class="absolute inset-0 z-40 pointer-events-none transition-all duration-1000">
+          <div id="fusuma-left-door" class="fusuma-panel fusuma-left">
+            <div class="fusuma-handle-left"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-black/10"></div>
+            <div class="absolute top-8 left-8 flex flex-col space-y-2 opacity-30 text-[#1b1c1a]">
+              <span class="text-xl [writing-mode:vertical-rl] tracking-widest font-serif">静寂</span>
+            </div>
+          </div>
+          <div id="fusuma-right-door" class="fusuma-panel fusuma-right">
+            <div class="fusuma-handle-right"></div>
+            <div class="absolute inset-0 bg-gradient-to-l from-black/5 via-transparent to-black/10"></div>
+            <div class="absolute bottom-8 right-8 flex flex-col space-y-2 opacity-30 text-[#1b1c1a]">
+              <span class="text-xl [writing-mode:vertical-rl] tracking-widest font-serif">幽玄</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="absolute inset-0 w-full h-full z-10 overflow-hidden">
+          {slides.filter((s) => s.src).map((slide, idx) => (
+            <div
+              class={`hero-slide absolute inset-0 bg-cover bg-center${idx === 0 ? ' active' : ''}`}
+              style={`background-image: url("${slide.src}");`}
+              title={slide.alt}
+              data-slide={idx}
+            >
+              <div class="absolute inset-0 bg-black/35"></div>
             </div>
           ))}
         </div>
+
+        <div class="absolute inset-0 z-20 pointer-events-none bg-gradient-to-t from-[#070714] via-transparent to-[#070714]/40 mix-blend-multiply"></div>
+
+        <div id="hero-text-block" class="hero-text-block active absolute inset-0 z-30 flex flex-col items-center justify-center text-center p-6 sm:p-12 pointer-events-none">
+          <div class="relative flex flex-col items-center max-w-3xl px-4">
+            <div class="absolute -inset-24 rounded-full bg-[#3a2d54]/40 blur-3xl pointer-events-none"></div>
+            <h2 id="hero-slide-title" class="relative text-3xl sm:text-4xl md:text-6xl font-bold mb-4 text-white font-serif tracking-tight drop-shadow-xl hero-title leading-tight">{firstSlide?.title}</h2>
+            <p id="hero-slide-subtitle" class="relative text-lg md:text-xl max-w-2xl mx-auto text-[#f0edea] italic font-serif leading-relaxed drop-shadow-md hero-subtitle">{firstSlide?.subtitle}</p>
+          </div>
+        </div>
+
+        <button type="button" id="ma-trigger-btn" class="group cursor-pointer select-none z-30" title="Replay Fusuma Cycle">
+          <span class="text-xl font-bold text-white tracking-widest group-hover:text-[#fcb797] transition-colors leading-none font-serif">間</span>
+          <span class="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#c89b7b] mt-1 group-hover:text-white transition-colors font-serif">VIDE SIGNIFIANT</span>
+          <span class="material-symbols-outlined text-[10px] text-[#c89b7b]/70 group-hover:text-[#c89b7b] transition-colors mt-0.5 animate-bounce">unfold_more</span>
+        </button>
       </section>
 
-      <script type="text/javascript">
-        (function() {
-          try {
-            const slides = document.getElementById('carousel-slides');
-            if (!slides) return;
-
-            const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            if (prefersReduced) {
-              // stop animation and do not attach interactive handlers
-              slides.classList.remove('animate-slide');
-              return;
-            }
-
-            // Pause on hover (desktop)
-            // Pause on hover (desktop) using animation-play-state to avoid restarting animation
-            slides.addEventListener('mouseover', function() {
-              slides.style.animationPlayState = 'paused';
-            });
-            slides.addEventListener('mouseout', function() {
-              slides.style.animationPlayState = 'running';
-            });
-
-            // Pause while touching (mobile) — pause while touch is active
-            let touching = false;
-            slides.addEventListener('touchstart', function() {
-              touching = true;
-              slides.style.animationPlayState = 'paused';
-            }, { passive: true });
-            slides.addEventListener('touchend', function() {
-              if (touching) {
-                slides.style.animationPlayState = 'running';
-              }
-              touching = false;
-            });
-            slides.addEventListener('touchcancel', function() {
-              slides.style.animationPlayState = 'running';
-              touching = false;
-            });
-
-            // Wait for images to load before starting animation, retry failed loads
-            const imgs = Array.from(slides.querySelectorAll('img.carousel-slide-img'));
-            function startIfReady() {
-              // If any image is not yet loaded, wait
-              const notReady = imgs.some(i => !i.complete || i.naturalWidth === 0);
-              if (!notReady) {
-                // add animation class and force a reflow so the animation starts cleanly
-                slides.classList.add('animate-slide');
-                // force reflow
-                // @ts-ignore
-                void slides.offsetWidth;
-                slides.style.animationPlayState = 'running';
-                return true;
-              }
-              return false;
-            }
-
-            imgs.forEach(img => {
-              img.style.display = 'block';
-              // retry load if seems to have failed
-              if (!img.complete || img.naturalWidth === 0) {
-                setTimeout(() => { try { img.src = img.getAttribute('src'); } catch(e){} }, 500);
-              }
-              img.addEventListener('error', () => {
-                img.style.opacity = '0.35';
-                img.alt = img.alt || 'Hero image could not be loaded';
-              });
-              img.addEventListener('load', () => {
-                // once any image loads, try to start when all are ready
-                startIfReady();
-              });
-            });
-
-            // Repeatedly attempt to start the animation until images are ready, then stop trying
-            let attempts = 0;
-            const maxAttempts = 10;
-            const attemptInterval = setInterval(() => {
-              attempts += 1;
-              if (startIfReady() || attempts >= maxAttempts) {
-                clearInterval(attemptInterval);
-                // If we reached max attempts and images still not ready, start anyway as a fallback
-                if (attempts >= maxAttempts && !slides.classList.contains('animate-slide')) {
-                  slides.classList.add('animate-slide');
-                  // @ts-ignore
-                  void slides.offsetWidth;
-                  slides.style.animationPlayState = 'running';
-                }
-              }
-            }, 500);
-
-            // Also try once after a short initial delay in case images load quickly
-            setTimeout(() => { startIfReady(); }, 300);
-
-          } catch (err) {
-            // fail silently
-            console.error('Carousel script error', err);
-          }
-        })();
-      </script>
+      <script src="/scripts/fusuma-hero.js" defer></script>
 
       <slot />
+      </div>
     </main>
 
     <Footer />

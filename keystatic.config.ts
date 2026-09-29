@@ -37,27 +37,6 @@ const imageItem = fields.object({
 	caption: fields.text({ label: 'キャプション (caption)', multiline: true }),
 });
 
-// --- ヒーロー画像群 (ページ / フロントページ共通) ---
-// 画像パス(テキスト)として保持する。
-// fields.image をネストした状態で使うと Save 時に値が黙って消えるため、
-// 安全策として text を使う。値は public/images 内の /images/... 形式。
-const imageField = (label: string) =>
-	fields.text({
-		label,
-		description: '例: /images/IMG_0581_DxO.webp',
-		multiline: false,
-	});
-
-const heroFields = {
-	image1: imageField('画像1'),
-	image2: imageField('画像2'),
-	image3: imageField('画像3'),
-	image4: imageField('画像4'),
-	image5: imageField('画像5'),
-	title: fields.text({ label: 'メイン見出し', multiline: true }),
-	subtitle: fields.text({ label: 'サブタイトル', multiline: true }),
-};
-
 export default config({
   storage: {
     kind: 'local',
@@ -183,6 +162,7 @@ export default config({
               options: [
                 { label: 'テキスト (textBlock)', value: 'textBlock' },
                 { label: '画像グリッド (imageGrid)', value: 'imageGrid' },
+                { label: 'カルタ3列 (karutaGrid)', value: 'karutaGrid' },
               ],
               defaultValue: 'textBlock',
             }),
@@ -210,6 +190,31 @@ export default config({
               label: '画像 (images)',
               description: '_template が imageGrid の場合に使用します。',
             }),
+
+            // --- カルタ3列 (Step3-3: 任意のみ・既存 imageGrid 互換) ---
+            karutaTitle: fields.text({ label: 'カルタ見出し (karutaTitle)' }),
+
+            karutaCards: fields.array(
+              fields.object({
+                number: fields.text({ label: '番号 (number)', description: '例: 01' }),
+                kanjiNum: fields.text({ label: '漢数字 (kanjiNum)', description: '例: 壱' }),
+                tag: fields.text({ label: 'タグ (tag)', description: '例: BOUNDARY' }),
+                romaji: fields.text({ label: 'ローマ字 (romaji)', description: '例: SHINBOKU & KEKKAI' }),
+                titleJp: fields.text({ label: '日本語タイトル (titleJp)', description: '例: 神木と結界' }),
+                titleEn: fields.text({ label: '英語タイトル (titleEn)' }),
+                image: fields.text({
+                  label: '画像',
+                  description: '例: /images/IMG_0581_DxO.webp',
+                }),
+                alt: fields.text({ label: '代替テキスト (alt)' }),
+                folioId: fields.text({ label: 'Folios ID', description: '例: FOLIO 01' }),
+                category: fields.text({ label: 'カテゴリ (category)' }),
+                icon: fields.text({ label: 'アイコン (icon)', description: 'Material Symbols 名。例: verified' }),
+                bodyJp: fields.text({ label: '本文日本語 (bodyJp)', multiline: true }),
+                bodyEn: fields.text({ label: '本文英語 (bodyEn)', multiline: true }),
+              }),
+              { label: 'カルタカード (karutaCards)' },
+            ),
           }),
           {
             label: '本文セクション (contentSections)',
@@ -221,6 +226,7 @@ export default config({
         ),
       },
     }),
+
 
     // ============================================================
     // `page` コレクション (src/content/pages/*.json) は削除済み。
@@ -248,36 +254,134 @@ export default config({
       schema: {
         title: fields.text({ label: 'ページタイトル' }),
 
+        // ヒーロー（FUSUMA）
+        // 画像とテキストを分けて管理する。どちらも最大5件。
+        // 1 → 5 → 1 のサイクルで自動表示され、順序は登録順です。
         hero: fields.object(
           {
-            ...heroFields,
-            slides: fields.array(
+            title: fields.text({
+              label: 'サイト既定タイトル',
+              description: 'OGP・meta の既定値。',
+            }),
+            subtitle: fields.text({
+              label: 'サイト既定説明',
+              description: 'OGP・meta description の既定値。',
+              multiline: true,
+            }),
+            fusumaImages: fields.array(
               fields.object({
-                image: fields.text({ label: '画像', description: '例: /images/IMG_0581_DxO.webp' }),
+                image: fields.text({
+                  label: '画像',
+                  description: '例: /images/IMG_0581_DxO.webp',
+                }),
+              }),
+              {
+                label: 'FUSUMA 画像（最大5件）',
+                description: '襖が開いた後に表示される背景画像。登録順に 1 → 5 → 1 と巡回します。',
+              },
+            ),
+            fusumaTexts: fields.array(
+              fields.object({
                 title: fields.text({ label: 'タイトル' }),
                 subtitle: fields.text({ label: 'サブタイトル', multiline: true }),
-                leftTitle: fields.text({ label: '左タイトル' }),
-                rightTitle: fields.text({ label: '右タイトル' }),
               }),
-              { label: 'カルーセル (slides)' },
+              {
+                label: 'FUSUMA テキスト（最大5件）',
+                description:
+                  '暗転中に表示されるタイトルとサブタイトル。画像と同じ順序で 1 → 5 → 1 と巡回します。',
+              },
             ),
           },
-          { label: 'ヒーロー / カルーセル' },
+          { label: 'ヒーロー（FUSUMA）' },
         ),
 
         introTitle: fields.text({ label: '導入見出し', multiline: true }),
         introText: fields.text({ label: '導入本文', multiline: true }),
 
+        // --- 6. Dispatches from Kyoto（ニュースレター）---
+        // フロントページ最下部に固定表示。編集はここだけ行う。
+        newsletter: fields.object(
+          {
+            enabled: fields.checkbox({
+              label: '表示する',
+              description: 'オフにするとフロントページ最下部のニュースレターを非表示にします。',
+              defaultValue: true,
+            }),
+            eyebrow: fields.text({
+              label: '上見出し (eyebrow)',
+              description: '例: DISPATCHES FROM KYOTO',
+              defaultValue: 'DISPATCHES FROM KYOTO',
+            }),
+            heading: fields.text({
+              label: '見出し (heading)',
+              description: '例: Receive Quiet Reflections',
+              defaultValue: 'Receive Quiet Reflections',
+            }),
+            body: fields.text({
+              label: '本文 (body)',
+              multiline: true,
+              description: '例: Quiet essays and photography from Kyoto, delivered only on nights of the new moon. Free subscription, unsubscribe anytime.',
+            }),
+            note: fields.text({
+              label: '注記 (note)',
+              description: '例: Strictly privacy conscious. No noise, only stillness.',
+              defaultValue: 'Strictly privacy conscious. No noise, only stillness.',
+            }),
+            successTitle: fields.text({
+              label: '送信完了メッセージ (successTitle)',
+              defaultValue: 'Thank you for subscribing to MA (Vide Signifiant).',
+            }),
+            successBody: fields.text({
+              label: '送信完了補足 (successBody)',
+              defaultValue: 'Dispatches will arrive on nights of the new moon.',
+            }),
+            buttonLabel: fields.text({
+              label: '送信ボタン (buttonLabel)',
+              defaultValue: 'Subscribe',
+            }),
+            placeholder: fields.text({
+              label: '入力欄プレースホルダ (placeholder)',
+              defaultValue: 'Your email address...',
+            }),
+          },
+          { label: 'ニュースレター (DISPATCHES FROM KYOTO)' },
+        ),
+
+        // --- 注目記事（1件のみ）---
+        // ここに指定した記事が「Featured Page Card」になる。
         featuredItems: fields.array(
           fields.object({
             item: fields.text({
               label: '記事パス',
               description:
-                '例: src/content/blog/from-kyoto-to-the-world.mdx （記事のファイルパスを指定）',
+                '例: src/content/blog/from-kyoto-to-the-world.mdx （空欄なら最新の1件が自動採用されます）',
             }),
           }),
-          { label: '注目記事 (手動指定)' },
+          {
+            label: '注目記事 (1件)',
+            description:
+              '指定した記事が Featured Page Card になります。空欄または1件未満の場合は最新記事が自動で入ります。',
+          },
         ),
+
+        // --- Vol. I Bundle（2記事固定）---
+        // 注目記事と重複する記事は自動的に除外されます。
+        // 2件に満たない場合は、注目記事以外の新しい記事から自動的に補完します。
+        bundleItems: fields.array(
+          fields.object({
+            item: fields.text({
+              label: '記事パス',
+              description:
+                '例: src/content/blog/shinto-as-japanese-cultural-os-pt1.mdx （空欄のスロットは新しい記事で自動補完されます）',
+            }),
+          }),
+          {
+            label: 'Vol. I Bundle（2記事）',
+            description:
+              'Vol. I Bundle に並べる2本の記事。注目記事と重複する記事は自動的に除外されます。',
+          },
+        ),
+
       },
     }),
 
@@ -336,6 +440,111 @@ export default config({
       },
     }),
 
+    /**
+     * Folio（Collected Volumes & Archives）: src/content/portal/folio.json
+     * フロントページ下部のデッキを独立編集する。
+     * 1行に2デッキが並び、各デッキには2列×3段＝最大6枚のカードを積む。
+     */
+    folio: singleton({
+      label: 'Folio（Collected Volumes & Archives）',
+      path: 'src/content/folio/folio',
+      format: { data: 'json' },
+      previewUrl: '/',
+      schema: {
+        title: fields.text({ label: '設定名' }),
+
+        volumes: fields.array(
+          fields.object({
+            title: fields.text({
+              label: 'デッキ名',
+              description: '例: Vol. I • Shinto as Cultural OS',
+            }),
+            badge: fields.text({ label: 'バッジ', description: '任意。例: New' }),
+            chapters: fields.array(
+              fields.object({
+                title: fields.text({ label: 'カード名' }),
+                description: fields.text({ label: 'カード説明', multiline: true }),
+                article: fields.text({
+                  label: '記事パス',
+                  description: '例: src/content/blog/shinto-as-japanese-cultural-os-pt1.mdx',
+                }),
+              }),
+              {
+                label: 'カード（最大6枚）',
+                description:
+                  '2列×3段＝最大6枚。指定した順番で積まれます。6枚に満たない場合は残りを最新記事から自動で補完します。',
+              },
+            ),
+          }),
+          {
+            label: 'デッキ',
+            description:
+              '1行に2つのデッキが並びます。デッキを追加すると行が増えていき、4デッキ（2行）が標準です。',
+          },
+        ),
+
+        _template: fields.text({ label: 'テンプレート (_template)' }),
+      },
+    }),
+
+    /**
+     * Karuta（空間語彙のカルタ）: src/content/karuta/karuta.json
+     * 全ブログ記事共通で表示されるカード。ブログ記事とは別に独立編集する。
+     * 1ページ3枚で表示し、上限は100枚（KARUTA_MAX）。
+     */
+    karuta: singleton({
+      label: 'Karuta（空間語彙のカルタ）',
+      path: 'src/content/karuta/karuta',
+      format: { data: 'json' },
+      previewUrl: '/blog/shinto-as-japanese-cultural-os-pt1',
+      schema: {
+        title: fields.text({ label: '設定名' }),
+
+        perPage: fields.number({
+          label: '1ページの枚数',
+          description: '1ページに表示する枚数（既定: 3）',
+          defaultValue: 3,
+        }),
+
+        max: fields.number({
+          label: '最大枚数',
+          description: '上限枚数（既定: 100）',
+          defaultValue: 100,
+        }),
+
+        cards: fields.array(
+          fields.object({
+            number: fields.text({ label: '番号 (number)', description: '例: 01' }),
+            kanjiNum: fields.text({ label: '漢数字 (kanjiNum)', description: '例: 壱' }),
+            tag: fields.text({ label: 'タグ (tag)', description: '例: BOUNDARY' }),
+            romaji: fields.text({ label: 'ローマ字 (romaji)', description: '例: SHINBOKU & KEKKAI' }),
+            titleJp: fields.text({ label: '日本語タイトル (titleJp)', description: '例: 神木と結界' }),
+            titleEn: fields.text({ label: '英語タイトル (titleEn)' }),
+            image: fields.text({
+              label: '画像',
+              description: '例: /images/IMG_0581_DxO.webp',
+            }),
+            alt: fields.text({ label: '代替テキスト (alt)' }),
+            folioId: fields.text({ label: 'Folio ID', description: '例: FOLIO 01' }),
+            category: fields.text({ label: 'カテゴリ (category)' }),
+            icon: fields.text({
+              label: 'アイコン (icon)',
+              description: 'Material Symbols 名。例: verified',
+            }),
+            bodyJp: fields.text({ label: '本文日本語 (bodyJp)', multiline: true }),
+            bodyEn: fields.text({ label: '本文英語 (bodyEn)', multiline: true }),
+          }),
+          {
+            label: 'カード（最大100枚）',
+            description:
+              '全ブログ記事共通で表示されます。1ページ3枚でカルーセル表示し、最大100枚まで。',
+          },
+        ),
+
+        _template: fields.text({ label: 'テンプレート (_template)' }),
+      },
+    }),
+
     /** SEO / ナビゲーション: src/content/config/config.json */
     siteConfig: singleton({
       label: 'SEO / ナビゲーション設定',
@@ -345,71 +554,61 @@ export default config({
       schema: {
         seo: fields.object(
           {
-            title: fields.text({ label: 'SEOタイトル', multiline: true }),
-            description: fields.text({ label: 'SEO説明', multiline: true }),
-            siteOwner: fields.text({ label: 'サイト運営者' }),
+            title: fields.text({
+              label: 'サイト既定タイトル',
+              description:
+                'OGP・meta の既定値。記事ごとにタイトルがない場合に使われます。',
+              multiline: true,
+            }),
+            description: fields.text({
+              label: 'サイト既定説明',
+              description: 'OGP・meta description の既定値。',
+              multiline: true,
+            }),
+            siteOwner: fields.text({
+              label: 'サイト運営者',
+              description: '例: Shun Yamamoto - 山本 俊',
+            }),
+            ogImage: fields.text({
+              label: 'OG画像',
+              description: 'SNSカード画像。例: /images/IMG_0581_DxO.webp',
+            }),
           },
-          { label: 'SEO' },
+          { label: 'SEO（サイト全体）' },
         ),
 
-        nav: fields.array(
-          fields.object({
-            title: fields.text({ label: 'タイトル' }),
-            link: fields.text({ label: 'URL' }),
-          }),
-          { label: 'ナビゲーション' },
+        archive: fields.object(
+          {
+            title: fields.text({
+              label: 'ブログ一覧 タイトル',
+              multiline: true,
+            }),
+            description: fields.text({
+              label: 'ブログ一覧 説明文',
+              multiline: true,
+            }),
+          },
+          { label: 'ブログ一覧（Archive）' },
         ),
 
-        contactLinks: fields.array(
+        navLinks: fields.array(
           fields.object({
-            title: fields.text({ label: 'タイトル' }),
-            link: fields.text({ label: 'URL' }),
-            icon: fields.text({ label: 'アイコン名' }),
+            label: fields.text({ label: 'ラベル' }),
+            href: fields.text({ label: 'URL', description: '例: /about' }),
           }),
-          { label: '連絡先リンク' },
+          { label: 'ヘッダーナビゲーション' },
+        ),
+
+        socialLinks: fields.array(
+          fields.object({
+            label: fields.text({ label: 'ラベル' }),
+            url: fields.text({ label: 'URL', description: '例: https://instagram.com/...' }),
+          }),
+          { label: 'フッター SNSリンク' },
         ),
       },
     }),
 
-    /** ヘッダー/フッターの補助設定: src/content/settings/site.json */
-    settings: singleton({
-      label: 'ヘッダー / フッター補助設定',
-      path: 'src/content/settings/site',
-      format: { data: 'json' },
-      previewUrl: '/',
-      schema: {
-        header: fields.object(
-          {
-            logo: fields.text({ label: 'ロゴ文言' }),
-            logoImage: fields.text({ label: 'ロゴ画像', description: '例: /images/IMG_0581_DxO.webp' }),
-            links: fields.array(
-              fields.object({
-                label: fields.text({ label: 'ラベル' }),
-                url: fields.text({ label: 'URL' }),
-              }),
-              { label: 'リンク' },
-            ),
-          },
-          { label: 'ヘッダー' },
-        ),
-
-        footer: fields.object(
-          {
-            logo: fields.text({ label: 'ロゴ文言' }),
-            logoImage: fields.text({ label: 'ロゴ画像', description: '例: /images/IMG_0581_DxO.webp' }),
-            links: fields.array(
-              fields.object({
-                label: fields.text({ label: 'ラベル' }),
-                url: fields.text({ label: 'URL' }),
-              }),
-              { label: 'リンク' },
-            ),
-            copyright: fields.text({ label: '著作権表記', multiline: true }),
-          },
-          { label: 'フッター' },
-        ),
-      },
-    }),
   },
 
   // 管理画面のサイドバー整理
@@ -418,7 +617,9 @@ export default config({
     navigation: {
       '記事': ['blog'],
       'ページ': ['home', 'about'],
-      'サイト共通': ['site', 'siteConfig', 'settings'],
+      'Folio': ['folio'],
+      'Karuta': ['karuta'],
+      'サイト共通': ['site', 'siteConfig'],
     },
   },
 });

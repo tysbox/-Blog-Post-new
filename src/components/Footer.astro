@@ -1,58 +1,30 @@
 ---
+// Footer — /tmp/ma-portal/src/App.tsx L503-515 100% 準拠
+// ヘッダー／フッターは全ページ共通のため、補助設定は使用しない。
+// SNSリンクは Keystatic「SEO / ナビゲーション設定」socialLinks から読む。
 import { getEntry } from 'astro:content';
-import siteSettings from '../content/settings/site.json';
+import config from '../content/config/config.json';
 
 const globalConfig = await getEntry('global', 'config');
-const { footerText, socialLinks } = globalConfig?.data || { footerText: '© 2025 The Way of Aesthetics. All rights reserved.', socialLinks: [] };
-const footerConfig = siteSettings?.footer || {};
-const links = footerConfig.links || socialLinks || [];
-// Prefer the canonical site title (header) for the footer logo/text
-const logo = globalConfig?.data?.siteTitle || footerConfig.logo || 'Wabi-Sabi Blog';
-const today = new Date();
+const footerText =
+  globalConfig?.data?.footerText || '© 2025 The Way of Aesthetics. All rights reserved.';
+const links = (config?.socialLinks ?? []).filter((l) => l?.label);
+const logo = globalConfig?.data?.siteTitle || '間　MA (Vide Signifiant)';
 ---
-	<footer class="site-footer">
-	  <div class="footer-content">
-	    <div class="footer-left">
-	      <div class="footer-logo">{logo}</div>
-	      <div class="footer-copy">{footerText}</div>
-	    </div>
-	    <div class="footer-right">
-	      <nav class="footer-links">
-	        {links?.map((l) => (
-	          <a href={l.url || l.href} target="_blank" rel="noopener noreferrer">{l.label || l.platform}</a>
-	        ))}
-	      </nav>
-	    </div>
-	  </div>
-	</footer>
 
-<style>
+<footer class="py-8 px-4 border-t border-gray-200 mt-10">
+  <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500 font-serif">
+    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
+      <span class="font-bold text-gray-900">{logo}</span>
+      <span>{footerText}</span>
+    </div>
+    <nav class="flex gap-6">
+      {links.map((l: any) => (
+        <a class="hover:text-gray-900 transition-colors" href={l.url || '#'}>
+          {l.label}
+        </a>
+      ))}
+    </nav>
+  </div>
+</footer>
 
-	.site-footer {
-	  padding: 2rem 1rem;
-	  background: linear-gradient(var(--gray-gradient)) no-repeat;
-	  color: rgb(var(--gray));
-	}
-
-	.footer-content {
-	  max-width: 80rem;
-	  margin: 0 auto;
-	  display: flex;
-	  justify-content: space-between;
-	  align-items: center;
-	  gap: 1rem;
-	}
-
-	.footer-left { display:flex; flex-direction:column; gap:0.5rem; }
-	.footer-logo { font-weight: 700; color: rgb(var(--black)); font-size: 0.95rem; line-height: 1; }
-	.footer-copy { color: rgb(var(--gray)); font-size: 0.95rem; }
-
-	.footer-links { display:flex; gap:1rem; }
-	.footer-links a { color: rgb(var(--gray)); text-decoration:none; }
-	.footer-links a:hover { color: rgb(var(--gray-dark)); }
-
-	@media (max-width: 640px) {
-	  .footer-content { flex-direction: column; align-items: center; text-align: center; }
-	}
-
-</style>

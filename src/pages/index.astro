@@ -1,163 +1,375 @@
 ---
+// 新ポータルデザイン 100% 準拠 — 参照: /tmp/ma-portal/src/App.tsx
+// 構成: Hero(PortalLayout) → Prologue → Featured Page Card
+//      → Vol. I Bundle → Anthology & Folios → Newsletter → Footer
+// 既存テキスト/画像は書き換えない。Keystatic home の既存データのみを写す。
 import PortalLayout from '../components/PortalLayout.astro';
-import { getCollection, getEntry, getEntries, render } from 'astro:content';
+import PortalShelf from '../components/PortalShelf.astro';
+import { getEntry, getCollection } from 'astro:content';
 
 const homePage = await getEntry('portal', 'home');
-const { Content } = await render(homePage);
-const pageData = homePage?.data || {};
+const pageData: any = homePage?.data || {};
 
-
-// Get latest blog posts
 const allPosts = await getCollection('blog');
 
-// Normalize data for sorting
-const combinedContent = allPosts.map(post => ({
-  ...post,
-  date: new Date(post.data.updatedDate || post.data.pubDate).valueOf(),
-  title: post.data.title,
-  description: post.data.description,
-  heroImage: post.data.heroImage,
-  href: `/blog/${post.id}`
-}));
+type Post = {
+  id: string;
+  title: string;
+  description?: string;
+  heroImage?: string;
+  href: string;
+  ts: number;
+};
 
-// Get manually featured items if any
-let manualContent = [];
-if (pageData.featuredItems && pageData.featuredItems.length > 0) {
-  const references = pageData.featuredItems.map(wrapper => {
-    const item = wrapper?.item;
-    if (!item) return null;
+const posts: Post[] = allPosts
+  .map((p) => ({
+    id: p.id,
+    title: p.data.title,
+    description: p.data.description,
+    heroImage: p.data.heroImage || undefined,
+    href: `/blog/${p.id}`,
+    ts: new Date(p.data.updatedDate || p.data.pubDate).valueOf(),
+  }))
+  .sort((a, b) => b.ts - a.ts);
 
-    // If the stored item is a string path (legacy format)
-    if (typeof item === 'string') {
-      // 正本は blog のみ。旧パス src/content/pages/*.json は廃止した
-      // `page` コレクションの storage だが、既存データにはその形式が
-      // 残っているので basename を id に正規化し blog として解決する。
-      const match = item.match(/^src\/content\/(?:blog|pages)\/([^.]+)\.(?:mdx|md|json)$/);
-      return match ? { collection: 'blog', id: match[1] } : null;
+const byId = new Map(posts.map((p) => [p.id, p]));
+
+// Keystatic の記事参照（文字列 / オブジェクト）を blog エントリへ解決する。
+const normalizeId = (value: unknown): string | null => {
+  if (!value) return null;
+  if (typeof value === 'object') {
+    const o = value as Record<string, unknown>;
+    const id = o.id || o.value || o.sys?.filename || o.sys?.relativePath;
+    return typeof id === 'string' ? id.replace(/\.(mdx|md|json)$/, '') : null;
+  }
+  if (typeof value !== 'string') return null;
+  const m = value.match(/^src\/content\/(?:blog|pages)\/([^.]+)\.(?:mdx|md|json)$/);
+  if (m) return m[1];
+  return value.replace(/\.(mdx|md|json)$/, '');
+};
+
+// --- 注目記事（1件）---
+// 指定があればそれを、空欄なら最新1件を採用する。
+const featured = (() => {
+  const fid = normalizeId(pageData.featuredItems?.[0]?.item);
+  return (fid ? byId.get(fid) : null) || posts[0] || null;
+})();
+
+// --- Vol. I Bundle（2記事固定）---
+// bundleItems で指定された記事（最大2件）を優先し、
+// 不足分は「注目記事以外の新しい記事」から自動で補完する。
+const bundle = (() => {
+  const picked: Post[] = [];
+  const used = new Set<string>(featured ? [featured.id] : []);
+
+  for (const wrapper of Array.isArray(pageData.bundleItems) ? pageData.bundleItems : []) {
+    if (picked.length >= 2) break;
+    const id = normalizeId(wrapper?.item);
+    const entry = id ? byId.get(id) : null;
+    if (entry && !used.has(entry.id)) {
+      picked.push(entry);
+      used.add(entry.id);
     }
-
-    // If the stored item is a Tina reference object
-    if (typeof item === 'object') {
-      const id = item.id || item?.value || item?.sys?.filename || item?.sys?.relativePath;
-      if (!id) return null;
-      // 正本は blog のみ。collection 名は気にせず id だけで解決する。
-      return { collection: 'blog', id: id.replace(/\.(mdx|md|json)$/, '') };
+  }
+  for (const p of posts) {
+    if (picked.length >= 2) break;
+    if (!used.has(p.id)) {
+      picked.push(p);
+      used.add(p.id);
     }
+  }
+  return picked;
+})();
 
-    return null;
-  }).filter(ref => ref !== null);
+// --- 6. Dispatches from Kyoto（ニュースレター）---
+// Keystatic home.newsletter で編集。値が空なら既定文言を使う。
+const newsletter = {
+  enabled: true,
+  eyebrow: 'DISPATCHES FROM KYOTO',
+  heading: 'Receive Quiet Reflections',
+  body: 'Quiet essays and photography from Kyoto, delivered only on nights of the new moon. Free subscription, unsubscribe anytime.',
+  note: 'Strictly privacy conscious. No noise, only stillness.',
+  successTitle: 'Thank you for subscribing to MA (Vide Signifiant).',
+  successBody: 'Dispatches will arrive on nights of the new moon.',
+  buttonLabel: 'Subscribe',
+  placeholder: 'Your email address...',
+  ...(pageData.newsletter || {}),
+};
 
-  const featuredEntries = await getEntries(references);
-  const validFeaturedEntries = (featuredEntries || []).filter(Boolean);
-  manualContent = validFeaturedEntries.map(entry => {
-    if (!entry) return null;
-    return {
-      ...entry,
-      date: new Date(entry.data.updatedDate || entry.data.pubDate).valueOf(),
-      title: entry.data.title,
-      description: entry.data.description,
-      heroImage: entry.data.heroImage,
-      href: `/blog/${entry.id}`
-    };
-  }).filter(Boolean);
-}
 
-// Sort automatic content by date
-const sortedAutomaticContent = combinedContent.sort((a, b) => b.date - a.date);
+// --- Anthology & Folios（セクション5）---
+// Folio は独立編集ページ（src/content/folio/folio.json）を参照する。
+// Folio is edited on a dedicated page (src/content/folio/folio.json).
+// If no deck is set, or a deck has fewer than 6 cards, the remaining
+// slots are filled automatically with the newest posts.
+const folioEntry = await getEntry('folio', 'folio');
+const folioData: any = folioEntry?.data || {};
+const MAX_CARDS = 6; // 2列 × 3段
 
-// Filter out manually selected items from automatic list to avoid duplicates
-const manualIds = new Set(manualContent.map(item => item.id));
-const filteredAutomaticContent = sortedAutomaticContent.filter(item => !manualIds.has(item.id));
+const chaptersFrom = (list: Post[]) =>
+  list.map((p, i) => ({
+    chapterNumber: `CHAPTER ${String(i + 1).padStart(2, '0')}`,
+    category: 'Page',
+    title: p.title,
+    description: p.description || '',
+    pageRange: 'p. 01–24',
+    href: p.href,
+    heroImage: p.heroImage || null,
+  }));
 
-// Combine: Manual items first, then automatic items
-const finalContent = [...manualContent, ...filteredAutomaticContent];
+const configuredVolumes = Array.isArray(folioData.volumes) ? folioData.volumes : [];
+const volumes =
+  configuredVolumes.length > 0
+    ? configuredVolumes.map((v: any, vi: number) => {
+        // 手動指定のカードを優先し、MAX_CARDS まで自動補完する。
+        const manual = (v.chapters ?? []).slice(0, MAX_CARDS);
+        const usedIds = new Set(manual.map((c: any) => normalizeId(c?.article)).filter(Boolean));
+        const auto = posts.filter((p) => !usedIds.has(p.id)).slice(0, MAX_CARDS - manual.length);
+        const cards = [...manual, ...auto].slice(0, MAX_CARDS);
 
-const displayCount = Number(pageData.displayCount) > 0 ? Math.floor(Number(pageData.displayCount)) : 5;
-const latestContent = finalContent.slice(0, displayCount);
-const featuredContent = latestContent[0];
-const otherContent = latestContent.slice(1);
+        return {
+          volumeNumberText: v.title || `Vol. ${['I', 'II', 'III'][vi] || vi + 1}`,
+          title: v.title || '',
+          badge: v.badge || '',
+          foliosCountText: `${cards.length} Folios`,
+          chapters: cards.map((c: any, ci: number) => {
+            const isManual = manual.includes(c);
+            const id = isManual ? normalizeId(c.article) : c.id;
+            const entry = id ? byId.get(id) : null;
+            return {
+              chapterNumber: `CHAPTER ${String(ci + 1).padStart(2, '0')}`,
+              category: 'Page',
+              title: isManual ? (c.title || entry?.title || '') : (entry?.title ?? ''),
+              description: isManual ? (c.description || '') : (entry?.description ?? ''),
+              pageRange: 'p. 01–24',
+              href: entry ? entry.href : null,
+              heroImage: entry?.heroImage ?? null,
+            };
+          }),
+        };
+      })
+    : [
+        {
+          volumeNumberText: 'Vol. I • Shinto as Cultural OS',
+          title: 'Shinto as Cultural OS',
+          badge: '',
+          foliosCountText: `${bundle.length} Folios`,
+          chapters: chaptersFrom(bundle),
+        },
+      ];
 ---
 
 <PortalLayout title={pageData.seoTitle || 'Hidden Treasure Kyoto Blog – Reflections on Japanese Culture, Shinto and Aesthetics'} hero={pageData.hero}>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    {/* Intro Section */}
-    <div id="latest" class="text-center mb-16 scroll-mt-24">
-      <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
-        {pageData.introTitle || 'Recent Writings'}
-      </h2>
-      {pageData.introText && (
-        <div class="max-w-4xl mx-auto text-lg text-gray-600 leading-relaxed whitespace-pre-line">
-          {pageData.introText}
-        </div>
-      )}
+  {/* 2. Prologue — App.tsx L149-175 */}
+  <section class="w-full max-w-[840px] mx-auto py-16 md:py-24 px-6 text-center">
+    <div class="inline-flex items-center gap-2 mb-6">
+      <span class="w-1.5 h-1.5 rounded-full bg-[#865138]"></span>
+      <span class="text-xs uppercase tracking-[0.2em] text-[#865138] font-semibold">PROLOGUE</span>
+      <span class="w-1.5 h-1.5 rounded-full bg-[#865138]"></span>
     </div>
-    
-    {/* Featured Post */}
-    {featuredContent && (
-      <article class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 mb-12">
-        <div class="md:flex">
-          {featuredContent.heroImage && (
-            <div class="md:w-1/2">
-              <a href={featuredContent.href} class="block h-96 md:h-[600px] overflow-hidden">
-                <img 
-                  src={featuredContent.heroImage} 
-                  alt={featuredContent.title}
-                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                />
-              </a>
-            </div>
+    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-8 font-serif">
+      {pageData.introTitle}
+    </h2>
+    <blockquote class="text-lg md:text-xl text-gray-600 leading-relaxed font-normal whitespace-pre-line max-w-3xl mx-auto font-serif">
+      {pageData.introText}
+    </blockquote>
+    <div class="mt-10 flex justify-center items-center gap-6 text-[#84746c]">
+      <span class="text-xs uppercase tracking-widest font-sans">Kyoto, Japan</span>
+      <span class="text-xs">•</span>
+      <span class="text-xs uppercase tracking-widest font-sans">Est. 2025</span>
+    </div>
+  </section>
+
+  {/* 3. Featured Page Card — App.tsx L178-239 */}
+  {featured && (
+  <section class="w-full max-w-[1200px] mx-auto px-4 mb-16">
+    <div class="w-full h-auto lg:h-[420px] bg-white rounded-lg shadow-xs border border-gray-100 overflow-hidden flex flex-col lg:flex-row hover:shadow-md transition-shadow">
+      <div class="w-full lg:w-[600px] h-[300px] lg:h-full relative overflow-hidden bg-gray-100 shrink-0 cursor-pointer">
+        <a href={featured.href} class="block w-full h-full">
+          {featured.heroImage && (
+            <img src={featured.heroImage} alt={featured.title} class="w-full h-full object-cover transition-transform duration-700 hover:scale-105" />
           )}
-          <div class="p-8 md:p-12 md:w-1/2 flex flex-col justify-center">
-            <div class="text-xs font-bold text-[#A36A4F] mb-3 uppercase tracking-wider">
-              Featured Blog Post
-            </div>
-            <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-              <a href={featuredContent.href} class="hover:text-[#A36A4F] transition-colors">
-                {featuredContent.title}
-              </a>
+        </a>
+        <div class="absolute top-4 left-4 bg-white/90 backdrop-blur-xs px-3 py-1 text-gray-900 border border-gray-200">
+          <span class="text-xs tracking-wider font-semibold uppercase font-sans">Featured Page</span>
+        </div>
+      </div>
+      <div class="w-full flex-1 p-8 lg:p-12 flex flex-col justify-between bg-white">
+        <div>
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xs uppercase tracking-[0.2em] text-[#A36A4F] font-bold">Featured Page</span>
+            <span class="w-8 h-px bg-gray-200"></span>
+            <span class="text-xs text-gray-400">Vol. I • 2025</span>
+          </div>
+          <a href={featured.href}>
+            <h3 class="text-2xl sm:text-3xl font-bold text-gray-900 hover:text-[#A36A4F] transition-colors leading-tight mb-3 cursor-pointer font-serif">
+              {featured.title}
             </h3>
-            <p class="text-gray-600 text-base mb-6 line-clamp-3">
-              {featuredContent.description}
+          </a>
+          {featured.description && (
+            <p class="text-base sm:text-lg text-gray-700 italic font-serif mb-4">
+              {featured.description}
             </p>
-            <a href={featuredContent.href} class="inline-flex items-center text-[#A36A4F] hover:text-[#8B593E] font-medium transition-colors">
-              Read More <span class="material-icons-outlined text-sm ml-1">arrow_forward</span>
-            </a>
+          )}
+          <p class="text-sm text-gray-600 line-clamp-3 leading-relaxed mb-6 font-serif">
+            {pageData.featuredBody || ''}
+          </p>
+        </div>
+        <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+          <a
+            href={featured.href}
+            class="inline-flex items-center gap-2 text-xs uppercase tracking-wider text-white bg-[#6f4229] hover:bg-[#8B593E] px-6 py-2.5 transition-colors"
+          >
+            <span>Read More</span>
+            <span class="material-icons-outlined text-sm">arrow_forward</span>
+          </a>
+          <span class="text-xs text-gray-400 italic font-serif">By Shun Yamamoto</span>
+        </div>
+      </div>
+    </div>
+  </section>
+  )}
+
+  {/* 4. Volume I Bundle — App.tsx L242-372 */}
+  <PortalShelf bundle={bundle} />
+
+  {/* 5. Anthology & Folios — App.tsx L375-454 */}
+  <section class="w-full max-w-[1200px] mx-auto px-4 pb-20">
+    <div class="flex flex-col md:flex-row items-baseline justify-between mb-12">
+      <div>
+        <span class="text-xs uppercase tracking-[0.2em] text-[#865138] font-bold">Anthology &amp; Folios</span>
+        <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mt-1 font-serif">Collected Volumes &amp; Archives</h3>
+      </div>
+      <p class="text-xs text-gray-400 mt-2 md:mt-0 font-serif">Hover over a deck to expand chapters. Click to read.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-16">
+      {volumes.map((volume) => (
+        <div class="flex flex-col">
+          <div class="mb-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-base font-semibold text-gray-900 font-serif">
+                {volume.volumeNumberText} • {volume.title}
+              </span>
+              {volume.badge && (
+                <span class="text-[10px] px-2 py-0.5 bg-[#865138]/10 text-[#865138] font-medium rounded-xs">
+                  {volume.badge}
+                </span>
+              )}
+            </div>
+            <span class="text-xs px-2 py-0.5 bg-[#f0edea] text-gray-600 rounded">{volume.foliosCountText}</span>
+          </div>
+
+          <div class="book-deck-container w-4/5 mx-auto">
+            {volume.chapters.map((chapter, itemIdx) => (
+              <div
+                class="book-page-card group relative bg-white rounded-lg overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 border border-gray-100 flex flex-col h-[360px] cursor-pointer"
+                style={`z-index: ${40 - itemIdx * 10};`}
+              >
+                {chapter.heroImage && (
+                  <div class="w-full h-32 shrink-0 bg-gray-100 overflow-hidden relative">
+                    <img
+                      src={chapter.heroImage}
+                      alt={chapter.title}
+                      class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div class="absolute top-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 text-xs font-semibold text-[#865138] border border-gray-200 shadow-xs">
+                      {chapter.chapterNumber}
+                    </div>
+                  </div>
+                )}
+                <div class="p-6 flex flex-col justify-end grow">
+                  <div class="mb-3">
+                    <div class="flex justify-between items-center text-xs text-[#865138] mb-2">
+                      <span class="font-bold tracking-widest font-sans">{chapter.chapterNumber}</span>
+                      <span class="opacity-70 font-sans">{chapter.category}</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-gray-900 leading-snug font-serif">
+                      {chapter.title}
+                    </h4>
+                  </div>
+                  <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <span class="text-xs text-[#865138] uppercase font-semibold">Open —</span>
+                    <span class="text-xs text-gray-400">{chapter.pageRange}</span>
+                  </div>
+                </div>
+                {/* ホバーで記事紹介プレビュー（上の記事紹介と同じ形式） */}
+                {chapter.href && (
+                  <a href={chapter.href} class="block">
+                    <div class="absolute inset-0 bg-[#faf8f5]/95 backdrop-blur-xs p-6 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-none group-hover:pointer-events-auto">
+                      <div>
+                        <div class="text-xs font-bold text-[#A36A4F] uppercase tracking-wider mb-2">
+                          {chapter.chapterNumber} • {chapter.category}
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-900 font-serif leading-snug mb-3">
+                          {chapter.title}
+                        </h4>
+                        {chapter.description && (
+                          <p class="text-gray-700 text-xs sm:text-sm leading-relaxed whitespace-pre-line text-justify font-serif">
+                            {chapter.description}
+                          </p>
+                        )}
+                      </div>
+                      <div class="pt-4 border-t border-gray-200 flex items-center justify-between mt-auto">
+                        <span class="inline-flex items-center text-[#A36A4F] hover:text-[#8B593E] font-medium text-sm transition-colors">
+                          <span>Read More</span>
+                          <span class="material-icons-outlined text-sm ml-1">arrow_forward</span>
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                )}
+              </div>
+            ))}
           </div>
         </div>
-      </article>
-    )}
-
-    {/* Other Posts Grid */}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {otherContent.map((item) => (
-        <article class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 flex flex-col h-full">
-          {item.heroImage && (
-            <a href={item.href} class="block h-80 overflow-hidden flex-shrink-0">
-              <img 
-                src={item.heroImage} 
-                alt={item.title}
-                class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-              />
-            </a>
-          )}
-          <div class="p-6 flex flex-col flex-grow">
-            <div class="text-xs font-bold text-[#A36A4F] mb-2 uppercase tracking-wider">
-              Blog Post
-            </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">
-              <a href={item.href} class="hover:text-[#A36A4F] transition-colors">
-                {item.title}
-              </a>
-            </h3>
-            <p class="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">
-              {item.description}
-            </p>
-            <a href={item.href} class="inline-flex items-center text-[#A36A4F] hover:text-[#8B593E] font-medium text-sm transition-colors mt-auto">
-              Read More <span class="material-icons-outlined text-sm ml-1">arrow_forward</span>
-            </a>
-          </div>
-        </article>
       ))}
     </div>
-  </div>
+  </section>
+
+  {/* 6. Dispatches from Kyoto Newsletter — App.tsx L457-497（Keystatic home.newsletter で編集） */}
+  {newsletter.enabled !== false && (
+  <section class="w-full max-w-[1200px] mx-auto px-4 mb-16">
+    <div class="bg-[#f0edea] p-8 md:p-14 rounded-sm flex flex-col md:flex-row items-center justify-between gap-8 border border-[#e5e2df]">
+      <div class="max-w-xl">
+        <span class="text-xs uppercase tracking-[0.2em] text-[#865138] font-bold">{newsletter.eyebrow}</span>
+        <h4 class="text-2xl font-bold text-gray-900 mt-1 mb-3 font-serif">{newsletter.heading}</h4>
+        {newsletter.body && (
+          <p class="text-sm text-gray-600 leading-relaxed font-serif">{newsletter.body}</p>
+        )}
+      </div>
+      <div class="w-full md:w-auto flex-1 max-w-md">
+        <div data-newsletter-thanks class="hidden p-4 bg-white rounded border border-[#d6c3ba] text-center text-sm text-[#6f4229]">
+          <p class="font-semibold">{newsletter.successTitle}</p>
+          <p class="text-xs text-gray-500 mt-1">{newsletter.successBody}</p>
+        </div>
+        <form data-newsletter-form class="flex flex-col sm:flex-row gap-2">
+          <input
+            class="w-full px-4 py-3 bg-white text-gray-900 placeholder:text-gray-400 text-sm border border-gray-200 focus:outline-none focus:border-[#8B593E] rounded-sm"
+            placeholder={newsletter.placeholder}
+            required
+            type="email"
+          />
+          <button class="text-xs uppercase tracking-wider px-6 py-3 bg-[#1b1c1a] hover:bg-[#8B593E] text-white shrink-0 transition-colors font-medium rounded-sm cursor-pointer" type="submit">
+            {newsletter.buttonLabel}
+          </button>
+        </form>
+        {newsletter.note && (
+          <span class="block text-[11px] text-gray-400 mt-2">{newsletter.note}</span>
+        )}
+      </div>
+    </div>
+  </section>
+  )}
+
+  <script>
+    const nlForm = document.querySelector('[data-newsletter-form]');
+    const nlThanks = document.querySelector('[data-newsletter-thanks]');
+    nlForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      nlForm.classList.add('hidden');
+      nlThanks?.classList.remove('hidden');
+    });
+  </script>
 </PortalLayout>

@@ -1,45 +1,47 @@
 {
   "title": "Portal (Home)",
   "hero": {
-    "slides": [
+    "title": "Traces of the Invisible",
+    "subtitle": "– In the Making, In the Maturing, In the Living – ",
+    "fusumaImages": [
       {
-        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuC3rNLgZHdOZGwGR25ulNuL4mnxEBn7VmAOYWYvd3dp1v2LJZDvBROUuoZx6gkv1vLFzd0PyU8gfIO_GmtxUZMdiKD-g6ckL4pg31SKjpaf3RA-0i2fSuPBfBJNxJn7wcQ6HguKJBQrbxE9D_wxjk5OMfLyqcx-rzP28E4efkz-Dk4fASaQXAxs4tVTA4vC2kOKsNpUERK_0t6bG09-Ak-sI1oGdzLWnXIszyrn5_tSmUO4qoYxFBvH963F12jvjiuvrqeFLVki",
-        "title": "Traces of the Invisible",
-        "subtitle": "– In the Making, In the Maturing, In the Living –",
-        "leftTitle": "",
-        "rightTitle": ""
+        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuC3rNLgZHdOZGwGR25ulNuL4mnxEBn7VmAOYWYvd3dp1v2LJZDvBROUuoZx6gkv1vLFzd0PyU8gfIO_GmtxUZMdiKD-g6ckL4pg31SKjpaf3RA-0i2fSuPBfBJNxJn7wcQ6HguKJBQrbxE9D_wxjk5OMfLyqcx-rzP28E4efkz-Dk4fASaQXAxs4tVTA4vC2kOKsNpUERK_0t6bG09-Ak-sI1oGdzLWnXIszyrn5_tSmUO4qoYxFBvH963F12jvjiuvrqeFLVki"
       },
       {
-        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBuRu6awyy_2bdD4mAbTRJdac803A991m7IyEnvv-C_UBOF-IzhUpwTcursb71DYkmtpW4RpTVPYAejxonFJDrWevJEC7jjRMfoL-THhIZliaqCnwequ7jtaovl6CCODyO9QbnkFFZRkK_Yc4ZcMyo4abIM3T3Di5KTLalZ8m6-T8c5OJMsSlvIAEUW4T_b8g6TAqIU_yjq07v1YZn6WLFqDTlcQxVm6KEU_jm4ac9-8j37JQu2CleUwyUw80cLgSOixt9wS437",
-        "title": "Making as Practice",
-        "subtitle": "Craft and patience",
-        "leftTitle": "",
-        "rightTitle": ""
+        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBuRu6awyy_2bdD4mAbTRJdac803A991m7IyEnvv-C_UBOF-IzhUpwTcursb71DYkmtpW4RpTVPYAejxonFJDrWevJEC7jjRMfoL-THhIZliaqCnwequ7jtaovl6CCODyO9QbnkFFZRkK_Yc4ZcMyo4abIM3T3Di5KTLalZ8m6-T8c5OJMsSlvIAEUW4T_b8g6TAqIU_yjq07v1YZn6WLFqDTlcQxVm6KEU_jm4ac9-8j37JQu2CleUwyUw80cLgSOixt9wS437"
       },
       {
-        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuB7xv5yKuQydWMzxWm_iS40nCSlG3a_Wzs-Gqv_n7IaD7FWm_C2tbQizLFckbU6tWY9j9Ic-_0JPzZWz9DLplKOeXGKM7CJMIJ_Iv3ivCSTfHJWNacrqOz6SVka6WZU1x80lt9tHjUBbePi2-BoJteOXjX6b1iaMR4-f9x2PhzUn9KK9zQR4An_QR92G1onz5H2Go8vg9ddh9FYaBFNfXUsZvwZnJBT1EZN16hiumVKx5ToBHNC3-HAw9AROBlFhyVD7bu1n0Cy",
-        "title": "Living with Objects",
-        "subtitle": "Use, mend, and time",
-        "leftTitle": "",
-        "rightTitle": ""
+        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuB7xv5yKuQydWMzxWm_iS40nCSlG3a_Wzs-Gqv_n7IaD7FWm_C2tbQizLFckbU6tWY9j9Ic-_0JPzZWz9DLplKOeXGKM7CJMIJ_Iv3ivCSTfHJWNacrqOz6SVka6WZU1x80lt9tHjUBbePi2-BoJteOXjX6b1iaMR4-f9x2PhzUn9KK9zQR4An_QR92G1onz5H2Go8vg9ddh9FYaBFNfXUsZvwZnJBT1EZN16hiumVKx5ToBHNC3-HAw9AROBlFhyVD7bu1n0Cy"
       },
       {
-        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuD8W8LOr2dSiMERxd-DRN5imOEV7FWNT0n8Z_WTGAdCIWLzqD7Jssmz7gnId12IqMBnD69NTcNlGH2gtUkcDm_I-h7bJjB96XsLPSqBBfW9GmjsFMmoNXIFWcTxL9PlXoc-u_9hSlGoj8_Q5iy_jHeUBjZR1FOvdtT-Hli2megFrTQgEjWYEjTfaywyqUOMxFXXAdl5TY8qPk6bFitqcPbe1WU37RkMZukrsOVrsUS4stJYkkmW4efrB1iAI1H73hb9sagyAKFX",
-        "title": "Natural Blending",
-        "subtitle": "Religions, rituals, seasons",
-        "leftTitle": "",
-        "rightTitle": ""
+        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuD8W8LOr2dSiMERxd-DRN5imOEV7FWNT0n8Z_WTGAdCIWLzqD7Jssmz7gnId12IqMBnD69NTcNlGH2gtUkcDm_I-h7bJjB96XsLPSqBBfW9GmjsFMmoNXIFWcTxL9PlXoc-u_9hSlGoj8_Q5iy_jHeUBjZR1FOvdtT-Hli2megFrTQgEjWYEjTfaywyqUOMxFXXAdl5TY8qPk6bFitqcPbe1WU37RkMZukrsOVrsUS4stJYkkmW4efrB1iAI1H73hb9sagyAKFX"
       },
       {
-        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDVYxDRQby0i9WULKL4PLvmJbS_P_EmxFUOA9tnP4czuiBhq7ga5ou74U0SJ72ElZ7Oz1gxyhJXN-A0QFUXGXgQMncM0c-oVIyX2YNKmFsprVU5Pdei8CP1NULZsPEEEP4iCUImIoxaKPQYZEJ-Y-uTRd7tYz2RWXmyBgHhYge1n_T12Ndd_PGDmTQIlI_HbJe_0GIOf-0Shp1mxiM38_ssUmvoIErTeoTlOEET1-ebB5UjDC7n-M2EoRkipKi2RBulvwEjI2_E",
-        "title": "Rooted in Time",
-        "subtitle": "From Kyoto to the world",
-        "leftTitle": "",
-        "rightTitle": ""
+        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDVYxDRQby0i9WULKL4PLvmJbS_P_EmxFUOA9tnP4czuiBhq7ga5ou74U0SJ72ElZ7Oz1gxyhJXN-A0QFUXGXgQMncM0c-oVIyX2YNKmFsprVU5Pdei8CP1NULZsPEEEP4iCUImIoxaKPQYZEJ-Y-uTRd7tYz2RWXmyBgHhYge1n_T12Ndd_PGDmTQIlI_HbJe_0GIOf-0Shp1mxiM38_ssUmvoIErTeoTlOEET1-ebB5UjDC7n-M2EoRkipKi2RBulvwEjI2_E"
       }
     ],
-    "title": "Traces of the Invisible",
-    "subtitle": "– In the Making, In the Maturing, In the Living – "
+    "fusumaTexts": [
+      {
+        "title": "Traces of the Invisible",
+        "subtitle": "– In the Making, In the Maturing, In the Living –"
+      },
+      {
+        "title": "Making as Practice",
+        "subtitle": "Craft and patience"
+      },
+      {
+        "title": "Living with Objects",
+        "subtitle": "Use, mend, and time"
+      },
+      {
+        "title": "Natural Blending",
+        "subtitle": "Religions, rituals, seasons"
+      },
+      {
+        "title": "Rooted in Time",
+        "subtitle": "From Kyoto to the world"
+      }
+    ]
   },
   "introTitle": "The Invisible shapes how we perceive beauty.",
   "introText": "A gesture, an atmosphere, a quiet trace left by time.\nsubtle elements that form the soul of Japan’s culture, climate, and customs.\nHere, we explore how things are made, how they mature,\nand how they come alive through the lives they accompany.",
