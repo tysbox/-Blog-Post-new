@@ -39,20 +39,13 @@ if (!lpLogoSrc) {
 // Server-side debug log so we can inspect what value is being read during SSR
 // Debug logs removed
 
-// Get latest content (blog post or page) for the "Latest Writing" link
+// Get latest content (blog post) for the "Latest Writing" link
 const allPosts = await getCollection('blog');
-const allPages = await getCollection('page');
 
-const combinedContent = [
-  ...allPosts.map(post => ({
-    date: new Date(post.data.updatedDate || post.data.pubDate).valueOf(),
-    href: `/blog/${post.id}`
-  })),
-  ...allPages.map(page => ({
-    date: page.data.pubDate ? new Date(page.data.pubDate).valueOf() : 0,
-    href: `/${page.id}`
-  }))
-];
+const combinedContent = allPosts.map(post => ({
+  date: new Date(post.data.updatedDate || post.data.pubDate).valueOf(),
+  href: `/blog/${post.id}`
+}));
 
 const sortedContent = combinedContent.sort((a, b) => b.date - a.date);
 const latestContent = sortedContent[0];

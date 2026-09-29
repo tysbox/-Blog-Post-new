@@ -4,7 +4,7 @@ import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
-import tinaDirective from "./astro-tina-directive/register"
+import keystatic from '@keystatic/astro';
 import fs from 'fs';
 import path from 'path';
 
@@ -18,10 +18,35 @@ const nodeModulesReal = (() => {
 })();
 
 // https://astro.build/config
+// Keystatic の管理画面(/keystatic)は astro dev 専用。
+// 静的ビルド(Cloudflare Pages)では prerender:false のルートを注入すると
+// ビルド全体が [NoAdapterInstalled] で失敗するため、dev のときだけ有効化する。
+const isDev = process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES;
+
 export default defineConfig({
 	site: process.env.SITE_URL || process.env.CF_PAGES_URL || process.env.URL || 'https://hidden-treasure.bisen-kyoto.com',
-	integrations: [mdx(), sitemap(), react(), tailwind(), tinaDirective()],
+	integrations: [
+		mdx(),
+		sitemap({
+			// 旧ルート `/{slug}` は 308 で /blog/{slug} へ転送する補助ページなので
+			// sitemap には載せない。ビルド成果物側には noindex + canonical を付ける。
+			filter: (page) => {
+				const path = new URL(page).pathname.replace(/^\/|\/$/g, '');
+				if (!path) return true; // トップ
+				if (path.startsWith('blog/')) return true;
+				// 静的ページとして存在するものは残す
+				return ['about', 'admin', 'contact'].includes(path);
+			},
+		}),
+		react(),
+		tailwind(),
+		...(isDev ? [keystatic()] : []),
+	],
 	vite: {
+		// @keystatic/astro API route imports the virtual module astro:env/server, so exclude it from pre-bundling.
+		optimizeDeps: {
+			exclude: ['@keystatic/astro'],
+		},
 		server: {
 			fs: {
 				allow: [
@@ -32,11 +57,18 @@ export default defineConfig({
 			watch: {
 				// Use polling to detect file changes in environments where native watching fails
 				usePolling: true,
-				interval: 50,
-				binaryInterval: 50,
+				interval: 100,
+				binaryInterval: 300,
+				ignored: [
+					'**/node_modules/**',
+					'**/node_modules.old/**',
+					'**/.git/**',
+					'**/dist/**',
+					'**/backup/**',
+				],
 				awaitWriteFinish: {
-					stabilityThreshold: 50,
-					pollInterval: 10
+					stabilityThreshold: 100,
+					pollInterval: 50
 				},
 			},
 		},

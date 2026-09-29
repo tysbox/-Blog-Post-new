@@ -45,7 +45,7 @@
   "introText": "A gesture, an atmosphere, a quiet trace left by time.\nsubtle elements that form the soul of Japan’s culture, climate, and customs.\nHere, we explore how things are made, how they mature,\nand how they come alive through the lives they accompany.",
   "featuredItems": [
     {
-      "item": "src/content/pages/from-kyoto-to-the-world.json"
+      "item": "src/content/blog/from-kyoto-to-the-world.mdx"
     }
   ]
 }

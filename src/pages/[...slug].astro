@@ -1,58 +1,29 @@
 ---
-import { getCollection } from "astro:content";
-import BaseLayout from '../layouts/BaseLayout.astro';
-import ReactContentLayout from '../components/react/ContentLayout';
-import client from "../../tina/__generated__/client";
-import PostNav from '../components/react/PostNav';
+import { getCollection } from 'astro:content';
 
+/**
+ * 旧ルート `/{slug}` → 正本 `/blog/{slug}` への 308 リダイレクト。
+ *
+ * 背景: Tina 由来の `page` コレクション (src/content/pages/*.json) と
+ * `blog` コレクション (src/content/blog/*.mdx) に同じ記事が二重に存在し、
+ * `/{slug}` と `/blog/{slug}` の2つのURLで同じ内容が公開されていた。
+ * MDX 側が description / japaneseText / contentSections をすべて含む
+ * 上位集合のため、MDX を正本とし JSON 側は廃止した。
+ * 既存のURL・ブックマーク・検索流入を壊さないため、
+ * このページで恒久リダイレクト(static ビルドでは meta-refresh HTML)を配信する。
+ */
 export async function getStaticPaths() {
-	const pages = await getCollection("page");
-	// Exclude /admin path if it exists in the collection (though it shouldn't for JSON)
-	const filteredPages = pages.filter(p => p.id !== 'admin');
-	return filteredPages.map((page) => ({
-		params: { slug: page.id },
-		props: { 
-      page,
-      getTinaProps: async () => {
-        // In production build, do not attempt to connect to the local Tina server (127.0.0.1:7777).
-        // The static content is already available via `getCollection` (page.data).
-        // This prevents the 'fetch failed: connect ECONNREFUSED' error.
-        if (import.meta.env.PROD || process.env.NODE_ENV === 'production') {
-          // Return the existing data so the component can render
-          return { 
-            data: {
-              contentPage: page.data,
-              page: page.data
-            }, 
-            query: '', 
-            variables: {} 
-          };
-        }
+	const posts = await getCollection('blog');
 
-        return client.queries.contentPage({
-          relativePath: `${page.id}.json`,
-        });
-      },
-    },
+	return posts.map((post) => ({
+		params: { slug: post.id },
+		props: { target: `/blog/${post.id}` },
 	}));
 }
 
-const { page, getTinaProps } = Astro.props;
-const tinaProps = await getTinaProps();
-// Build prev/next for pages
-const allPages = await getCollection('page');
-const sortedPages = allPages.sort((a, b) => {
-  const ad = new Date(a.data.pubDate).valueOf() || 0;
-  const bd = new Date(b.data.pubDate).valueOf() || 0;
-  return bd - ad;
-});
-const currentIndex = sortedPages.findIndex(p => p.id === page.id);
-const prevPage = currentIndex >= 0 && currentIndex < sortedPages.length - 1 ? sortedPages[currentIndex + 1] : null;
-const nextPage = currentIndex > 0 ? sortedPages[currentIndex - 1] : null;
----
+const { target } = Astro.props;
 
-<BaseLayout title={page.data.title}>
-  <ReactContentLayout client:load {...tinaProps} />
-  <PostNav client:load prev={prevPage ? { id: prevPage.id, title: prevPage.data.title, href: `/${prevPage.id}` } : null} next={nextPage ? { id: nextPage.id, title: nextPage.data.title, href: `/${nextPage.id}` } : null} />
-</BaseLayout>
+// 308 Permanent Redirect。静的出力では meta-refresh 付き HTML として書き出される。
+return Astro.redirect(target, 308);
+---
 

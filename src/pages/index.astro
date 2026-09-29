@@ -7,31 +7,18 @@ const { Content } = await render(homePage);
 const pageData = homePage?.data || {};
 
 
-// Get latest blog posts and pages
+// Get latest blog posts
 const allPosts = await getCollection('blog');
-const allPages = await getCollection('page');
 
-// Combine and normalize data for sorting
-const combinedContent = [
-  ...allPosts.map(post => ({
-    ...post,
-    type: 'blog',
-    date: new Date(post.data.updatedDate || post.data.pubDate).valueOf(),
-    title: post.data.title,
-    description: post.data.description,
-    heroImage: post.data.heroImage,
-    href: `/blog/${post.id}`
-  })),
-  ...allPages.map(page => ({
-    ...page,
-    type: 'page',
-    date: page.data.updatedDate ? new Date(page.data.updatedDate).valueOf() : (page.data.pubDate ? new Date(page.data.pubDate).valueOf() : 0), // Prefer updatedDate, fallback to pubDate or 0
-    title: page.data.title,
-    description: page.data.hero?.subtitle || '', // Use subtitle as description
-    heroImage: page.data.hero?.image1,
-    href: `/${page.id}`
-  }))
-];
+// Normalize data for sorting
+const combinedContent = allPosts.map(post => ({
+  ...post,
+  date: new Date(post.data.updatedDate || post.data.pubDate).valueOf(),
+  title: post.data.title,
+  description: post.data.description,
+  heroImage: post.data.heroImage,
+  href: `/blog/${post.id}`
+}));
 
 // Get manually featured items if any
 let manualContent = [];
@@ -42,30 +29,19 @@ if (pageData.featuredItems && pageData.featuredItems.length > 0) {
 
     // If the stored item is a string path (legacy format)
     if (typeof item === 'string') {
-      const path = item;
-      if (path.includes('src/content/blog/')) {
-        const id = path.split('src/content/blog/')[1].replace(/\.(mdx|md)$/, '');
-        return { collection: 'blog', id };
-      } else if (path.includes('src/content/pages/')) {
-        const id = path.split('src/content/pages/')[1].replace(/\.json$/, '');
-        return { collection: 'page', id };
-      }
-      return null;
+      // 正本は blog のみ。旧パス src/content/pages/*.json は廃止した
+      // `page` コレクションの storage だが、既存データにはその形式が
+      // 残っているので basename を id に正規化し blog として解決する。
+      const match = item.match(/^src\/content\/(?:blog|pages)\/([^.]+)\.(?:mdx|md|json)$/);
+      return match ? { collection: 'blog', id: match[1] } : null;
     }
 
     // If the stored item is a Tina reference object
     if (typeof item === 'object') {
-      const collection = item.collection || item?.__collection || item?.sys?.collection || item?.sys?.collection?.name;
       const id = item.id || item?.value || item?.sys?.filename || item?.sys?.relativePath;
-      if (!collection || !id) return null;
-
-      // Map Tina's contentPage to Astro 'page' collection name
-      if (collection === 'contentPage' || collection === 'pages') {
-        return { collection: 'page', id: id.replace(/\.json$/, '') };
-      }
-
-      // Normalize id by stripping extension
-      return { collection, id: id.replace(/\.(mdx|md|json)$/, '') };
+      if (!id) return null;
+      // 正本は blog のみ。collection 名は気にせず id だけで解決する。
+      return { collection: 'blog', id: id.replace(/\.(mdx|md|json)$/, '') };
     }
 
     return null;
@@ -75,27 +51,14 @@ if (pageData.featuredItems && pageData.featuredItems.length > 0) {
   const validFeaturedEntries = (featuredEntries || []).filter(Boolean);
   manualContent = validFeaturedEntries.map(entry => {
     if (!entry) return null;
-    if (entry.collection === 'blog') {
-      return {
-        ...entry,
-        type: 'blog',
-        date: new Date(entry.data.updatedDate || entry.data.pubDate).valueOf(),
-        title: entry.data.title,
-        description: entry.data.description,
-        heroImage: entry.data.heroImage,
-        href: `/blog/${entry.id}`
-      };
-    } else {
-      return {
-        ...entry,
-        type: 'page',
-        date: entry.data.updatedDate ? new Date(entry.data.updatedDate).valueOf() : (entry.data.pubDate ? new Date(entry.data.pubDate).valueOf() : 0),
-        title: entry.data.title,
-        description: entry.data.hero?.subtitle || '',
-        heroImage: entry.data.hero?.image1,
-        href: `/${entry.id}`
-      };
-    }
+    return {
+      ...entry,
+      date: new Date(entry.data.updatedDate || entry.data.pubDate).valueOf(),
+      title: entry.data.title,
+      description: entry.data.description,
+      heroImage: entry.data.heroImage,
+      href: `/blog/${entry.id}`
+    };
   }).filter(Boolean);
 }
 
@@ -146,7 +109,7 @@ const otherContent = latestContent.slice(1);
           )}
           <div class="p-8 md:p-12 md:w-1/2 flex flex-col justify-center">
             <div class="text-xs font-bold text-[#A36A4F] mb-3 uppercase tracking-wider">
-              {featuredContent.type === 'blog' ? 'Featured Blog Post' : 'Featured Page'}
+              Featured Blog Post
             </div>
             <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
               <a href={featuredContent.href} class="hover:text-[#A36A4F] transition-colors">
@@ -179,7 +142,7 @@ const otherContent = latestContent.slice(1);
           )}
           <div class="p-6 flex flex-col flex-grow">
             <div class="text-xs font-bold text-[#A36A4F] mb-2 uppercase tracking-wider">
-              {item.type === 'blog' ? 'Blog Post' : 'Page'}
+              Blog Post
             </div>
             <h3 class="text-xl font-bold text-gray-900 mb-2">
               <a href={item.href} class="hover:text-[#A36A4F] transition-colors">

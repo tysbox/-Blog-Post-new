@@ -1,6 +1,6 @@
 ---
 import JapaneseAccordion from './react/JapaneseAccordion';
-import { richTextToHtml } from '../utils/richText';
+import { richTextToHtml, richTextToHtmlInline, stripMarkdown } from '../utils/richText';
 
 interface Props {
   hero: {
@@ -25,12 +25,12 @@ const { hero = {}, contentSections, japaneseText } = Astro.props;
 
 <div class="relative w-full">
   {hero?.image1 && (
-    <img alt={hero.title || 'Hero Image'} class="w-full h-[66vh] object-cover" src={hero.image1}/>
+    <img alt={stripMarkdown(hero.title) || 'Hero Image'} class="w-full h-[66vh] object-cover" src={hero.image1}/>
   )}
   <div class="absolute inset-0 bg-black bg-opacity-10"></div>
   <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
     <div class="w-4/5 -translate-y-12">
-      <h1 class="text-white text-[calc((1rem+4vw)*0.7)] leading-tight font-medium">{hero?.title}</h1>
+      <h1 class="text-white text-[calc((1rem+4vw)*0.7)] leading-tight font-medium" set:html={richTextToHtmlInline(hero?.title)} />
       <p class="text-white text-lg mt-2">{hero?.subtitle}</p>
     </div>
   </div>

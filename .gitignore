@@ -7,6 +7,11 @@ public/admin/
 
 # dependencies
 node_modules/
+# Keystatic の dev サーバーはプロジェクト全体を再帰走査する
+# (collectEntriesInDir は .gitignore を尊重するが、名前は完全一致で
+#  'node_modules' のみ除外するため 'node_modules.old' は走査される)。
+# 未除外だと 1.6GB を走査して /api/keystatic/tree が応答しなくなるため除外する。
+node_modules.old/
 
 # logs
 *.log
@@ -27,6 +32,12 @@ pnpm-debug.log*
 *.bak
 *.code-workspace
 scripts/webp-backup-*/
+
+# ローカルのみ / コミット対象外
+# backup/ は Tina 移行時の退避データ（移行元の原本 JSON を含む）。
+# .vscode/ はエディタ個別の設定。
+.vscode/
+backup/
 
 # jetbrains setting folder
 .idea/

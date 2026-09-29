@@ -1,44 +1,158 @@
 ---
-import { type CollectionEntry, getCollection } from "astro:content";
-import BlogPost from "../../layouts/BlogPost.astro"
-import client from "../../../tina/__generated__/client";
-import AdminBlogPost from "../../../tina/pages/AdminBlogPost";
+import { getCollection } from 'astro:content';
+import BlogPost from '../../layouts/BlogPost.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import ImageGrid from '../../components/mdx/ImageGrid.astro';
+import JapaneseAccordion from '../../components/react/JapaneseAccordion';
+import PostNav from '../../components/react/PostNav';
+import { richTextToHtml, richTextToHtmlInline, stripMarkdown } from '../../utils/richText';
 
 export async function getStaticPaths() {
-	const posts = await getCollection("blog");
+	const posts = await getCollection('blog');
 
-	return posts.map((post) => ({
-		params: { slug: post.id },
-		props: {
-			post,
-			getTinaProps: async () => {
-        if (import.meta.env.PROD || process.env.NODE_ENV === 'production') {
-          return {
-            data: {
-              blog: post.data
-            },
-            query: '',
-            variables: {}
-          };
-        }
-				return client.queries.blog({
-					relativePath: post.data.tinaInfo.relativePath,
-				});
-      },
-		},
-	}));
+	// 前後の記事ナビ用に、日付降順で並び替えた一覧を用意する。
+	const sorted = [...posts].sort(
+		(a, b) => new Date(b.data.pubDate).valueOf() - new Date(a.data.pubDate).valueOf(),
+	);
+
+	return posts.map((post) => {
+		const index = sorted.findIndex((p) => p.id === post.id);
+		// index が新しい側=次の記事、古い側=前の記事。
+		const newer = index > 0 ? sorted[index - 1] : null;
+		const older = index >= 0 && index < sorted.length - 1 ? sorted[index + 1] : null;
+		const toNav = (entry) =>
+			entry
+				? { id: entry.id, title: stripMarkdown(entry.data.title), href: `/blog/${entry.id}` }
+				: null;
+
+		return {
+			params: { slug: post.id },
+			props: { post, prev: toNav(older), next: toNav(newer) },
+		};
+	});
 }
 
-const { post, getTinaProps } = Astro.props;
-const tinaProps = await getTinaProps();
-const blogData = tinaProps.data.blog;
-const blogPostProps = {
-  ...blogData,
-  pubDate: new Date(blogData.pubDate),
-  updatedDate: blogData.updatedDate ? new Date(blogData.updatedDate) : undefined,
-};
+const { post, prev, next } = Astro.props;
+
+const {
+	title,
+	description,
+	pubDate,
+	updatedDate,
+	heroImage,
+	heroTitle,
+	heroSubtitle,
+	japaneseText,
+	contentSections = [],
+} = post.data;
+
+// タイトルは Markdown として解釈する（**太字** や *斜体* が使えるようにする）。
+// 見出しの内側なので、段落タグで包む marked.parse ではなく parseInline を使う。
+const headingHtml = richTextToHtmlInline(heroTitle || title);
+const headingPlain = stripMarkdown(heroTitle || title);
+const subtitleHtml = richTextToHtmlInline(heroSubtitle);
 ---
 
-<BlogPost {...blogPostProps}>
-		<AdminBlogPost {...tinaProps} client:tina/>
+<BlogPost title={headingPlain} description={description} pubDate={pubDate} updatedDate={updatedDate}>
+	<article class="blog-post">
+		{heroImage && (
+			<header class="hero">
+				<img class="hero-image" src={heroImage} alt={headingPlain || 'Hero image'} />
+				<div class="hero-overlay">
+					{headingHtml && <h1 class="hero-title" set:html={headingHtml} />}
+					{subtitleHtml && <p class="hero-subtitle" set:html={subtitleHtml} />}
+				</div>
+			</header>
+		)}
+
+		{(pubDate || updatedDate) && (
+			<p class="date">
+				{pubDate && <FormattedDate date={pubDate} />}
+				{updatedDate && <span class="last-updated-on"> · Updated <FormattedDate date={updatedDate} /></span>}
+			</p>
+		)}
+
+		{japaneseText && (
+			<div class="japanese">
+				<JapaneseAccordion content={japaneseText} client:load />
+			</div>
+		)}
+
+		<div class="prose">
+			{contentSections.map((section) => {
+				if (section._template === 'imageGrid') {
+					return <ImageGrid images={section.images ?? []} />;
+				}
+				return (
+					<div
+						class="section-text"
+						set:html={richTextToHtml(section.bodyText)}
+					/>
+				);
+			})}
+		</div>
+	</article>
+	<PostNav client:load prev={prev} next={next} />
 </BlogPost>
+
+<style>
+	.blog-post {
+		width: 100%;
+	}
+	.hero {
+		position: relative;
+		width: 100%;
+	}
+	.hero-image {
+		display: block;
+		width: 100%;
+		height: 66vh;
+		object-fit: cover;
+	}
+	.hero-overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		padding: 0 1rem;
+		background-color: rgba(0, 0, 0, 0.1);
+	}
+	.hero-title {
+		margin: 0;
+		color: #fff;
+		font-size: clamp(1.75rem, 6vw, 3.5rem);
+		font-weight: 700;
+		line-height: 1.05;
+	}
+	.hero-subtitle {
+		margin-top: 0.5rem;
+		color: #fff;
+		font-size: 1.125rem;
+		white-space: pre-wrap;
+	}
+	.date {
+		margin: 1.5rem auto 0;
+		max-width: 720px;
+		padding: 0 1em;
+		color: rgb(var(--gray));
+	}
+	.japanese {
+		max-width: 896px;
+		margin: 2rem auto 0;
+		padding: 0 1rem;
+	}
+	.prose {
+		width: 720px;
+		max-width: calc(100% - 2em);
+		margin: 1em auto;
+		padding: 1em;
+		color: rgb(var(--gray-dark));
+	}
+	.prose :global(h2) {
+		margin-top: 2em;
+	}
+</style>
+

@@ -87,3 +87,32 @@ export function richTextToHtml(content: unknown): string {
     headerIds: false,
   }) as string;
 }
+
+/**
+ * 見出し・タイトルなど「1行の装飾」に使う Markdown → HTML。
+ *
+ * `marked.parse` は段落を `<p>` で包むため、`<h1>` などの 안에置くと
+ * 入れ子が崩れてしまう。見出し内ではこちらを使う。
+ */
+export function richTextToHtmlInline(content: unknown): string {
+  const markdown = richTextToMarkdown(content);
+
+  if (!markdown) {
+    return '';
+  }
+
+  return marked.parseInline(markdown, {
+    gfm: true,
+    breaks: true,
+    mangle: false,
+    headerIds: false,
+  }) as string;
+}
+
+/** `<title>` や `alt` など装飾が要らない箇所用に、Markdown 記号を取り除く。 */
+export function stripMarkdown(content: unknown): string {
+  return richTextToMarkdown(content)
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1') // 画像・リンク
+    .replace(/[*_`~]/g, '')                   // 強調・コード
+    .trim();
+}

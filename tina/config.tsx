@@ -109,7 +109,7 @@ export default defineConfig({
                 type: "reference",
                 name: "item",
                 label: "Content Item",
-                collections: ["blog", "contentPage"],
+                collections: ["blog"],
               }
             ]
           },
@@ -200,77 +200,10 @@ export default defineConfig({
           },
         ],
       },
-      {
-        name: "contentPage",
-        label: "Website Pages",
-        path: "src/content/pages",
-        format: "json",
-        fields: [
-          { type: "string", name: "title", label: "Title", isTitle: true, required: true },
-          {
-            type: "datetime",
-            name: "pubDate",
-            label: "Date Posted",
-            required: true,
-            ui: {
-              defaultValue: new Date().toISOString(),
-            }
-          },
-          {
-            type: "datetime",
-            name: "updatedDate",
-            label: "Last Updated",
-            required: false,
-          },
-          {
-            type: "object",
-                name: "hero",
-                label: "Hero Section",
-                fields: [
-                  { type: "image", name: "image1", label: "Hero Image" },
-                  { type: "string", name: "title", label: "Title" },
-                  { type: "string", name: "subtitle", label: "Subtitle", ui: { component: 'textarea' } },
-                ],
-              },
-          {
-            type: "rich-text",
-            name: "japaneseText",
-            label: "Japanese Version (Full Text)",
-          },
-              {
-                type: "object",
-                name: "contentSections",
-                label: "Content Blocks",
-                list: true,
-                templates: [
-                  {
-                    name: "textBlock",
-                    label: "Text Block",
-                    fields: [
-                      { type: "rich-text", name: "bodyText", label: "Body Text" },
-                    ],
-                  },
-                  {
-                    name: "imageGrid",
-                    label: "Image Grid",
-                    fields: [
-                      {
-                        type: "object",
-                        name: "images",
-                        label: "Images",
-                        list: true,
-                        fields: [
-                          { type: "image", name: "src", label: "Image Source" },
-                          { type: "string", name: "label", label: "Label" },
-                          { type: "string", name: "caption", label: "Caption" },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
+      // `contentPage` (src/content/pages) は削除した。同じ記事が
+      // blog (src/content/blog/*.mdx) と二重に存在し、/{slug} と
+      // /blog/{slug} の2URLで同じ内容が公開されていたため。
+      // 記事は blog コレクションだけで管理する。
       {
         name: "global",
         label: "Global Settings",

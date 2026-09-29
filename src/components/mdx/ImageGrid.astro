@@ -1,0 +1,60 @@
+---
+interface ImageItem {
+	src: string;
+	label?: string;
+	caption?: string;
+}
+
+interface Props {
+	images?: ImageItem[];
+}
+
+const { images } = Astro.props as Props;
+const list = Array.isArray(images) ? images.filter(Boolean) : [];
+---
+
+{/* 画像が1枚の場合は横長（3:2）中央寄せで表示する */}
+{
+	list.length === 1 && (
+		<div class="flex justify-center w-full">
+			<div class="flex flex-col gap-2 w-full md:w-3/4">
+				<img
+					alt={list[0].label || 'Content Image'}
+					class="w-full aspect-[3/2] object-cover rounded-lg shadow-sm"
+					src={list[0].src}
+					loading="lazy"
+				/>
+				{(list[0].label || list[0].caption) && (
+					<div class="text-sm text-gray-500 text-center">
+						{list[0].label && <span class="font-bold block">{list[0].label}</span>}
+						{list[0].caption && <span>{list[0].caption}</span>}
+					</div>
+				)}
+			</div>
+		</div>
+	)
+}
+
+{
+	list.length > 1 && (
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+			{list.map((img) => (
+				<div class="flex flex-col gap-2">
+					<img
+						alt={img.label || 'Content Image'}
+						class="w-full aspect-square object-cover rounded-lg"
+						src={img.src}
+						loading="lazy"
+					/>
+					{(img.label || img.caption) && (
+						<div class="text-sm text-gray-500">
+							{img.label && <span class="font-bold block">{img.label}</span>}
+							{img.caption && <span>{img.caption}</span>}
+						</div>
+					)}
+				</div>
+			))}
+		</div>
+	)
+}
+

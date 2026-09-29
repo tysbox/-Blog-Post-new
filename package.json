@@ -21,7 +21,9 @@
     "clean:caches": "rm -rf node_modules/.vite node_modules/@tinacms/app/node_modules/.vite",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "dev:astro": "astro dev",
+    "dev:keystatic": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1"
   },
   "dependencies": {
     "@astrojs/check": "0.9.9",
@@ -30,6 +32,8 @@
     "@astrojs/rss": "4.0.18",
     "@astrojs/sitemap": "3.7.2",
     "@astrojs/tailwind": "6.0.2",
+    "@keystatic/astro": "6.0.0",
+    "@keystatic/core": "0.6.9",
     "astro": "5.18.1",
     "marked": "5.1.1",
     "react": "18.3.1",
