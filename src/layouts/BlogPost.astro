@@ -7,6 +7,7 @@ import CloudflareBeacon from '../components/CloudflareBeacon.astro';
 import { getEntry, getCollection } from 'astro:content';
 import config from '../content/config/config.json';
 import { timestamp } from '../utils/date';
+import { permalinkOf } from '../utils/postOrder';
 
 type Props = CollectionEntry<'blog'>['data'];
 
@@ -29,7 +30,7 @@ const latestUrl = (() => {
       timestamp(b.data.updatedDate, b.data.pubDate) -
       timestamp(a.data.updatedDate, a.data.pubDate),
   );
-  return sorted[0] ? `/blog/${sorted[0].id}` : '/';
+  return sorted[0] ? `/blog/${permalinkOf(sorted[0].id)}` : '/';
 })();
 
 // /latest は「最新の記事」そのものを指すため、実際のURLに解決する。

@@ -7,30 +7,28 @@ import ImageGrid from '../../components/mdx/ImageGrid.astro';
 import KarutaGrid from '../../components/mdx/KarutaGrid.astro';
 import { richTextToHtml, stripMarkdown } from '../../utils/richText';
 import { extractToc, addHeadingIds } from '../../utils/toc';
+import { orderPosts, permalinkOf } from '../../utils/postOrder';
 import { timestamp } from '../../utils/date';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
 
   // 前後の記事ナビは【日付ではなく Index（章順）】に従う。
-  // Index と同じ並び = 公開日の昇順（第一回目が先頭）。
-  //   sorted[i-1] = 1 つ前の記事 → prev（←）
-  //   sorted[i+1] = 1 つ後の記事 → next（→）
-  const sorted = [...posts].sort(
-    (a, b) => timestamp(a.data.pubDate) - timestamp(b.data.pubDate),
-  );
+  // Index と同じ並び = src/utils/postOrder.ts（order 値 → 無ければ公開日の昇順）。
+  const ordered = orderPosts(posts).map((o) => o.post);
 
   return posts.map((post) => {
-    const index = sorted.findIndex((p) => p.id === post.id);
-    const before = index > 0 ? sorted[index - 1] : null; // 1 つ前の記事
-    const after = index >= 0 && index < sorted.length - 1 ? sorted[index + 1] : null; // 1 つ後の記事
+    const index = ordered.findIndex((p) => p.id === post.id);
+    const before = index > 0 ? ordered[index - 1] : null; // 1 つ前の記事
+    const after = index >= 0 && index < ordered.length - 1 ? ordered[index + 1] : null; // 1 つ後の記事
     const toNav = (entry: any) =>
       entry
-        ? { id: entry.id, title: stripMarkdown(entry.data.title), href: `/blog/${entry.id}` }
+        ? { id: entry.id, title: stripMarkdown(entry.data.title), href: `/blog/${permalinkOf(entry.id)}` }
         : null;
 
     return {
-      params: { slug: post.id },
+      // URL は日付接頭辞なしの従来スラグ（ファイル名だけ日付付きにしている）
+      params: { slug: permalinkOf(post.id) },
       props: { post, prev: toNav(before), next: toNav(after) },
     };
   });
@@ -61,6 +59,19 @@ const headingJp = (() => {
   return m ? stripMarkdown(m[1]) : '';
 })();
 
+// 日本語原文の HTML。
+// 旧 JapaneseAccordion コンポーネントと同じく Markdown を解釈する（生の `###` / `**` が
+// 文字として出るのを防ぐ）。加えて Keystatic は複数行を YAML の folded scalar（>）で
+// 保存するため日本語の文中に「折り返し→空白」が混入するので、日本語文字間の空白のみ除去する。
+const japaneseHtml = (() => {
+  const raw = post.data.japaneseText;
+  if (typeof raw !== 'string' || !raw.trim()) return '';
+  const normalized = raw
+    .replace(/([぀-ヿ㐀-䶿一-鿿])[ \t]+(?=[぀-ヿ㐀-䶿一-鿿])/g, '$1')
+    .trim();
+  return richTextToHtml(normalized);
+})();
+
 // Index は textBlock の見出しから自動生成（既存本文の書き換えなし）。
 const tocEntries = extractToc(contentSections);
 // カルタは全記事共通で必ず出力されるため、Index にも常に載せる。
@@ -83,15 +94,20 @@ const readMinutes = (() => {
   return Math.max(1, Math.round(chars / 700));
 })();
 
-// Index（目次）: 第1回目から最新まで、公開順に全記事を列挙する。
-const allPosts = (await getCollection('blog')).sort(
-  (a, b) => timestamp(a.data.pubDate) - timestamp(b.data.pubDate),
+// Index（目次）: 表示順（order → 無ければ公開日の昇順）に沿って全記事を列挙する。
+// 記事数が増えてもドロワーが溢れないよう、既定は「現在位置の前後5件」のみ表示し、
+// 「すべて表示」で全件をスクロールさせる（50記事でも破綻しない設計）。
+const INDEX_WINDOW = 5;
+const allPosts = orderPosts(await getCollection('blog'));
+const currentIndex = Math.max(
+  0,
+  allPosts.findIndex((o) => o.post.id === post.id),
 );
 
-const indexArticles = allPosts.map((p, i) => ({
+const indexArticles = allPosts.map(({ post: p, numberText }) => ({
   id: p.id,
-  href: `/blog/${p.id}`,
-  number: String(i + 1).padStart(2, '0'),
+  href: `/blog/${permalinkOf(p.id)}`,
+  number: numberText,
   // Index は目次なので記事の正式タイトル（title）を使う。heroTitle はヒーロー用見出しのため使わない。
   title: stripMarkdown(p.data.title || p.data.heroTitle),
   date: p.data.pubDate
@@ -217,9 +233,16 @@ const indexRange = `All Articles · ${indexArticles.length}`;
         <span class="font-sans text-xs text-[#51443d]">間 MA 編集室（BiScène Kyoto）</span>
       </div>
       {/* 日本語原文: Index などのラベルと同じ茶色（#6f4229）。#865138 より1段濃い。 */}
-      <div class="font-serif text-sm sm:text-base text-[#6f4229] leading-relaxed mb-4 font-light whitespace-pre-wrap bear-prose">
-        {(post.data.japaneseText as string) || ''}
-      </div>
+      {japaneseHtml ? (
+        <div
+          class="font-serif text-sm sm:text-base text-[#6f4229] leading-relaxed mb-4 font-light bear-prose"
+          set:html={japaneseHtml}
+        />
+      ) : (
+        <p class="font-serif text-sm text-[#865138] mb-4">
+          日本語版は未入力です（Keystatic「日本語バージョン全文」で編集できます）。
+        </p>
+      )}
     </div>
 
     {/* Frosted Glass TOC Drawer — 透過75%(不透明度25%) / 幅500px / App.tsx L362-369 */}
@@ -236,33 +259,51 @@ const indexRange = `All Articles · ${indexArticles.length}`;
       </div>
 
       <div class="mb-4">
-        <div class="text-[10px] font-sans uppercase tracking-[0.2em] text-[#6f4229] font-bold mb-2">
-          All Articles · 全記事（{indexArticles.length}）
-        </div>
-        <div class="space-y-1">
-          {indexArticles.map((entry) => (
-            <a
-              href={entry.href}
-              data-toc-link
-              aria-current={entry.isCurrent ? 'page' : undefined}
-              class={`flex items-start space-x-3 p-2 transition-colors group ${
-                entry.isCurrent ? 'bg-[#6f4229]/10' : 'hover:bg-[#6f4229]/10'
-              }`}
+        <div class="flex items-baseline justify-between gap-3 mb-2">
+          <div class="text-[10px] font-sans uppercase tracking-[0.2em] text-[#6f4229] font-bold">
+            All Articles · 全記事（{indexArticles.length}）
+          </div>
+          {indexArticles.length > INDEX_WINDOW * 2 + 1 && (
+            <button
+              type="button"
+              id="toc-mode-btn"
+              data-toc-mode-label
+              data-full-label={`すべて表示（${indexArticles.length}）`}
+              data-window-label="前後のみ"
+              class="text-[10px] font-sans uppercase tracking-[0.15em] text-[#8b593e] font-semibold hover:text-[#6f4229] transition-colors"
             >
-              <span class={`w-1.5 h-1.5 shrink-0 mt-2 ${entry.isCurrent ? 'bg-[#6f4229]' : 'bg-[#8b593e]'}`}></span>
-              <div>
-                <div class="font-sans text-[11px] uppercase tracking-wider text-[#8b593e] font-semibold">
-                  NO. {entry.number}
-                  {entry.date && <span class="text-[#84746c]"> — {entry.date}</span>}
+              {`すべて表示（${indexArticles.length}）`}
+            </button>
+          )}
+        </div>
+        <div id="toc-article-list" class="space-y-1">
+          {indexArticles.map((entry, i) => {
+            const outside = Math.abs(i - currentIndex) > INDEX_WINDOW;
+            return (
+              <a
+                href={entry.href}
+                data-toc-link
+                aria-current={entry.isCurrent ? 'page' : undefined}
+                data-toc-outside={outside ? 'true' : undefined}
+                class={`flex items-start space-x-3 p-2 transition-colors group ${
+                  outside ? 'hidden ' : ''
+                }${entry.isCurrent ? 'bg-[#6f4229]/10' : 'hover:bg-[#6f4229]/10'}`}
+              >
+                <span class={`w-1.5 h-1.5 shrink-0 mt-2 ${entry.isCurrent ? 'bg-[#6f4229]' : 'bg-[#8b593e]'}`}></span>
+                <div>
+                  <div class="font-sans text-[11px] uppercase tracking-wider text-[#8b593e] font-semibold">
+                    NO. {entry.number}
+                    {entry.date && <span class="text-[#84746c]"> — {entry.date}</span>}
+                  </div>
+                  <div class={`font-serif text-sm font-medium transition-colors ${
+                    entry.isCurrent ? 'text-[#6f4229]' : 'text-[#1b1c1a] group-hover:text-[#6f4229]'
+                  }`}>
+                    {entry.title}
+                  </div>
                 </div>
-                <div class={`font-serif text-sm font-medium transition-colors ${
-                  entry.isCurrent ? 'text-[#6f4229]' : 'text-[#1b1c1a] group-hover:text-[#6f4229]'
-                }`}>
-                  {entry.title}
-                </div>
-              </div>
-            </a>
-          ))}
+              </a>
+            );
+          })}
         </div>
       </div>
 
@@ -411,6 +452,15 @@ const indexRange = `All Articles · ${indexArticles.length}`;
   .bear-prose b {
     color: #1b1c1a;
   }
+  /* Index: 「すべて表示」で全件をスクロールさせる（50記事でも破綻しない） */
+  #toc-article-list {
+    scrollbar-width: thin;
+  }
+  #toc-article-list.is-full {
+    max-height: min(58vh, 520px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
 </style>
 
 <script>
@@ -433,6 +483,23 @@ const indexRange = `All Articles · ${indexArticles.length}`;
     if (tocDrawer && !tocDrawer.classList.contains('hidden') && !target.closest('#toc-container')) {
       closeToc();
     }
+  });
+
+  // --- Index: 前後5件表示 ⇄ 全件スクロール ---
+  const modeBtn = document.getElementById('toc-mode-btn');
+  const articleList = document.getElementById('toc-article-list');
+  const modeLabel = modeBtn?.querySelector('[data-toc-mode-label]');
+  const fullLabel = modeBtn?.getAttribute('data-full-label') || '';
+  const windowLabel = modeBtn?.getAttribute('data-window-label') || '';
+  let fullMode = false;
+  modeBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fullMode = !fullMode;
+    articleList?.classList.toggle('is-full', fullMode);
+    articleList?.querySelectorAll('[data-toc-outside]').forEach((el) => {
+      el.classList.toggle('hidden', !fullMode);
+    });
+    if (modeLabel) modeLabel.textContent = fullMode ? windowLabel : fullLabel;
   });
 
   // --- 日本語ドロワー ---

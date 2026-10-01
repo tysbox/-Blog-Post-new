@@ -1,5 +1,6 @@
 import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
+import { permalinkOf } from '../utils/postOrder';
 import config from '../content/config/config.json'
 
 export async function GET(context) {
@@ -10,7 +11,7 @@ export async function GET(context) {
 		site: context.site,
 		items: posts.map((post) => ({
 			...post.data,
-			link: `/blog/${post.id}/`,
+			link: `/blog/${permalinkOf(post.id)}/`,
 		})),
 	});
 }

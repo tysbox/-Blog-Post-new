@@ -7,6 +7,7 @@ import PortalLayout from '../components/PortalLayout.astro';
 import PortalShelf from '../components/PortalShelf.astro';
 import { getEntry, getCollection } from 'astro:content';
 import { timestamp } from '../utils/date';
+import { permalinkOf } from '../utils/postOrder';
 
 const homePage = await getEntry('portal', 'home');
 const pageData: any = homePage?.data || {};
@@ -48,14 +49,21 @@ const posts: Post[] = allPosts
     title: p.data.title,
     description: p.data.description,
     heroImage: p.data.heroImage || undefined,
-    href: `/blog/${p.id}`,
+    href: `/blog/${permalinkOf(p.id)}`,
     ts: timestamp(p.data.updatedDate, p.data.pubDate),
   }))
   .sort((a, b) => b.ts - a.ts);
 
-const byId = new Map(posts.map((p) => [p.id, p]));
+// 記事参照は「日付付き id」と「日付なし（従来スラグ）」の両方を受け付ける。
+const byId = new Map<string, Post>();
+posts.forEach((p) => {
+  byId.set(p.id, p);
+  byId.set(permalinkOf(p.id), p);
+});
 
 // Keystatic の記事参照（文字列 / オブジェクト）を blog エントリへ解決する。
+// ファイル名は `2025-12-08-from-kyoto-to-the-world.mdx` のように日付付きなので、
+// 参照は「日付付き id」と「日付なし（従来スラグ）」の両方で引けるようにする。
 const normalizeId = (value: unknown): string | null => {
   if (!value) return null;
   if (typeof value === 'object') {
@@ -65,7 +73,7 @@ const normalizeId = (value: unknown): string | null => {
     return typeof id === 'string' ? id.replace(/\.(mdx|md|json)$/, '') : null;
   }
   if (typeof value !== 'string') return null;
-  const m = value.match(/^src\/content\/(?:blog|pages)\/([^.]+)\.(?:mdx|md|json)$/);
+  const m = value.match(/^src\/content\/(?:blog|pages)\/(.+)\.(?:mdx|md|json)$/);
   if (m) return m[1];
   return value.replace(/\.(mdx|md|json)$/, '');
 };
@@ -121,64 +129,40 @@ const newsletter = {
 
 // --- Anthology & Folios（セクション5）---
 // Folio は独立編集ページ（src/content/folio/folio.json）を参照する。
-// Folio is edited on a dedicated page (src/content/folio/folio.json).
-// If no deck is set, or a deck has fewer than 6 cards, the remaining
-// slots are filled automatically with the newest posts.
+// ※ 表示は「編集した内容そのもの」だけに一致させる：
+//   記事からの自動補完は行わない（Keystatic に無いカードが
+//   サイトに出る＝編集画面と表示の不整合になるため）。
+//   デッキの段数（CSS の nth-child 1〜4）に合わせて最大4枚。
 const folioEntry = await getEntry('folio', 'folio');
 const folioData: any = folioEntry?.data || {};
-const MAX_CARDS = 6; // 2列 × 3段
-
-const chaptersFrom = (list: Post[]) =>
-  list.map((p, i) => ({
-    chapterNumber: `CHAPTER ${String(i + 1).padStart(2, '0')}`,
-    category: 'Page',
-    title: p.title,
-    description: p.description || '',
-    pageRange: 'p. 01–24',
-    href: p.href,
-    heroImage: p.heroImage || null,
-  }));
+const MAX_CARDS = 4; // CSS .book-page-card:nth-child(1..4) の段数
 
 const configuredVolumes = Array.isArray(folioData.volumes) ? folioData.volumes : [];
-const volumes: DeckVolume[] =
-  configuredVolumes.length > 0
-    ? configuredVolumes.map((v: any, vi: number) => {
-        // 手動指定のカードを優先し、MAX_CARDS まで自動補完する。
-        const manual = (v.chapters ?? []).slice(0, MAX_CARDS);
-        const usedIds = new Set(manual.map((c: any) => normalizeId(c?.article)).filter(Boolean));
-        const auto = posts.filter((p) => !usedIds.has(p.id)).slice(0, MAX_CARDS - manual.length);
-        const cards = [...manual, ...auto].slice(0, MAX_CARDS);
-
+const volumes: DeckVolume[] = configuredVolumes
+  .map((v: any, vi: number) => {
+    const cards = (v.chapters ?? []).slice(0, MAX_CARDS);
+    return {
+      volumeNumberText: v.title || `Vol. ${['I', 'II', 'III'][vi] || vi + 1}`,
+      title: v.title || '',
+      badge: v.badge || '',
+      foliosCountText: `${cards.length} Folios`,
+      chapters: cards.map((c: any, ci: number) => {
+        const id = normalizeId(c.article);
+        const entry = id ? byId.get(id) : null;
         return {
-          volumeNumberText: v.title || `Vol. ${['I', 'II', 'III'][vi] || vi + 1}`,
-          title: v.title || '',
-          badge: v.badge || '',
-          foliosCountText: `${cards.length} Folios`,
-          chapters: cards.map((c: any, ci: number) => {
-            const isManual = manual.includes(c);
-            const id = isManual ? normalizeId(c.article) : c.id;
-            const entry = id ? byId.get(id) : null;
-            return {
-              chapterNumber: `CHAPTER ${String(ci + 1).padStart(2, '0')}`,
-              category: 'Page',
-              title: isManual ? (c.title || entry?.title || '') : (entry?.title ?? ''),
-              description: isManual ? (c.description || '') : (entry?.description ?? ''),
-              pageRange: 'p. 01–24',
-              href: entry ? entry.href : null,
-              heroImage: entry?.heroImage ?? null,
-            };
-          }),
+          chapterNumber: `CHAPTER ${String(ci + 1).padStart(2, '0')}`,
+          category: 'Page',
+          title: c.title || entry?.title || '',
+          description: c.description || entry?.description || '',
+          pageRange: 'p. 01–24',
+          href: entry ? entry.href : null,
+          heroImage: entry?.heroImage ?? null,
         };
-      })
-    : [
-        {
-          volumeNumberText: 'Vol. I • Shinto as Cultural OS',
-          title: 'Shinto as Cultural OS',
-          badge: '',
-          foliosCountText: `${bundle.length} Folios`,
-          chapters: chaptersFrom(bundle),
-        },
-      ];
+      }),
+    };
+  })
+  // カード未設定のデッキは見出しだけ残さず非表示（空のデッキを出さない）
+  .filter((vol) => vol.chapters.length > 0);
 ---
 
 <PortalLayout title={pageData.seoTitle || 'Hidden Treasure Kyoto Blog – Reflections on Japanese Culture, Shinto and Aesthetics'} hero={pageData.hero}>
@@ -302,9 +286,6 @@ const volumes: DeckVolume[] =
                       loading="lazy"
                     />
                   )}
-                  <div class="absolute top-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 text-xs font-semibold text-[#865138] border border-gray-200 shadow-xs">
-                    {chapter.chapterNumber}
-                  </div>
                   {/* 第2段階: 上部イメージのホバーで記事紹介（上の記事紹介と同じ形式） */}
                   {chapter.href && (
                     <a href={chapter.href} class="block">

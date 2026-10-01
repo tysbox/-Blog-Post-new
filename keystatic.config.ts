@@ -69,12 +69,30 @@ export default config({
         // --- フロントマター（JSON → MDX 変換で生成した項目と完全一致） ---
         // タイトルは Markdown が使えます（**太字** / *斜体*）。描画側で解釈されます。
         // Backing field for slugField. Value must equal the filename (no extension).
-        slug: fields.slug({ name: { label: 'スラッグ (Slug)' } }),
+        // 命名規約: 公開日（YYYY-MM-DD）を先頭に付ける（Keystatic の一覧が slug 昇順＝
+        // 日付順で並ぶため／上流 Issue #1579 参照）。URL にはこの接頭辞を出さない。
+        // 新規記事を作る時は slug に `2026-06-01-new-post` のように日付を付けてください。
+        slug: fields.slug({
+          name: {
+            label: 'スラッグ (Slug)',
+            description:
+              'ファイル名と一致させる必要があります。公開日（YYYY-MM-DD）を先頭に付けると Keystatic の一覧が日付順に並びます（例: 2025-12-08-from-kyoto-to-the-world）。URL には日付部分を使いません。',
+          },
+        }),
 
         // Display title, independent of the slug, freely editable.
         title: fields.text({
           label: 'タイトル (Title)',
           multiline: true,
+        }),
+
+        // 表示順 No.（通常は空）。
+        //   ・空のまま = 公開日の昇順で 1,2,3… と自動採番（src/utils/postOrder.ts）
+        //   ・数字を入れる = その数字で表示順を固定（他記事は自動で繰り上がる）
+        order: fields.number({
+          label: '表示順 No.（通常は空）',
+          description:
+            '通常は空のままで問題ありません（公開日の順で 1,2,3… と自動採番されます）。順序を日付から切り離したい場合だけ数字を入れます。',
         }),
 
         description: fields.text({
@@ -84,6 +102,8 @@ export default config({
 
         pubDate: fields.date({
           label: '公開日 (Date Posted)',
+          description:
+            '並び順と Index の NO. はこの「公開日」で決まります。15/16 の間に補足記事を差し込むときは、ここを 15 と 16 の間の日付に設定してください（ファイル名の日付も揃えると管理画面の一覧も同じ順になります）。',
           validation: { isRequired: true },
         }),
 
@@ -440,9 +460,10 @@ export default config({
     }),
 
     /**
-     * Folio（Collected Volumes & Archives）: src/content/portal/folio.json
+     * Folio（Collected Volumes & Archives）: src/content/folio/folio.json
      * フロントページ下部のデッキを独立編集する。
-     * 1行に2デッキが並び、各デッキには2列×3段＝最大6枚のカードを積む。
+     * ※「編集したカード＝そのまま表示」にするため、記事からの自動補完は行わない。
+     *   デッキの段数（CSS の nth-child 1〜4）＝最大4枚。
      */
     folio: singleton({
       label: 'Folio（Collected Volumes & Archives）',
@@ -469,9 +490,9 @@ export default config({
                 }),
               }),
               {
-                label: 'カード（最大6枚）',
+                label: 'カード（最大4枚）',
                 description:
-                  '2列×3段＝最大6枚。指定した順番で積まれます。6枚に満たない場合は残りを最新記事から自動で補完します。',
+                  'デッキの段数に合わせて最大4枚。指定したカードだけがそのまま表示されます（記事からの自動補完は行いません）。',
               },
             ),
           }),

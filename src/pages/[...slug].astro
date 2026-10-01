@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import { permalinkOf } from '../utils/postOrder';
 
 /**
  * 旧ルート `/{slug}` → 正本 `/blog/{slug}` への 308 リダイレクト。
@@ -11,14 +12,23 @@ import { getCollection } from 'astro:content';
  * 上位集合のため、MDX を正本とし JSON 側は廃止した。
  * 既存のURL・ブックマーク・検索流入を壊さないため、
  * このページで恒久リダイレクト(static ビルドでは meta-refresh HTML)を配信する。
+ *
+ * 記事ファイル名は `2025-12-08-slug.mdx` のように公開日付けにしている
+ * （Keystatic の一覧が slug 昇順＝日付順で並ぶため。see src/utils/postOrder.ts）。
+ * URL は従来どおり日付なしの slug を使う。
  */
 export async function getStaticPaths() {
 	const posts = await getCollection('blog');
 
-	return posts.map((post) => ({
-		params: { slug: post.id },
-		props: { target: `/blog/${post.id}` },
-	}));
+	// `/{slug}` → `/blog/{slug}` の308リダイレクト。ファイル名の日付接頭辞は
+	// URL に出さない（ファイル名だけが日付付きにして Keystatic の一覧を日付順に並べる）。
+	return posts.map((post) => {
+		const permalink = permalinkOf(post.id);
+		return {
+			params: { slug: permalink },
+			props: { target: `/blog/${permalink}` },
+		};
+	});
 }
 
 const { target } = Astro.props;

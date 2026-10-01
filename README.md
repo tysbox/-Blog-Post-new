@@ -91,6 +91,9 @@ Keystatic の管理画面は **ローカル開発時のみ**利用できます�
 
 サイト全体の設定値（レイアウトが直接読み込む静的 JSON）は `src/content/settings/site.json` です。
 
+編集の全体像（ルーティング、ファイル命名、Index 番号の決まり方、Folio／日本語版の扱いなど）は
+**[MANUAL.md](MANUAL.md)** にまとめています。
+
 ## ディレクトリ構成
 
 ```text

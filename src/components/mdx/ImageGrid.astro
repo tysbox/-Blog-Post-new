@@ -1,6 +1,8 @@
 ---
 // 記事内画像グリッド — /tmp/mablogx/src/App.tsx L631-671 100% 準拠
 // 既存テキスト（label / caption）は変更しない。
+// ※ 画像左上の自動ナンバリング（FIG. xx）は撤去。label / caption は
+//   Keystatic で空欄なら非表示のまま（描画はデータ有无で判定）。
 interface ImageItem {
   src: string;
   label?: string;
@@ -9,29 +11,29 @@ interface ImageItem {
 
 interface Props {
   images?: ImageItem[];
-  figureOffset?: number;
 }
 
-const { images, figureOffset = 0 } = Astro.props as Props;
+const { images } = Astro.props as Props;
 const list = (Array.isArray(images) ? images : []).filter(Boolean);
 ---
 
 {list.length > 0 && (
-  <div class={`grid grid-cols-1 ${list.length > 1 ? 'md:grid-cols-2' : 'max-w-2xl mx-auto'} gap-6 my-8`}>
+  <div class={`grid grid-cols-1 gap-6 my-8 ${
+    list.length > 1
+      ? 'md:grid-cols-2'
+      // 1枚のみ: 横並び2枚（各カラム幅 = (W - gap)/2 = 正方形 → 高さ (W-24)/2）と
+      // 高さを揃えるため、幅を「1.5 × 高さ」= 75% - 18px にして 3:2 で表示する。
+      : 'md:w-[calc(75%_-_18px)] mx-auto'
+  }`}>
     {list.map((img, imgIdx) => (
       <div class="flex flex-col space-y-2 group">
-        <div class="aspect-square w-full bg-[#f0edea] overflow-hidden shadow-sm relative">
+        <div class={`w-full bg-[#f0edea] overflow-hidden shadow-sm relative ${list.length > 1 ? 'aspect-square' : 'aspect-[3/2]'}`}>
           <img
             src={img.src}
             alt={img.label || 'Article image'}
             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
-          <div class="absolute top-3 left-3 bg-[#fcf9f5]/90 backdrop-blur-sm px-2 py-1">
-            <span class="font-sans text-[10px] uppercase tracking-wider text-[#1b1c1a] font-semibold">
-              FIG. {String(figureOffset + imgIdx + 1).padStart(2, '0')}
-            </span>
-          </div>
         </div>
         <div class="flex flex-col space-y-1">
           {img.label && <span class="font-sans text-xs font-semibold text-[#1b1c1a]">{img.label}</span>}

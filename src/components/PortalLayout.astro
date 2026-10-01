@@ -4,6 +4,7 @@ import Footer from './Footer.astro';
 import CloudflareBeacon from './CloudflareBeacon.astro';
 import { getEntry, getCollection } from 'astro:content';
 import { timestamp } from '../utils/date';
+import { permalinkOf } from '../utils/postOrder';
 import '../styles/global.css';
 
 interface FusumaImage {
@@ -35,7 +36,7 @@ const latestUrl = (() => {
       timestamp(b.data.updatedDate, b.data.pubDate) -
       timestamp(a.data.updatedDate, a.data.pubDate),
   );
-  return sorted[0] ? `/blog/${sorted[0].id}` : '/';
+  return sorted[0] ? `/blog/${permalinkOf(sorted[0].id)}` : '/';
 })();
 
 // FUSUMA は画像とテキストを分けて管理する。どちらも最大5件。
@@ -90,16 +91,10 @@ const slideCount = slides.length;
           <div id="fusuma-left-door" class="fusuma-panel fusuma-left">
             <div class="fusuma-handle-left"></div>
             <div class="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-black/10"></div>
-            <div class="absolute top-8 left-8 flex flex-col space-y-2 opacity-30 text-[#1b1c1a]">
-              <span class="text-xl [writing-mode:vertical-rl] tracking-widest font-serif">静寂</span>
-            </div>
           </div>
           <div id="fusuma-right-door" class="fusuma-panel fusuma-right">
             <div class="fusuma-handle-right"></div>
             <div class="absolute inset-0 bg-gradient-to-l from-black/5 via-transparent to-black/10"></div>
-            <div class="absolute bottom-8 right-8 flex flex-col space-y-2 opacity-30 text-[#1b1c1a]">
-              <span class="text-xl [writing-mode:vertical-rl] tracking-widest font-serif">幽玄</span>
-            </div>
           </div>
         </div>
 

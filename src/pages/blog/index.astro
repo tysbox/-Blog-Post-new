@@ -4,6 +4,7 @@
 import { getCollection } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
 import { stripMarkdown } from '../../utils/richText';
+import { permalinkOf } from '../../utils/postOrder';
 import config from '../../content/config/config.json';
 import { timestamp, formatYear } from '../../utils/date';
 
@@ -38,7 +39,7 @@ const readMinutes = (p: (typeof posts)[number]) => {
     {/* Lead article */}
     {lead && (
       <section class="scroll-mt-28 space-y-6 pt-4">
-        <a href={`/blog/${lead.id}`} class="block group">
+        <a href={`/blog/${permalinkOf(lead.id)}`} class="block group">
           <div class="w-full relative bg-[#f6f3f0] overflow-hidden mb-6">
             <div class="w-full h-[300px] sm:h-[420px] overflow-hidden">
               {lead.data.heroImage && (
@@ -80,7 +81,7 @@ const readMinutes = (p: (typeof posts)[number]) => {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           {rest.map((post) => (
-            <a href={`/blog/${post.id}`} class="group flex flex-col">
+            <a href={`/blog/${permalinkOf(post.id)}`} class="group flex flex-col">
               <div class="aspect-[3/2] w-full bg-[#f0edea] overflow-hidden shadow-sm relative">
                 {post.data.heroImage && (
                   <img

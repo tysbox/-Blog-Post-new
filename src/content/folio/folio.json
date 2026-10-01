@@ -4,7 +4,28 @@
     {
       "title": "Vol. I • Shinto as Cultural OS",
       "badge": "",
-      "chapters": []
+      "chapters": [
+        {
+          "title": "Chapter 1 : Pokémon - Why We Are Drawn to a World That Never Ends part 1",
+          "description": "[Chapter 1] Special Edition Part 1\nHave you ever noticed that the worlds we return to most often are the ones where nothing is truly alien?\nWhen was the last time you finished something and felt nothing more than that it was time to begin again?\n",
+          "article": "src/content/blog/chapter-1--pokmon---why-we-are-drawn-to-a-world-that-never-ends-part-1.mdx"
+        },
+        {
+          "title": "Chapter 1 : Pokémon - Why We Are Drawn to a World That Never Ends Part 2",
+          "description": "[Chapter 1] Special Edition Part 2　\n \nIs it possible that we love what we love precisely because it never quite belongs to us?\n \nHow much of what we find \"natural\" was never designed at all, but inherited?\n",
+          "article": "src/content/blog/chapter-1--pokmon---why-we-are-drawn-to-a-world-that-never-ends-part-2.mdx"
+        },
+        {
+          "title": "Episode 1 -- Shinto as Japanese Cultural OS Part3",
+          "description": "The quiet foundation beneath behavior, values, and everyday life",
+          "article": "src/content/blog/shinto-as-japanese-cultural-os-pt3.mdx"
+        },
+        {
+          "title": "Episode 1 -- Shinto as Japanese Cultural OS Part2",
+          "description": "[Episode 1]  Discovering the Cultural OS  Part2\nHow Japanese mythology became a prototype of conduct and purity came to be understood as a process rather than a rule, and how this sensibility shaped a culture capable of both acceptance and resistance.\n\n\n\n\n\nImage: 手水屋（tyouzuya）A purification pavilion at the shrine entrance\nAt the tyouzuya, visitors ritually cleanse their hands (and mind) before entering the shrine.",
+          "article": "src/content/blog/shinto-as-japanese-cultural-os-pt2.mdx"
+        }
+      ]
     }
   ]
 }
