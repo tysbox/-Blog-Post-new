@@ -43,3 +43,6 @@ backup/
 .idea/
 .env*.local
 node_modules
+# iCloud 同期の重複コピー（"name 2" / "name 2.sh" 等）はコミット対象外
+* 2
+* 2.*
