@@ -104,23 +104,24 @@ const slideCount = slides.length;
         </div>
 
         <div class="absolute inset-0 w-full h-full z-10 overflow-hidden">
-          {slides.filter((s) => s.src).map((slide, idx) => (
-            <div
-              class={`hero-slide absolute inset-0 bg-cover bg-center${idx === 0 ? ' active' : ''}`}
-              style={`background-image: url("${slide.src}");`}
-              title={slide.alt}
-              data-slide={idx}
-            >
-              <div class="absolute inset-0 bg-black/35"></div>
-            </div>
-          ))}
+          {slides.map((slide, idx) =>
+            slide.src ? (
+              <div
+                class={`hero-slide absolute inset-0 bg-cover bg-center${idx === 0 ? ' active' : ''}`}
+                style={`background-image: url("${slide.src}");`}
+                title={slide.alt}
+                data-slide={idx}
+              >
+                <div class="absolute inset-0 bg-black/35"></div>
+              </div>
+            ) : null,
+          )}
         </div>
 
         <div class="absolute inset-0 z-20 pointer-events-none bg-gradient-to-t from-[#070714] via-transparent to-[#070714]/40 mix-blend-multiply"></div>
 
         <div id="hero-text-block" class="hero-text-block active absolute inset-0 z-30 flex flex-col items-center justify-center text-center p-6 sm:p-12 pointer-events-none">
           <div class="relative flex flex-col items-center max-w-3xl px-4">
-            <div class="absolute -inset-24 rounded-full bg-[#3a2d54]/40 blur-3xl pointer-events-none"></div>
             <h2 id="hero-slide-title" class="relative text-3xl sm:text-4xl md:text-6xl font-bold mb-4 text-white font-serif tracking-tight drop-shadow-xl hero-title leading-tight">{firstSlide?.title}</h2>
             <p id="hero-slide-subtitle" class="relative text-lg md:text-xl max-w-2xl mx-auto text-[#f0edea] italic font-serif leading-relaxed drop-shadow-md hero-subtitle">{firstSlide?.subtitle}</p>
           </div>

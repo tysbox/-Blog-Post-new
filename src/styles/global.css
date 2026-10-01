@@ -307,7 +307,8 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 	position: absolute;
 	inset: 0;
 	opacity: 0;
-	transition: opacity 2s ease-in-out;
+	/* fusuma-hero.js のフェーズに合わせてフェードイン/アウトとも 3s */
+	transition: opacity 3s ease-in-out;
 	background-size: cover;
 	background-position: center;
 }
@@ -316,7 +317,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 .hero-slide.highlight {
 	filter: contrast(1.08) brightness(1.04);
-	transition: opacity 2s ease-in-out, filter 1s ease;
+	transition: opacity 3s ease-in-out, filter 1s ease;
 }
 
 .hero-text-block {
@@ -337,12 +338,25 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 	pointer-events: auto;
 }
 
+/* スモーク風ハロー: グロー要素（blur/グラデーション glow）は撤去し、
+   代わりにテキスト周囲に text-shadow を重ねて近似する。
+   text-shadow は filter/合成レイヤーを作らないので、フェード中の再描画による
+   一瞬の光り（フィリッカーのような瞬き）の原因にならない。
+   外側ほど広く淡く、内側は写真の上での可読性のための暗影（従来どおり）。 */
 .hero-title {
-	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+	text-shadow:
+		0 0 0.9em rgba(58, 45, 84, 0.34),
+		0 0 0.4em rgba(58, 45, 84, 0.38),
+		0 0 0.15em rgba(58, 45, 84, 0.3),
+		0 2px 8px rgba(0, 0, 0, 0.7);
 	white-space: pre-wrap;
 }
 .hero-subtitle {
-	text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+	text-shadow:
+		0 0 0.9em rgba(58, 45, 84, 0.26),
+		0 0 0.4em rgba(58, 45, 84, 0.3),
+		0 0 0.15em rgba(58, 45, 84, 0.24),
+		0 1px 6px rgba(0, 0, 0, 0.6);
 	white-space: pre-wrap;
 }
 
@@ -449,7 +463,33 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 	box-shadow: 0 10px 20px -4px rgba(60, 45, 35, 0.12), 0 4px 8px -2px rgba(60, 45, 35, 0.05);
 }
 
+/* 展開時に手前のカードで隠れるタイトルが読めるよう、半行ぶん下方へ寄せる
+   （カードの寸法・重なり量は変えない。ポインタの下で動かないよう、ホバー中も位置を維持） */
+.book-card-title {
+	transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.book-deck-container:hover .book-page-card:nth-child(n + 2) .book-card-title {
+	transform: translateY(12px);
+}
+
+/* フォリオカードの2段階ホバー
+   第1段階: カード（下部タイトル）へのホバー/タッチ → 最前面へ浮上（イメージ＋タイトル）
+   第2段階: 上部イメージ（.book-card-hero）へのホバー/タッチ → 内容要約を表示
+   要約は .book-card-hero の子に置いているため、要約上へポインタが移っても
+   ホバーが途切れず、要約内のリンクも操作できる（判定のちらつきが起きない）。 */
+.book-card-preview {
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.3s ease;
+}
+.book-card-hero:hover .book-card-preview {
+	opacity: 1;
+	pointer-events: auto;
+}
+
 .book-page-card:hover {
+	/* 下に重なっているフォリオも、ホバーで最前面へ出してタイトル/内容要約を読めるようにする */
+	z-index: 50 !important;
 	box-shadow: 0 20px 32px -4px rgba(139, 89, 62, 0.22), 0 8px 16px -2px rgba(139, 89, 62, 0.12) !important;
 	border-color: rgba(163, 106, 79, 0.5) !important;
 }
@@ -487,6 +527,8 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 	.hero-slide,
 	.hero-text-block,
 	.book-page-card,
+	.book-card-title,
+	.book-card-preview,
 	.animate-fade-in {
 		transition: none !important;
 		animation: none !important;

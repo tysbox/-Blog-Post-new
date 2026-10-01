@@ -216,7 +216,8 @@ const indexRange = `All Articles · ${indexArticles.length}`;
         <span class="font-sans text-xs uppercase tracking-widest font-semibold text-[#865138]">Original Text / 日本語原文</span>
         <span class="font-sans text-xs text-[#51443d]">間 MA 編集室（BiScène Kyoto）</span>
       </div>
-      <div class="font-serif text-sm sm:text-base text-[#1b1c1a] leading-relaxed mb-4 font-light whitespace-pre-wrap bear-prose">
+      {/* 日本語原文: Index などのラベルと同じ茶色（#6f4229）。#865138 より1段濃い。 */}
+      <div class="font-serif text-sm sm:text-base text-[#6f4229] leading-relaxed mb-4 font-light whitespace-pre-wrap bear-prose">
         {(post.data.japaneseText as string) || ''}
       </div>
     </div>
