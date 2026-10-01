@@ -21,16 +21,27 @@ if [[ "$restore_mode" == "--ensure-link" ]]; then
     exit 0
   fi
 
-  # node_modules is a real directory (e.g. after npm ci) — symlink or move to cache
+  # node_modules is a real directory (e.g. after npm ci) — move it to the cache
+  # and replace it with a symlink.
+  #
+  # 注意: 旧実装はキャッシュが既に存在すると「実体を rm -rf してリンクを作る」
+  # だけだったため、インストール済みの依存がすべて消えていた。
+  # 実体をキャッシュへ移すか、キャッシュ側を正とするかを見分けて処理する。
   if [[ -d "$repo_node_modules" && ! -L "$repo_node_modules" ]]; then
+    # キャッシュの親ディレクトリが未作成だと mv が失敗するため必ず用意する。
     mkdir -p "$cache_root"
-    if [[ -d "$external_node_modules" ]]; then
-      # Cache already exists — just remove the real dir and symlink to cache (fast)
+    if [[ -n "$(ls -A "$external_node_modules" 2>/dev/null)" ]]; then
+      # キャッシュに既に依存が入っている場合、実体を捨てると消える。
+      # プロジェクト内の実体を破棄し、キャッシュ側を正とする。
+      echo "node_modules link check: cache already populated, keeping cache" >&2
       rm -rf "$repo_node_modules"
-    else
-      # No cache — move real dir to cache (slow, first time only)
-      mv "$repo_node_modules" "$external_node_modules"
+      ln -s "$external_node_modules" "$repo_node_modules"
+      echo "node_modules symlinked to cache: $external_node_modules"
+      exit 0
     fi
+    # キャッシュが空なので実体をそのまま移す（iCloud 同期対象から外れる）
+    rmdir "$external_node_modules" 2>/dev/null || true
+    mv "$repo_node_modules" "$external_node_modules"
     ln -s "$external_node_modules" "$repo_node_modules"
     echo "node_modules symlinked to cache: $external_node_modules"
     exit 0

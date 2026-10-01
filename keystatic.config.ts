@@ -20,8 +20,7 @@ import { config, fields, collection, singleton } from '@keystatic/core';
  *   - collection : `{slug}` がエントリのスラグに置換される
  *   - singleton  : `{branch}` のみ置換される(固定URL)
  *
- * フロントマター/JSON構造は `src/content.config.ts` のZodスキーマと
- * `scripts/convert-tina-json-to-mdx.mjs` の `buildFrontmatter()` と一致させている。
+ * フロントマター/JSON構造は `src/content.config.ts` のZodスキーマと一致させている。
  * 特にブロックの識別子は Keystatic 標準の `_type` ではなく、既存JSONに合わせて
  * `_template` を使用・保存する（`fields.blocks` は `_type` を書いてしまうため未使用）。
  */

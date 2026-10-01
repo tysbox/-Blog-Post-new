@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SOURCE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-TARGET_ROOT="${ICLOUD_BACKUP_DIR:-/Users/tystudio/Desktop/Blog-Post}"
+TARGET_ROOT="${ICLOUD_BACKUP_DIR:-$HOME/Desktop/Blog-Post-backup}"
 
 mkdir -p "$TARGET_ROOT"
 
@@ -21,7 +21,6 @@ rsync -a --delete \
   --exclude 'dist' \
   --exclude '.DS_Store' \
   --exclude 'astro.log' \
-  --exclude 'tina.log' \
   --exclude 'public/admin' \
   --exclude 'admin' \
   "$SOURCE_ROOT/" "$TARGET_ROOT/"

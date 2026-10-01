@@ -5,9 +5,10 @@ import { getCollection } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
 import { stripMarkdown } from '../../utils/richText';
 import config from '../../content/config/config.json';
+import { timestamp, formatYear } from '../../utils/date';
 
 const posts = (await getCollection('blog')).sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+  (a, b) => timestamp(b.data.pubDate) - timestamp(a.data.pubDate),
 );
 
 const [lead, ...rest] = posts;
@@ -92,7 +93,7 @@ const readMinutes = (p: (typeof posts)[number]) => {
               </div>
               <div class="flex flex-col space-y-1 pt-4">
                 <div class="flex items-center gap-2 text-[10px] font-sans uppercase tracking-[0.2em] text-[#865138]">
-                  <span>{new Date(post.data.pubDate).getFullYear()}</span>
+                  <span>{formatYear(post.data.pubDate)}</span>
                   <span class="text-[#d6c3ba]">•</span>
                   <span>{readMinutes(post)} min read</span>
                 </div>

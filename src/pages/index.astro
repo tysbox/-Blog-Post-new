@@ -6,6 +6,7 @@
 import PortalLayout from '../components/PortalLayout.astro';
 import PortalShelf from '../components/PortalShelf.astro';
 import { getEntry, getCollection } from 'astro:content';
+import { timestamp } from '../utils/date';
 
 const homePage = await getEntry('portal', 'home');
 const pageData: any = homePage?.data || {};
@@ -21,6 +22,26 @@ type Post = {
   ts: number;
 };
 
+// Anthology & Folios のデッキ。2つの生成分岐（folio.json 由来 / 自動補完）を
+// 1つの型に揃えることで、テンプレート側のコールバック引数が型付けされる。
+type DeckChapter = {
+  chapterNumber: string;
+  category: string;
+  title: string;
+  description: string;
+  pageRange: string;
+  href: string | null;
+  heroImage: string | null;
+};
+
+type DeckVolume = {
+  volumeNumberText: string;
+  title: string;
+  badge: string;
+  foliosCountText: string;
+  chapters: DeckChapter[];
+};
+
 const posts: Post[] = allPosts
   .map((p) => ({
     id: p.id,
@@ -28,7 +49,7 @@ const posts: Post[] = allPosts
     description: p.data.description,
     heroImage: p.data.heroImage || undefined,
     href: `/blog/${p.id}`,
-    ts: new Date(p.data.updatedDate || p.data.pubDate).valueOf(),
+    ts: timestamp(p.data.updatedDate, p.data.pubDate),
   }))
   .sort((a, b) => b.ts - a.ts);
 
@@ -39,7 +60,8 @@ const normalizeId = (value: unknown): string | null => {
   if (!value) return null;
   if (typeof value === 'object') {
     const o = value as Record<string, unknown>;
-    const id = o.id || o.value || o.sys?.filename || o.sys?.relativePath;
+    const sys = o.sys as Record<string, unknown> | undefined;
+    const id = o.id || o.value || sys?.filename || sys?.relativePath;
     return typeof id === 'string' ? id.replace(/\.(mdx|md|json)$/, '') : null;
   }
   if (typeof value !== 'string') return null;
@@ -118,7 +140,7 @@ const chaptersFrom = (list: Post[]) =>
   }));
 
 const configuredVolumes = Array.isArray(folioData.volumes) ? folioData.volumes : [];
-const volumes =
+const volumes: DeckVolume[] =
   configuredVolumes.length > 0
     ? configuredVolumes.map((v: any, vi: number) => {
         // 手動指定のカードを優先し、MAX_CARDS まで自動補完する。

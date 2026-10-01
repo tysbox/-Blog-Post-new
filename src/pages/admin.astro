@@ -1,3 +1,30 @@
 ---
-return Astro.redirect('/admin/index.html');
+/**
+ * 管理画面の入口。
+ * - ローカル開発: Keystatic 管理画面 (/keystatic) へリダイレクトする。
+ * - 本番ビルド : Keystatic は dev 専用（astro.config.mjs 参照）のため案内ページを表示する。
+ * 旧 Tina 管理画面 (/admin/index.html) は撤去済み。
+ */
+if (import.meta.env.DEV) {
+  return Astro.redirect('/keystatic');
+}
 ---
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>管理画面について | 間 MA</title>
+  </head>
+  <body style="font-family: system-ui, sans-serif; max-width: 40rem; margin: 4rem auto; padding: 0 1.5rem; line-height: 1.7; color: #1a1a1a;">
+    <h1 style="font-size: 1.5rem;">管理画面について</h1>
+    <p>このサイトのコンテンツ編集には <strong>Keystatic</strong> を使用します。</p>
+    <p>
+      Keystatic の管理画面は<strong>ローカル開発時のみ</strong>利用できます。
+      ローカルで <code>npm run dev</code> を起動し、<code>http://127.0.0.1:4321/keystatic</code> を開いてください。
+    </p>
+    <p>本番環境（Cloudflare Pages）では管理画面は公開されません。</p>
+  </body>
+</html>
+

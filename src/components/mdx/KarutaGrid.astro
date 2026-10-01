@@ -180,7 +180,7 @@ const num = (n: number) => String(n).padStart(2, '0');
     const next = root.querySelector('[data-karuta-next]');
     if (pages.length <= 1) return;
     let current = 0;
-    const show = (i) => {
+    const show = (i: number) => {
       current = (i + pages.length) % pages.length;
       pages.forEach((p, idx) => {
         p.classList.toggle('hidden', idx !== current);

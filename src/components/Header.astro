@@ -1,6 +1,7 @@
 ---
 import { getEntry, getCollection } from 'astro:content';
 import config from '../content/config/config.json';
+import { timestamp } from '../utils/date';
 
 // 新ポータル準拠: Home / Latest Writing(最新記事へ) / About & Contact + BiScèneロゴ
 // 既存テキスト・画像の書き換えなし。リンク先のみ既存データから解決する。
@@ -27,7 +28,7 @@ if (lpLogo) {
 const allPosts = await getCollection('blog');
 const sortedContent = allPosts
   .map((post) => ({
-    date: new Date(post.data.updatedDate || post.data.pubDate).valueOf(),
+    date: timestamp(post.data.updatedDate, post.data.pubDate),
     href: `/blog/${post.id}`,
   }))
   .sort((a, b) => b.date - a.date);

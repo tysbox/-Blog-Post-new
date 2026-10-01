@@ -7,6 +7,7 @@ import ImageGrid from '../../components/mdx/ImageGrid.astro';
 import KarutaGrid from '../../components/mdx/KarutaGrid.astro';
 import { richTextToHtml, stripMarkdown } from '../../utils/richText';
 import { extractToc, addHeadingIds } from '../../utils/toc';
+import { timestamp } from '../../utils/date';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -16,7 +17,7 @@ export async function getStaticPaths() {
   //   sorted[i-1] = 1 つ前の記事 → prev（←）
   //   sorted[i+1] = 1 つ後の記事 → next（→）
   const sorted = [...posts].sort(
-    (a, b) => new Date(a.data.pubDate).valueOf() - new Date(b.data.pubDate).valueOf(),
+    (a, b) => timestamp(a.data.pubDate) - timestamp(b.data.pubDate),
   );
 
   return posts.map((post) => {
@@ -84,7 +85,7 @@ const readMinutes = (() => {
 
 // Index（目次）: 第1回目から最新まで、公開順に全記事を列挙する。
 const allPosts = (await getCollection('blog')).sort(
-  (a, b) => new Date(a.data.pubDate).valueOf() - new Date(b.data.pubDate).valueOf(),
+  (a, b) => timestamp(a.data.pubDate) - timestamp(b.data.pubDate),
 );
 
 const indexArticles = allPosts.map((p, i) => ({
