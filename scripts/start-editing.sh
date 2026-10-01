@@ -299,15 +299,53 @@ fi
 # ---------------------------------------------------------------------------
 # 4) 既にサーバーが動いていればブラウザだけ開く
 # ---------------------------------------------------------------------------
-# open_browsers は Keystatic 管理画面と HTML 表示の両方を開く。
+# open_browsers は Keystatic 管理画面と HTML 表示を Safari の
+# 同一ウィンドウ・別タブで開く。
 # 編集中に start.command を再実行することは稀なので、HTML は毎回新規タブで
 # 開いてよい（既存のタブへフォーカスさせる要件はない）。
 # HTML 表示の自動オープンは環境変数 MA_OPEN_SITE=0 で無効化できる。
 MA_OPEN_SITE="${MA_OPEN_SITE:-1}"
 open_browsers() {
-  open "${ADMIN_URL}"
   if [ "${MA_OPEN_SITE}" = "1" ]; then
-    open "${BASE_URL}/"
+    if ! osascript - "${ADMIN_URL}" "${BASE_URL}/" <<'APPLESCRIPT'
+on run argv
+  set adminURL to item 1 of argv
+  set siteURL to item 2 of argv
+  tell application "Safari"
+    activate
+    if (count of windows) = 0 then
+      make new document with properties {URL:adminURL}
+      tell front window to make new tab with properties {URL:siteURL}
+    else
+      tell front window
+        set current tab to (make new tab with properties {URL:adminURL})
+        make new tab with properties {URL:siteURL}
+      end tell
+    end if
+  end tell
+end run
+APPLESCRIPT
+    then
+      open -a Safari "${ADMIN_URL}"
+      open -a Safari "${BASE_URL}/"
+    fi
+  else
+    if ! osascript - "${ADMIN_URL}" <<'APPLESCRIPT'
+on run argv
+  set adminURL to item 1 of argv
+  tell application "Safari"
+    activate
+    if (count of windows) = 0 then
+      make new document with properties {URL:adminURL}
+    else
+      tell front window to set current tab to (make new tab with properties {URL:adminURL})
+    end if
+  end tell
+end run
+APPLESCRIPT
+    then
+      open -a Safari "${ADMIN_URL}"
+    fi
   fi
   return 0
 }
