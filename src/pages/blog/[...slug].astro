@@ -9,6 +9,7 @@ import { richTextToHtml, stripMarkdown } from '../../utils/richText';
 import { extractToc, addHeadingIds } from '../../utils/toc';
 import { orderPosts, permalinkOf } from '../../utils/postOrder';
 import { timestamp } from '../../utils/date';
+import { getUiLabels } from '../../utils/uiLabels';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -35,6 +36,9 @@ export async function getStaticPaths() {
 }
 
 const { post, prev, next } = Astro.props as any;
+
+// UI ラベル（Keystatic「UI ラベル」で編集可能）
+const L = (await getUiLabels()).article;
 
 const {
   title,
@@ -74,7 +78,17 @@ const japaneseHtml = (() => {
 
 // Index は textBlock の見出しから自動生成（既存本文の書き換えなし）。
 const tocEntries = extractToc(contentSections);
-// カルタは全記事共通で必ず出力されるため、Index にも常に載せる。
+
+// 記事固有のカルタブロック（Keystatic contentSections の karutaGrid）。
+// 入力があればそれを優先し、無ければ KarutaGrid 側で全記事共通の karuta.json を使う。
+const karutaSection = (contentSections || []).find(
+  (s: any) => s?._template === 'karutaGrid',
+);
+const karutaTitle = karutaSection?.karutaTitle || '';
+const karutaCards = Array.isArray(karutaSection?.karutaCards)
+  ? karutaSection.karutaCards
+  : [];
+// カルタは記事固有データ or 全記事共通データのいずれかで必ず出力される。
 const hasKaruta = true;
 
 // Index のアンカーと本文見出し id を対応させる
@@ -121,7 +135,7 @@ const indexArticles = allPosts.map(({ post: p, numberText }) => ({
 }));
 
 // Index トリガーのラベル（全記事数を表す）
-const indexRange = `All Articles · ${indexArticles.length}`;
+const indexRange = `${L.tocAllArticles} · ${indexArticles.length}`;
 
 // 読了時間（本文の文字数ベース）
 ---
@@ -131,11 +145,11 @@ const indexRange = `All Articles · ${indexArticles.length}`;
   <section class="max-w-4xl mx-auto w-full px-6 md:px-12 lg:px-0 pt-8 pb-6">
     <div class="flex flex-col space-y-3">
       <div class="flex flex-wrap items-center gap-2 text-xs font-sans tracking-widest text-[#865138] uppercase">
-        <span class="bg-[#f0edea] px-2.5 py-1 font-semibold text-[#6f4229]">Essay</span>
+        <span class="bg-[#f0edea] px-2.5 py-1 font-semibold text-[#6f4229]">{L.categoryBadge}</span>
         <span class="text-[#d6c3ba]">•</span>
         <span class="text-[#51443d]">{pubDate ? new Date(pubDate).getFullYear() : ''}</span>
         <span class="text-[#d6c3ba]">•</span>
-        <span class="text-[#51443d]">{readMinutes} min read</span>
+        <span class="text-[#51443d]">{readMinutes} {L.readSuffix}</span>
       </div>
 
       <div class="pt-2">
@@ -158,8 +172,8 @@ const indexRange = `All Articles · ${indexArticles.length}`;
         <div class="flex items-center space-x-3">
           <div class="w-10 h-10 bg-[#eae8e4] flex items-center justify-center font-serif text-lg text-[#1b1c1a]">間</div>
           <div class="flex flex-col">
-            <span class="font-sans text-xs font-semibold text-[#1b1c1a] tracking-wide">間 MA Editorial</span>
-            <span class="font-sans text-[11px] text-[#51443d]">BiScène Kyoto</span>
+            <span class="font-sans text-xs font-semibold text-[#1b1c1a] tracking-wide">{L.editorialName}</span>
+            <span class="font-sans text-[11px] text-[#51443d]">{L.editorialByline}</span>
           </div>
         </div>
         <div class="flex items-center space-x-3 text-xs font-sans tracking-widest">
@@ -191,7 +205,7 @@ const indexRange = `All Articles · ${indexArticles.length}`;
           <span class="w-1.5 h-1.5 bg-[#6f4229] rounded-full shrink-0"></span>
           <span class="tracking-wide">{headingPlain}</span>
         </div>
-        <span class="text-[11px] tracking-widest uppercase text-[#84746c] shrink-0">FIG. 00 / ARCHIVE</span>
+        <span class="text-[11px] tracking-widest uppercase text-[#84746c] shrink-0">{L.figLabel}</span>
       </div>
     </section>
   )}
@@ -205,7 +219,7 @@ const indexRange = `All Articles · ${indexArticles.length}`;
         class="flex items-center space-x-3 px-4 py-2.5 bg-[#fcf9f5] text-[#1b1c1a] hover:bg-[#f0edea] transition-colors text-left group"
       >
         <span class="material-symbols-outlined text-[18px] text-[#6f4229] transition-transform group-hover:scale-110">menu</span>
-        <span class="font-sans text-xs uppercase tracking-widest font-semibold">= INDEX</span>
+        <span class="font-sans text-xs uppercase tracking-widest font-semibold">{L.indexLabel}</span>
         <span class="font-sans text-xs text-[#51443d] font-normal">({indexRange})</span>
       </button>
 
@@ -218,7 +232,7 @@ const indexRange = `All Articles · ${indexArticles.length}`;
           <div class="flex items-center space-x-2">
             <span class="w-2 h-2 rounded-full bg-[#865138]"></span>
             <span class="font-sans text-xs uppercase tracking-wider font-semibold text-[#865138]">
-              日本語バージョン (Japanese Script)
+              {L.japaneseToggle}
             </span>
           </div>
           <span id="lang-chevron" class="material-symbols-outlined text-[18px] transition-transform duration-300">expand_more</span>
@@ -229,8 +243,8 @@ const indexRange = `All Articles · ${indexArticles.length}`;
     {/* Accordion Drawer: Japanese Original Script — App.tsx L330-358 */}
     <div id="lang-drawer" class="hidden w-full bg-[#f0edea] p-6 mt-2 shadow-md border border-[#d6c3ba]/60 animate-fade-in">
       <div class="flex items-baseline justify-between mb-3 border-b border-[#d6c3ba]/40 pb-2">
-        <span class="font-sans text-xs uppercase tracking-widest font-semibold text-[#865138]">Original Text / 日本語原文</span>
-        <span class="font-sans text-xs text-[#51443d]">間 MA 編集室（BiScène Kyoto）</span>
+        <span class="font-sans text-xs uppercase tracking-widest font-semibold text-[#865138]">{L.japaneseDrawerTitle}</span>
+        <span class="font-sans text-xs text-[#51443d]">{L.japaneseDrawerByline}</span>
       </div>
       {/* 日本語原文: Index などのラベルと同じ茶色（#6f4229）。#865138 より1段濃い。 */}
       {japaneseHtml ? (
@@ -240,7 +254,7 @@ const indexRange = `All Articles · ${indexArticles.length}`;
         />
       ) : (
         <p class="font-serif text-sm text-[#865138] mb-4">
-          日本語版は未入力です（Keystatic「日本語バージョン全文」で編集できます）。
+          {L.japaneseEmpty}
         </p>
       )}
     </div>
@@ -252,7 +266,7 @@ const indexRange = `All Articles · ${indexArticles.length}`;
       style="background-color: rgba(252, 249, 245, 0.25); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);"
     >
       <div class="flex items-center justify-between pb-3 border-b border-[#8b593e]/20 mb-4">
-        <span class="font-serif font-semibold text-lg text-[#1b1c1a] tracking-wide">CONTENTS / 目次</span>
+        <span class="font-serif font-semibold text-lg text-[#1b1c1a] tracking-wide">{L.tocTitle}</span>
         <button type="button" id="toc-close-btn" class="p-1 text-[#51443d] hover:text-[#1b1c1a] transition-colors" aria-label="Close Table of Contents">
           <span class="material-symbols-outlined text-[20px]">close</span>
         </button>
@@ -261,7 +275,7 @@ const indexRange = `All Articles · ${indexArticles.length}`;
       <div class="mb-4">
         <div class="flex items-baseline justify-between gap-3 mb-2">
           <div class="text-[10px] font-sans uppercase tracking-[0.2em] text-[#6f4229] font-bold">
-            All Articles · 全記事（{indexArticles.length}）
+            {L.tocAllArticles}（{indexArticles.length}）
           </div>
           {indexArticles.length > INDEX_WINDOW * 2 + 1 && (
             <button
@@ -292,7 +306,7 @@ const indexRange = `All Articles · ${indexArticles.length}`;
                 <span class={`w-1.5 h-1.5 shrink-0 mt-2 ${entry.isCurrent ? 'bg-[#6f4229]' : 'bg-[#8b593e]'}`}></span>
                 <div>
                   <div class="font-sans text-[11px] uppercase tracking-wider text-[#8b593e] font-semibold">
-                    NO. {entry.number}
+                    {L.tocNoPrefix} {entry.number}
                     {entry.date && <span class="text-[#84746c]"> — {entry.date}</span>}
                   </div>
                   <div class={`font-serif text-sm font-medium transition-colors ${
@@ -311,14 +325,14 @@ const indexRange = `All Articles · ${indexArticles.length}`;
       {tocEntries.length > 0 && (
         <div class="pt-2 border-t border-[#8b593e]/20 space-y-1">
           <div class="text-[10px] font-sans uppercase tracking-[0.2em] text-[#6f4229] font-bold mb-2 mt-3">
-            In This Article · 本文内
+            {L.tocInThisArticle}
           </div>
           {tocEntries.map((entry, i) => (
             <a href={`#${entry.id}`} data-toc-link class="flex items-start space-x-3 p-2 hover:bg-[#6f4229]/10 transition-colors group">
               <span class="w-1.5 h-1.5 bg-[#d6c3ba] shrink-0 mt-2"></span>
               <div>
                 <div class="font-sans text-[11px] uppercase tracking-wider text-[#8b593e] font-semibold">
-                  SECTION {String(i + 1).padStart(2, '0')}
+                  {L.tocSectionPrefix} {String(i + 1).padStart(2, '0')}
                 </div>
                 <div class="font-serif text-sm font-medium text-[#1b1c1a] group-hover:text-[#6f4229] transition-colors">
                   {entry.text}
@@ -333,20 +347,20 @@ const indexRange = `All Articles · ${indexArticles.length}`;
         <div class="pt-2 border-t border-[#8b593e]/20 space-y-1">
           <a href="#section-karuta" data-toc-link class="flex items-center space-x-3 p-2 hover:bg-[#6f4229]/10 transition-colors text-xs font-sans uppercase tracking-wider text-[#51443d] hover:text-[#1b1c1a] font-medium">
             <span class="material-symbols-outlined text-[16px] text-[#6f4229]">style</span>
-            <span class="font-medium text-[#1b1c1a]">Card Folio: 空間語彙のカルタ</span>
+            <span class="font-medium text-[#1b1c1a]">{L.tocKarutaLabel}</span>
           </a>
         </div>
       )}
 
       <div class="pt-4 text-[10px] text-[#84746c] font-sans tracking-widest uppercase border-t border-[#d6c3ba]/30 mt-3">
-        ISSN 2814-9902 • Kyoto Dispatch
+        {L.tocFooter}
       </div>
     </div>
   </section>
 
   {/* Article Body Content — App.tsx L533-673 */}
   <article class="max-w-4xl mx-auto w-full px-6 md:px-12 lg:px-0 space-y-16">
-    {/* 本文ブロック（karutaGrid は下文で全記事共通に出力するため除外） */}
+    {/* 本文ブロック（karutaGrid は下の Card Folio で描画するためここでは除外） */}
     {contentSections.map((section: any, sectionIndex: number) => {
       if (!section) return null;
       if (section._template === 'imageGrid') {
@@ -379,8 +393,8 @@ const indexRange = `All Articles · ${indexArticles.length}`;
       );
     })}
 
-    {/* Card Folio: 全ブログ記事共通（1ページ3枚・カルーセル / 上限100枚） */}
-    <KarutaGrid />
+    {/* Card Folio: 記事固有の karutaGrid を優先し、無ければ全記事共通 karuta.json を出力 */}
+    <KarutaGrid title={karutaTitle} cards={karutaCards} />
 
     {/* Connected Articles Navigation — App.tsx L781-849 */}
     {(prev || next) && (
@@ -391,7 +405,7 @@ const indexRange = `All Articles · ${indexArticles.length}`;
               <div class="space-y-2">
                 <span class="font-sans text-[11px] uppercase tracking-widest text-[#84746c] group-hover:text-[#6f4229] transition-colors flex items-center gap-1 font-semibold">
                   <span class="material-symbols-outlined text-[14px]">arrow_back</span>
-                  PREVIOUS ARTICLE
+                  {L.prevLabel}
                 </span>
                 <h3 class="font-serif text-lg text-[#1b1c1a] group-hover:text-[#6f4229] transition-colors">
                   {prev.title}
@@ -407,7 +421,7 @@ const indexRange = `All Articles · ${indexArticles.length}`;
               <div class="space-y-2">
                 <div class="flex items-center justify-start md:justify-end gap-1">
                   <span class="font-sans text-[11px] uppercase tracking-widest text-[#84746c] group-hover:text-[#6f4229] transition-colors flex items-center gap-1 font-semibold">
-                    NEXT ARTICLE
+                    {L.nextLabel}
                     <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
                   </span>
                 </div>

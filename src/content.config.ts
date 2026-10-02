@@ -82,40 +82,30 @@ const blog = defineCollection({
 
 const global = defineCollection({
   loader: glob({ pattern: "**/*.json", base: "./src/content/global" }),
-  schema: z.union([
-    z.object({
-      _template: z.literal('config'),
-      siteTitle: z.string().optional(),
-      navLinks: z.array(z.object({
-        label: z.string(),
-        href: z.string(),
-      })).optional(),
-      socialLinks: z.array(z.object({
-        platform: z.string(),
-        href: z.string(),
-      })).optional(),
-      footerText: z.string().optional(),
-    }),
-    z.object({
-      _template: z.literal('about'),
-      mainTitle: z.string().optional(),
-      subTitle: z.string().optional(),
-      aboutBlogTitle: z.string().optional(),
-      aboutBlogText: z.string().optional(),
-      aboutAuthorTitle: z.string().optional(),
-      aboutAuthorText: z.string().optional(),
-      contactTitle: z.string().optional(),
-    }),
-  ]),
+  // ヘッダー/フッター設定 (config.json) と About ページ (about.json) を
+  // 1つのスキーマで受ける。旧 Tina 形式の `_template` はコードから参照されて
+  // いないため削除した（Keystatic 側の検証エラーの原因でもあった）。
+  schema: z.object({
+    // config.json
+    siteTitle: z.string().optional(),
+    lpLogo: z.string().optional(),
+    lpUrl: z.string().optional(),
+    footerText: z.string().optional(),
+    // about.json
+    mainTitle: z.string().optional(),
+    subTitle: z.string().optional(),
+    aboutBlogTitle: z.string().optional(),
+    aboutBlogText: z.string().optional(),
+    aboutAuthorTitle: z.string().optional(),
+    aboutAuthorText: z.string().optional(),
+    contactTitle: z.string().optional(),
+  }),
 });
 
 const portal = defineCollection({
   loader: glob({ pattern: "**/*.json", base: "./src/content/portal" }),
   schema: z.object({
-    title: z.string(),
     hero: z.object({
-      title: z.string().optional(),
-      subtitle: z.string().optional(),
       // FUSUMA 画像（最大5件）: 襖が開いた後に表示される背景画像
       fusumaImages: z.array(z.object({
         image: z.string().optional(),
@@ -174,7 +164,6 @@ const portal = defineCollection({
 const folio = defineCollection({
   loader: glob({ pattern: "**/*.json", base: "./src/content/folio" }),
   schema: z.object({
-    title: z.string().optional(),
     volumes: z.array(z.object({
       title: z.string().optional(),
       badge: z.string().optional(),
@@ -184,7 +173,6 @@ const folio = defineCollection({
         article: z.string().optional(),
       })).optional(),
     })).optional(),
-    _template: z.string().optional(),
   }),
 });
 
@@ -193,7 +181,6 @@ const folio = defineCollection({
 const karuta = defineCollection({
   loader: glob({ pattern: "**/*.json", base: "./src/content/karuta" }),
   schema: z.object({
-    title: z.string().optional(),
     perPage: z.number().optional(),
     max: z.number().optional(),
     cards: z.array(z.object({
@@ -211,16 +198,6 @@ const karuta = defineCollection({
       bodyJp: z.string().optional(),
       bodyEn: z.string().optional(),
     })).optional(),
-    _template: z.string().optional(),
-  }),
-});
-
-const pageMd = defineCollection({
-  loader: glob({ pattern: "**/*.mdx", base: "./src/content/page" }),
-  schema: z.object({
-    title: z.string().optional(),
-    seoTitle: z.string().optional(),
-    body: z.any().optional(),
   }),
 });
 
@@ -230,7 +207,6 @@ const siteConfig = defineCollection({
     seo: z.object({
       title: z.string().optional(),
       description: z.string().optional(),
-      siteOwner: z.string().optional(),
       ogImage: z.string().optional(),
     }).optional(),
     archive: z.object({
@@ -248,4 +224,82 @@ const siteConfig = defineCollection({
   }),
 });
 
-export const collections = { blog, global, portal, folio, karuta, pageMd, siteConfig };
+// UI ラベル（テンプレートに固定されていた文言）: src/content/labels/ui.json
+// 記事ページ・一覧・ポータル・カルタ・フッター・お問い合わせの見出し文言を
+// Keystatic から編集できるようにする。
+const labels = defineCollection({
+  loader: glob({ pattern: "**/*.json", base: "./src/content/labels" }),
+  schema: z.object({
+    article: z.object({
+      categoryBadge: z.string().optional(),
+      indexLabel: z.string().optional(),
+      japaneseToggle: z.string().optional(),
+      japaneseDrawerTitle: z.string().optional(),
+      japaneseDrawerByline: z.string().optional(),
+      japaneseEmpty: z.string().optional(),
+      tocTitle: z.string().optional(),
+      tocAllArticles: z.string().optional(),
+      tocInThisArticle: z.string().optional(),
+      tocSectionPrefix: z.string().optional(),
+      tocNoPrefix: z.string().optional(),
+      tocKarutaLabel: z.string().optional(),
+      tocFooter: z.string().optional(),
+      prevLabel: z.string().optional(),
+      nextLabel: z.string().optional(),
+      figLabel: z.string().optional(),
+      editorialName: z.string().optional(),
+      editorialByline: z.string().optional(),
+      readSuffix: z.string().optional(),
+    }).optional(),
+    archive: z.object({
+      journalLabel: z.string().optional(),
+      latestEssayLabel: z.string().optional(),
+      archiveHeading: z.string().optional(),
+      entriesSuffix: z.string().optional(),
+    }).optional(),
+    portal: z.object({
+      prologueLabel: z.string().optional(),
+      featuredLabel: z.string().optional(),
+      featuredVolumeLabel: z.string().optional(),
+      readMoreLabel: z.string().optional(),
+      openLabel: z.string().optional(),
+      anthologyLabel: z.string().optional(),
+      anthologyHeading: z.string().optional(),
+      anthologyHint: z.string().optional(),
+      locationLabel: z.string().optional(),
+      estLabel: z.string().optional(),
+      videSignifiant: z.string().optional(),
+      skipCarousel: z.string().optional(),
+      foliosSuffix: z.string().optional(),
+      chapterPrefix: z.string().optional(),
+      pageCategory: z.string().optional(),
+      bundleEpisodeLabel: z.string().optional(),
+      pageRange: z.string().optional(),
+    }).optional(),
+    karuta: z.object({
+      cardFolioLabel: z.string().optional(),
+      heading: z.string().optional(),
+      hint: z.string().optional(),
+      hintJp: z.string().optional(),
+    }).optional(),
+    footer: z.object({
+      journalSectionsLabel: z.string().optional(),
+      backToMainLabel: z.string().optional(),
+      aboutContactLabel: z.string().optional(),
+      privacyLabel: z.string().optional(),
+      locationLabel: z.string().optional(),
+    }).optional(),
+    contact: z.object({
+      heading: z.string().optional(),
+      nameLabel: z.string().optional(),
+      emailLabel: z.string().optional(),
+      messageLabel: z.string().optional(),
+      quizLabel: z.string().optional(),
+      quizQuestion: z.string().optional(),
+      quizHint: z.string().optional(),
+      sendLabel: z.string().optional(),
+    }).optional(),
+  }),
+});
+
+export const collections = { blog, global, portal, folio, karuta, siteConfig, labels };

@@ -1,0 +1,71 @@
+{
+  "article": {
+    "categoryBadge": "Essay",
+    "indexLabel": "= INDEX",
+    "japaneseToggle": "日本語バージョン (Japanese Script)",
+    "japaneseDrawerTitle": "Original Text / 日本語原文",
+    "japaneseDrawerByline": "間 MA 編集室（BiScène Kyoto）",
+    "japaneseEmpty": "日本語版は未入力です（Keystatic「日本語バージョン全文」で編集できます）。",
+    "tocTitle": "CONTENTS / 目次",
+    "tocAllArticles": "All Articles · 全記事",
+    "tocInThisArticle": "In This Article · 本文内",
+    "tocSectionPrefix": "SECTION",
+    "tocNoPrefix": "NO.",
+    "tocKarutaLabel": "Card Folio: 空間語彙のカルタ",
+    "tocFooter": "ISSN 2814-9902 • Kyoto Dispatch",
+    "prevLabel": "PREVIOUS ARTICLE",
+    "nextLabel": "NEXT ARTICLE",
+    "figLabel": "FIG. 00 / ARCHIVE",
+    "editorialName": "間 MA Editorial",
+    "editorialByline": "BiScène Kyoto",
+    "readSuffix": "min read"
+  },
+  "archive": {
+    "journalLabel": "Journal",
+    "latestEssayLabel": "Latest Essay",
+    "archiveHeading": "Archive",
+    "entriesSuffix": "Entries"
+  },
+  "portal": {
+    "prologueLabel": "PROLOGUE",
+    "featuredLabel": "Featured Page",
+    "featuredVolumeLabel": "Vol. I • 2025",
+    "readMoreLabel": "Read More",
+    "openLabel": "Open —",
+    "anthologyLabel": "Anthology & Folios",
+    "anthologyHeading": "Collected Volumes & Archives",
+    "anthologyHint": "Hover over a deck to expand chapters. Click to read.",
+    "locationLabel": "Kyoto, Japan",
+    "estLabel": "Est. 2025",
+    "videSignifiant": "VIDE SIGNIFIANT",
+    "skipCarousel": "Skip carousel",
+    "foliosSuffix": "Folios",
+    "chapterPrefix": "CHAPTER",
+    "pageCategory": "Page",
+    "bundleEpisodeLabel": "Page • Vol. I Episode 1 Part",
+    "pageRange": "p. 01–24"
+  },
+  "karuta": {
+    "cardFolioLabel": "Card Folio • 空間語彙のカルタ",
+    "heading": "Three Spatial Lexicons: The Sacred Karuta Folio",
+    "hint": "Tap or hover over each consecrated archetype to reveal its spatial mechanics and philosophical gloss.",
+    "hintJp": "(各カルタをクリックまたはホバーすると、空間構造と注釈が開きます)"
+  },
+  "footer": {
+    "journalSectionsLabel": "Journal Sections",
+    "backToMainLabel": "Back to Main Page",
+    "aboutContactLabel": "About & Contact",
+    "privacyLabel": "Privacy & Terms",
+    "locationLabel": "Kyoto, Japan"
+  },
+  "contact": {
+    "heading": "Contact",
+    "nameLabel": "Name (optional)",
+    "emailLabel": "Email (optional)",
+    "messageLabel": "Message",
+    "quizLabel": "Quiz:",
+    "quizQuestion": "Which city is selected?",
+    "quizHint": "Enter the <strong>first letter</strong> of the city shown (case-insensitive).",
+    "sendLabel": "Send"
+  }
+}

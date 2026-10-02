@@ -1,5 +1,4 @@
 ---
-import siteSettings from '../content/settings/site.json';
 import { getEntry } from 'astro:content';
 import Header from '../components/Header.astro';
 import CloudflareBeacon from '../components/CloudflareBeacon.astro';
@@ -11,7 +10,7 @@ interface Props {
 const { title } = Astro.props;
 
 const globalConfig = await getEntry('global', 'config');
-const footerText = globalConfig?.data?.footerText || siteSettings.footer?.copyright || '© 2024 The Way of Aesthetics. All rights reserved.';
+const footerText = globalConfig?.data?.footerText || '© 2024 The Way of Aesthetics. All rights reserved.';
 ---
 
 <!DOCTYPE html>

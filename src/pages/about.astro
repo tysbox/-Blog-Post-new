@@ -4,10 +4,14 @@ import ContactForm from '../components/ContactForm.astro';
 import { getEntry } from 'astro:content';
 
 const aboutConfig = await getEntry('global', 'about');
-const { mainTitle, subTitle, aboutBlogTitle, aboutBlogText, aboutAuthorTitle, aboutAuthorText, contactTitle } = aboutConfig.data || {};
+const { mainTitle, subTitle, aboutBlogTitle, aboutBlogText, aboutAuthorTitle, aboutAuthorText, contactTitle } = aboutConfig?.data || {};
+
+// サイト名は Keystatic「サイト共通」から読む（ページタイトルの接尾辞に使用）
+const globalConfig = await getEntry('global', 'config');
+const siteTitle = globalConfig?.data?.siteTitle || '間　MA (Vide Signifiant)';
 ---
 
-<BaseLayout title={`${mainTitle} - Wabi-Sabi Blog`}>
+<BaseLayout title={`${mainTitle} - ${siteTitle}`}>
   <div class="flex flex-col gap-10">
     <div class="flex flex-wrap justify-between gap-3 px-4 sm:px-0">
       <div class="flex flex-col gap-3">

@@ -271,22 +271,11 @@ export default config({
       format: { data: 'json' },
       previewUrl: '/',
       schema: {
-        title: fields.text({ label: 'ページタイトル' }),
-
         // ヒーロー（FUSUMA）
         // 画像とテキストを分けて管理する。どちらも最大5件。
         // 1 → 5 → 1 のサイクルで自動表示され、順序は登録順です。
         hero: fields.object(
           {
-            title: fields.text({
-              label: 'サイト既定タイトル',
-              description: 'OGP・meta の既定値。',
-            }),
-            subtitle: fields.text({
-              label: 'サイト既定説明',
-              description: 'OGP・meta description の既定値。',
-              multiline: true,
-            }),
             fusumaImages: fields.array(
               fields.object({
                 image: fields.text({
@@ -418,9 +407,6 @@ export default config({
         aboutBlogTitle: fields.text({ label: 'ブログ説明の見出し', multiline: true }),
         aboutBlogText: fields.text({ label: 'ブログ説明', multiline: true }),
         contactTitle: fields.text({ label: 'お問い合わせ見出し', multiline: true }),
-
-        // Tina 由来の識別子。JSON 構造を保つため保持する（通常は変更不要）。
-        _template: fields.text({ label: 'テンプレート (_template)' }),
       },
     }),
 
@@ -433,29 +419,10 @@ export default config({
       schema: {
         siteTitle: fields.text({ label: 'サイトタイトル', multiline: true }),
 
-        navLinks: fields.array(
-          fields.object({
-            label: fields.text({ label: 'ラベル', validation: { isRequired: true } }),
-            href: fields.text({ label: 'URL', validation: { isRequired: true } }),
-          }),
-          { label: 'ナビゲーションリンク' },
-        ),
-
         lpLogo: fields.text({ label: 'LPロゴ画像', description: '例: /images/IMG_0581_DxO.webp' }),
         lpUrl: fields.text({ label: 'LPリンク先URL' }),
 
-        socialLinks: fields.array(
-          fields.object({
-            platform: fields.text({ label: 'プラットフォーム名' }),
-            href: fields.text({ label: 'URL' }),
-          }),
-          { label: 'ソーシャルリンク' },
-        ),
-
         footerText: fields.text({ label: 'フッター文言', multiline: true }),
-
-        // Tina 由来の識別子。JSON 構造を保つため保持する（通常は変更不要）。
-        _template: fields.text({ label: 'テンプレート (_template)' }),
       },
     }),
 
@@ -471,8 +438,6 @@ export default config({
       format: { data: 'json' },
       previewUrl: '/',
       schema: {
-        title: fields.text({ label: '設定名' }),
-
         volumes: fields.array(
           fields.object({
             title: fields.text({
@@ -502,8 +467,6 @@ export default config({
               '1行に2つのデッキが並びます。デッキを追加すると行が増えていき、4デッキ（2行）が標準です。',
           },
         ),
-
-        _template: fields.text({ label: 'テンプレート (_template)' }),
       },
     }),
 
@@ -518,8 +481,6 @@ export default config({
       format: { data: 'json' },
       previewUrl: '/blog/shinto-as-japanese-cultural-os-pt1',
       schema: {
-        title: fields.text({ label: '設定名' }),
-
         perPage: fields.number({
           label: '1ページの枚数',
           description: '1ページに表示する枚数（既定: 3）',
@@ -560,8 +521,6 @@ export default config({
               '全ブログ記事共通で表示されます。1ページ3枚でカルーセル表示し、最大100枚まで。',
           },
         ),
-
-        _template: fields.text({ label: 'テンプレート (_template)' }),
       },
     }),
 
@@ -584,10 +543,6 @@ export default config({
               label: 'サイト既定説明',
               description: 'OGP・meta description の既定値。',
               multiline: true,
-            }),
-            siteOwner: fields.text({
-              label: 'サイト運営者',
-              description: '例: Shun Yamamoto - 山本 俊',
             }),
             ogImage: fields.text({
               label: 'OG画像',
@@ -629,6 +584,103 @@ export default config({
       },
     }),
 
+    /** UI ラベル: src/content/labels/ui.json */
+    labels: singleton({
+      label: 'UI ラベル（見出し・ボタン文言）',
+      path: 'src/content/labels/ui',
+      format: { data: 'json' },
+      previewUrl: '/',
+      schema: {
+        article: fields.object(
+          {
+            categoryBadge: fields.text({ label: '記事カテゴリバッジ', description: '例: Essay' }),
+            indexLabel: fields.text({ label: '目次ボタン', description: '例: = INDEX' }),
+            japaneseToggle: fields.text({ label: '日本語トグル', description: '例: 日本語バージョン (Japanese Script)' }),
+            japaneseDrawerTitle: fields.text({ label: '日本語原文の見出し' }),
+            japaneseDrawerByline: fields.text({ label: '日本語原文の署名' }),
+            japaneseEmpty: fields.text({ label: '日本語未入力時の案内', multiline: true }),
+            tocTitle: fields.text({ label: '目次タイトル', description: '例: CONTENTS / 目次' }),
+            tocAllArticles: fields.text({ label: '全記事の見出し', description: '例: All Articles · 全記事' }),
+            tocInThisArticle: fields.text({ label: '本文内の見出し', description: '例: In This Article · 本文内' }),
+            tocSectionPrefix: fields.text({ label: '本文内セクション接頭辞', description: '例: SECTION' }),
+            tocNoPrefix: fields.text({ label: '目次の番号接頭辞', description: '例: NO.' }),
+            tocKarutaLabel: fields.text({ label: 'カルタ目次ラベル' }),
+            tocFooter: fields.text({ label: '目次フッター', description: '例: ISSN 2814-9902 • Kyoto Dispatch' }),
+            prevLabel: fields.text({ label: '前の記事ラベル' }),
+            nextLabel: fields.text({ label: '次の記事ラベル' }),
+            figLabel: fields.text({ label: '図版ラベル', description: '例: FIG. 00 / ARCHIVE' }),
+            editorialName: fields.text({ label: '編集部名', description: '例: 間 MA Editorial' }),
+            editorialByline: fields.text({ label: '編集部の所属', description: '例: BiScène Kyoto' }),
+            readSuffix: fields.text({ label: '読了時間の単位', description: '例: min read' }),
+          },
+          { label: '記事ページ' },
+        ),
+        archive: fields.object(
+          {
+            journalLabel: fields.text({ label: '一覧の小見出し', description: '例: Journal' }),
+            latestEssayLabel: fields.text({ label: '最新記事ラベル', description: '例: Latest Essay' }),
+            archiveHeading: fields.text({ label: 'アーカイブ見出し', description: '例: Archive' }),
+            entriesSuffix: fields.text({ label: '件数の単位', description: '例: Entries' }),
+          },
+          { label: 'ブログ一覧' },
+        ),
+        portal: fields.object(
+          {
+            prologueLabel: fields.text({ label: 'プロローグの小見出し' }),
+            featuredLabel: fields.text({ label: '注目記事ラベル' }),
+            featuredVolumeLabel: fields.text({ label: '注目記事の巻表記', description: '例: Vol. I • 2025' }),
+            readMoreLabel: fields.text({ label: '続きを読むボタン' }),
+            openLabel: fields.text({ label: 'カードの開くラベル' }),
+            anthologyLabel: fields.text({ label: 'Anthology の小見出し' }),
+            anthologyHeading: fields.text({ label: 'Anthology の見出し' }),
+            anthologyHint: fields.text({ label: 'Anthology の説明', multiline: true }),
+            locationLabel: fields.text({ label: '所在地' }),
+            estLabel: fields.text({ label: '設立表記' }),
+            videSignifiant: fields.text({ label: 'ロゴ副題' }),
+            skipCarousel: fields.text({ label: 'カルーセルスキップ' }),
+            foliosSuffix: fields.text({ label: 'Folio 件数の単位' }),
+            chapterPrefix: fields.text({ label: 'チャプター接頭辞' }),
+            pageCategory: fields.text({ label: 'カードのカテゴリ' }),
+            bundleEpisodeLabel: fields.text({ label: 'Bundle カードの表記', description: '例: Page • Vol. I Episode 1 Part' }),
+            pageRange: fields.text({ label: 'ページ範囲' }),
+          },
+          { label: 'ポータル（ホーム）' },
+        ),
+        karuta: fields.object(
+          {
+            cardFolioLabel: fields.text({ label: 'カルタの小見出し', description: '例: Card Folio • 空間語彙のカルタ' }),
+            heading: fields.text({ label: 'カルタ見出し' }),
+            hint: fields.text({ label: 'カルタの説明（英語）', multiline: true }),
+            hintJp: fields.text({ label: 'カルタの説明（日本語）', multiline: true }),
+          },
+          { label: 'カルタ' },
+        ),
+        footer: fields.object(
+          {
+            journalSectionsLabel: fields.text({ label: 'フッター見出し' }),
+            backToMainLabel: fields.text({ label: 'メインページへ' }),
+            aboutContactLabel: fields.text({ label: 'About & Contact' }),
+            privacyLabel: fields.text({ label: 'プライバシー' }),
+            locationLabel: fields.text({ label: '所在地' }),
+          },
+          { label: 'フッター' },
+        ),
+        contact: fields.object(
+          {
+            heading: fields.text({ label: 'お問い合わせ見出し' }),
+            nameLabel: fields.text({ label: '名前ラベル' }),
+            emailLabel: fields.text({ label: 'メールラベル' }),
+            messageLabel: fields.text({ label: 'メッセージラベル' }),
+            quizLabel: fields.text({ label: 'クイズラベル' }),
+            quizQuestion: fields.text({ label: 'クイズの質問文', description: '例: Which city is selected?' }),
+            quizHint: fields.text({ label: 'クイズの説明', multiline: true }),
+            sendLabel: fields.text({ label: '送信ボタン' }),
+          },
+          { label: 'お問い合わせフォーム' },
+        ),
+      },
+    }),
+
   },
 
   // 管理画面のサイドバー整理
@@ -640,6 +692,7 @@ export default config({
       'Folio': ['folio'],
       'Karuta': ['karuta'],
       'サイト共通': ['site', 'siteConfig'],
+      'UI ラベル': ['labels'],
     },
   },
 });

@@ -1,8 +1,5 @@
 {
-  "title": "Portal (Home)",
   "hero": {
-    "title": "Traces of the Invisible",
-    "subtitle": "– In the Making, In the Maturing, In the Living – ",
     "fusumaImages": [
       {
         "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuC3rNLgZHdOZGwGR25ulNuL4mnxEBn7VmAOYWYvd3dp1v2LJZDvBROUuoZx6gkv1vLFzd0PyU8gfIO_GmtxUZMdiKD-g6ckL4pg31SKjpaf3RA-0i2fSuPBfBJNxJn7wcQ6HguKJBQrbxE9D_wxjk5OMfLyqcx-rzP28E4efkz-Dk4fASaQXAxs4tVTA4vC2kOKsNpUERK_0t6bG09-Ak-sI1oGdzLWnXIszyrn5_tSmUO4qoYxFBvH963F12jvjiuvrqeFLVki"
@@ -49,5 +46,16 @@
     {
       "item": "src/content/blog/from-kyoto-to-the-world.mdx"
     }
-  ]
+  ],
+  "newsletter": {
+    "enabled": true,
+    "eyebrow": "DISPATCHES FROM KYOTO",
+    "heading": "Receive Quiet Reflections",
+    "body": "Quiet essays and photography from Kyoto, delivered only on nights of the new moon. Free subscription, unsubscribe anytime.",
+    "note": "Strictly privacy conscious. No noise, only stillness.",
+    "successTitle": "Thank you for subscribing to MA (Vide Signifiant).",
+    "successBody": "Dispatches will arrive on nights of the new moon.",
+    "buttonLabel": "Subscribe",
+    "placeholder": "Your email address..."
+  }
 }

@@ -7,6 +7,12 @@ import { stripMarkdown } from '../../utils/richText';
 import { permalinkOf } from '../../utils/postOrder';
 import config from '../../content/config/config.json';
 import { timestamp, formatYear } from '../../utils/date';
+import { getUiLabels } from '../../utils/uiLabels';
+
+// UI ラベル（Keystatic「UI ラベル」で編集可能）
+const labels = await getUiLabels();
+const L = labels.archive;
+const LA = labels.article;
 
 const posts = (await getCollection('blog')).sort(
   (a, b) => timestamp(b.data.pubDate) - timestamp(a.data.pubDate),
@@ -23,7 +29,7 @@ const readMinutes = (p: (typeof posts)[number]) => {
 <BlogPost title={config.seo?.title || '間 MA (Vide Signifiant)'} description={config.seo?.description}>
   <section class="max-w-4xl mx-auto w-full px-6 md:px-12 lg:px-0 pt-8 pb-6">
     <div class="space-y-1.5 border-b border-[#d6c3ba]/40 pb-4">
-      <span class="font-sans text-xs uppercase tracking-[0.2em] text-[#865138] font-semibold">Journal</span>
+      <span class="font-sans text-xs uppercase tracking-[0.2em] text-[#865138] font-semibold">{L.journalLabel}</span>
       <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl text-[#1b1c1a] font-normal tracking-tight leading-[1.15]">
         {config.archive?.title || '間 MA — Vide Signifiant'}
       </h1>
@@ -54,7 +60,7 @@ const readMinutes = (p: (typeof posts)[number]) => {
           </div>
           <div class="space-y-1.5 border-b border-[#d6c3ba]/40 pb-3.5">
             <span class="font-sans text-xs uppercase tracking-[0.2em] text-[#865138] font-semibold">
-              Latest Essay
+              {L.latestEssayLabel}
             </span>
             <h2 class="font-serif text-2xl sm:text-3xl text-[#1b1c1a] font-normal leading-snug group-hover:text-[#6f4229] transition-colors">
               {stripMarkdown(lead.data.title)}
@@ -73,9 +79,9 @@ const readMinutes = (p: (typeof posts)[number]) => {
     {rest.length > 0 && (
       <section class="pt-8 border-t border-[#d6c3ba]/40 space-y-10">
         <div class="flex items-baseline justify-between pb-3 border-b border-[#d6c3ba]/40">
-          <h2 class="font-serif text-2xl text-[#1b1c1a] font-normal">Archive</h2>
+          <h2 class="font-serif text-2xl text-[#1b1c1a] font-normal">{L.archiveHeading}</h2>
           <span class="text-[11px] font-sans uppercase tracking-widest text-[#84746c]">
-            {String(rest.length).padStart(2, '0')} Entries
+            {String(rest.length).padStart(2, '0')} {L.entriesSuffix}
           </span>
         </div>
 
@@ -96,7 +102,7 @@ const readMinutes = (p: (typeof posts)[number]) => {
                 <div class="flex items-center gap-2 text-[10px] font-sans uppercase tracking-[0.2em] text-[#865138]">
                   <span>{formatYear(post.data.pubDate)}</span>
                   <span class="text-[#d6c3ba]">•</span>
-                  <span>{readMinutes(post)} min read</span>
+                  <span>{readMinutes(post)} {LA.readSuffix}</span>
                 </div>
                 <h3 class="font-serif text-lg text-[#1b1c1a] group-hover:text-[#6f4229] transition-colors leading-snug">
                   {stripMarkdown(post.data.title)}

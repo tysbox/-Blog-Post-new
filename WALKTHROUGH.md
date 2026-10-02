@@ -2,7 +2,7 @@
 
 最終結果のみを記載。失敗や途中経過は含まない。
 
-- 対象: `/Users/user/Desktop/Blog-Post-new`
+- 対象: `/Users/tysbox/Project/blog-post`
 - ビルド: **17ページ成功** / 型エラー **17件**（§13-2 に引き継ぎ事项として記載）
 - 参照プロトタイプ: `/tmp/ma-portal/src/App.tsx`, `/tmp/mablogx/src/App.tsx`
 - 直近のコミット: `ec6d5d2`（Node 22.23.3 統一 / Tina 残骸撤去 / 日付欠落対策 / 編集ランチャー）

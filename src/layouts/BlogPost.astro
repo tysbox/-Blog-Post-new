@@ -8,17 +8,24 @@ import { getEntry, getCollection } from 'astro:content';
 import config from '../content/config/config.json';
 import { timestamp } from '../utils/date';
 import { permalinkOf } from '../utils/postOrder';
+import { getUiLabels } from '../utils/uiLabels';
 
 type Props = CollectionEntry<'blog'>['data'];
 
 const { title, description } = Astro.props;
 
+// UI ラベル（Keystatic「UI ラベル」で編集可能）
+const L = (await getUiLabels()).footer;
+
 const globalConfig = await getEntry('global', 'config');
 const siteTitle = globalConfig?.data?.siteTitle || '間　MA (Vide Signifiant)';
+const lpLogo = globalConfig?.data?.lpLogo || '/images/Logo1.png';
+const lpUrl = globalConfig?.data?.lpUrl || 'https://bisen-kyoto.com/';
 // ヘッダー／フッターは全ページ共通のため、補助設定は使用しない。
 // ナビ／SNSリンクは Keystatic「SEO / ナビゲーション設定」から読む。
 const footerText =
   globalConfig?.data?.footerText || '© 2025 The Way of Aesthetics. All rights reserved.';
+const footerDescription = config.seo?.description || '';
 const navLinks = (config?.navLinks ?? []).filter((l) => l?.label && l?.href);
 const links = (config?.socialLinks ?? []).filter((l) => l?.label);
 
@@ -75,12 +82,12 @@ const resolveHref = (href: string) => (href === '/latest' ? latestUrl : href);
       </nav>
       <div class="flex items-center space-x-3 sm:space-x-4">
         <a
-          href="https://bisen-kyoto.com/"
+          href={lpUrl}
           target="_blank"
           rel="noopener noreferrer"
           class="block w-[95px] sm:w-[105px] h-[50px] sm:h-[60px] flex items-center justify-center transition-transform hover:scale-105"
         >
-          <img src="/images/Logo1.png" alt="BiScène" class="w-[95px] sm:w-[105px] h-[50px] sm:h-[60px] object-contain" width="105" height="60" />
+          <img src={lpLogo} alt="BiScène" class="w-[95px] sm:w-[105px] h-[50px] sm:h-[60px] object-contain" width="105" height="60" />
         </a>
       </div>
     </header>
@@ -98,31 +105,31 @@ const resolveHref = (href: string) => (href === '/latest' ? latestUrl : href);
         <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-baseline">
           <div class="md:col-span-5 space-y-3">
             <div class="flex items-baseline space-x-2">
-              <span class="font-serif text-2xl text-[#1b1c1a]">間 MA</span>
-              <span class="font-serif text-sm text-[#51443d] italic">(Vide Signifiant)</span>
+              <span class="font-serif text-2xl text-[#1b1c1a]">{siteTitle}</span>
             </div>
-            <p class="font-serif text-xs text-[#51443d] max-w-sm leading-relaxed">
-              A contemplative editorial journal exploring the interval, spatial negative space,
-              Japanese aesthetics, and contemporary thought in Kyoto.
-            </p>
+            {footerDescription && (
+              <p class="font-serif text-xs text-[#51443d] max-w-sm leading-relaxed">
+                {footerDescription}
+              </p>
+            )}
           </div>
 
           {/* Journal Sections を右端（Colophon & Contact の跡地）へ移設 */}
           <div class="md:col-span-7 space-y-4 md:text-right">
             <div>
-              <div class="font-sans text-xs uppercase tracking-widest text-[#865138] font-semibold mb-3">Journal Sections</div>
+              <div class="font-sans text-xs uppercase tracking-widest text-[#865138] font-semibold mb-3">{L.journalSectionsLabel}</div>
               <ul class="space-y-1.5 font-serif text-xs">
                 <li>
-                  <a href="/" class="text-[#51443d] hover:text-[#1b1c1a] transition-colors">Back to Main Page</a>
+                  <a href="/" class="text-[#51443d] hover:text-[#1b1c1a] transition-colors">{L.backToMainLabel}</a>
                 </li>
                 <li>
-                  <a href="/about" class="text-[#51443d] hover:text-[#6f4229] transition-colors">About &amp; Contact</a>
+                  <a href="/about" class="text-[#51443d] hover:text-[#6f4229] transition-colors">{L.aboutContactLabel}</a>
                 </li>
               </ul>
             </div>
             <div class="flex items-center gap-6 text-[11px] font-sans uppercase tracking-widest text-[#84746c] md:justify-end">
-              <a href="/" class="hover:text-[#1b1c1a] transition-colors">Privacy &amp; Terms</a>
-              <span>Kyoto, Japan</span>
+              <a href="/" class="hover:text-[#1b1c1a] transition-colors">{L.privacyLabel}</a>
+              <span>{L.locationLabel}</span>
             </div>
           </div>
         </div>

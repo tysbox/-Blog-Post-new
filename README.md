@@ -142,11 +142,11 @@ npm run backup:icloud      # ソースのみを $HOME/Desktop/Blog-Post-backup �
 完全に一致させたい場合は、依存をすべて作り直します。
 
 ```sh
-nvm use                                                                # Node 22.23.3
-rm -rf node_modules .astro dist                                        # symlink を削除
-rm -rf "$HOME/Library/Caches/com.tystudio/Blog-Post-new/node_modules"  # 外部キャッシュも削除
-npm ci                                                                 # lock から再現インストール
-npm run deps:externalize                                               # キャッシュへ移動して symlink 化
+nvm use                                                          # Node 22.23.3
+rm -rf node_modules .astro dist                                  # symlink を削除
+rm -rf "$HOME/Library/Caches/com.tystudio/blog-post/node_modules"  # 外部キャッシュも削除
+npm ci                                                           # lock から再現インストール
+npm run deps:externalize                                         # キャッシュへ移動して symlink 化
 ```
 
 > 外部キャッシュを残したまま `npm ci` すると、プロジェクト内に実ディレクトリの `node_modules` ができ、
