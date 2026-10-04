@@ -218,11 +218,18 @@ node -v   # v22.23.3 であること
   CF_PAGES=1 npm run build 2>&1 | tail -10
   ls dist/keystatic 2>&1 || echo "(distにkeystatic無し=想定通り)"
   ```
-- [ ] `4-2` Pages設定を確認する (ダッシュボード)
-  - Build command: `npm run build`: [ ]
-  - Output: `dist`: [ ]
-  - `NODE_VERSION` = `22.23.3` (Astro 7要求 `>=22.12.0` を満たす): [ ]
-  - 本番で keystatic が除外されること: [ ]
+- [x] `4-2` Pages設定を確認する
+  - ローカル模擬検証 (2026-10-04): `dist` を静的配信 (Pages相当) で検証
+    - `/` `/blog/` `/about/` `/rss.xml` `/sitemap-index.xml` → すべて **200**
+    - `/keystatic` → **404** (本番ビルドで正しく除外されている=想定通り)
+  - 実デプロイ前にダッシュボード側で最終確認する項目:
+    - Build command: `npm run build` → `CF_PAGES` はPagesが自動設定 (`4-1`で検証済): [ ]
+    - Output directory: `dist`: [ ]
+    - `NODE_VERSION` = `22.23.3` (`.nvmrc` と一致・`preinstall`が完全一致検証するため**厳密一致が必須**): [ ]
+  - **デプロイなしでは完全保証できない項目** (初回デプロイで確認):
+    - PagesのBuild image Node 22.23.3提供有無 (なければ`NODE_VERSION`指定で代替)
+    - 本番カスタムドメイン/ヘッダー/リダイレクト設定の継続
+    - Pages環境変数 (`SITE_URL`, `PUBLIC_CLOUDFLARE_BEACON_TOKEN` 等) の引き継ぎ
 - [ ] `4-3` マージ判断
   - 全部緑 → `redesign-20261001` へPR/マージ: [ ]
   - TailwindのみNG → Phase 2までを先にマージし Phase 3は別PR化も可: [ ]
