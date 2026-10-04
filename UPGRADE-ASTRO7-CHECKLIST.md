@@ -252,7 +252,9 @@ fontFamily serif/newsreader/sans) はCSSへ移植が必要。
 
 
 - [x] `1-2` 差分ビルドで変化がないことを確認する
-  - 済 (2026-10-04): 17ページ・3.13s・緑。`diff -rq baseline/dist dist` → 差分ゼロ。`index.html` バイト同一確認
+  - 済 (2026-10-04): 17ページ・3.13s・緑。`diff -rq baseline/dist dist` → 差分ゼロ
+- [x] `1-3` コミットする
+  - 済 (2026-10-04): `93d5ef3`
   ```bash
   npm run build 2>&1 | tail -10
   ```
