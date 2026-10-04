@@ -172,72 +172,47 @@ node -v   # v22.23.3 であること
   npm run dev 2>&1 | tail -10
   # http://127.0.0.1:4321/keystatic を開き、一覧・編集・Previewボタンが表示されること
   ```
-- [ ] `2-8` 目視チェック (ベースラインと同じ3ページ)
-  - レイアウト崩れなし: [ ]
-  - テキスト連結なし: [ ]
-  - スライドアニメ動作: [ ]
-  - `/keystatic` 動作: [ ]
-- [ ] `2-9` コミットする
+- [x] `2-8` 目視チェック (ベースラインと同じ3ページ)
+  - テキスト差分検証済 (2-6): 崩れではなく `Part 1` 空白の正常化のみ。CSSはTailwind v4で再生成済
+  - ブラウザ目視 (3ページ実機確認): [ ] ← Phase 4前に対応
+  - `/keystatic` 200確認済 (2-7)。編集・Previewボタンの操作確認: [ ] ← Phase 4前に対応
+- [x] `2-9` コミットする
+  - 済: `bf75531` (package.json/lock + astro.config + global.css + CloudflareBeacon + checklist)
   ```bash
   git add package.json package-lock.json
   git commit -m "Astro 5→7 + @astrojs/*追従 + React 19 (Tailwindは据え置き)"
 
-## Phase 3 — Tailwind 3→4 隔離移行 (所要 60〜180分) [最大リスク]
+## Phase 3 — Tailwind 3→4 隔離移行 [Phase 2に統合済み]
 
-背景: `@astrojs/tailwind@6.0.2` のpeerは `astro ^3||^4||^5` のため Astro 7 と非互換。
-公式方針は `@astrojs/tailwind` 廃止 → `@tailwindcss/vite` プラグイン + CSS `@theme` 定義へ移行。
-`tailwind.config.mjs` の独自拡張 (boxShadow xs/2xs, borderRadius xs, backdropBlur xs,
-fontFamily serif/newsreader/sans) はCSSへ移植が必要。
+> 統合メモ (2026-10-04): `@astrojs/tailwind` のpeer制約で依存解決が通らなかったため、
+> Phase 2の `bf75531` で同時実施済み。以下は実施記録としてチェック化する。
 
-- [ ] `3-1` 現行Tailwind拡張の棚卸し
-  ```bash
-  cat tailwind.config.mjs
-  grep -rho -E "(shadow-(xs|2xs)|rounded-xs|backdrop-blur-xs|font-(serif|newsreader|sans))" src | sort | uniq -c
-  ```
-- [ ] `3-2` 移行する
-  ```bash
-  npm uninstall @astrojs/tailwind
-  npm install tailwindcss@latest @tailwindcss/vite@latest
-  ```
-- [ ] `3-3` `astro.config.mjs` を修正する (`tailwind()` → vite plugin)
-  ```diff
-  - import tailwind from '@astrojs/tailwind';
-  + import tailwindcss from '@tailwindcss/vite';
-    integrations: [
-      mdx(), sitemap({...}), react(),
-  -    tailwind(),
-      ...(isDev ? [keystatic()] : []),
-    ],
-    vite: {
-  +    plugins: [tailwindcss()],
-        optimizeDeps: {...}, server: {...},
-    }
-  ```
-- [ ] `3-4` CSSエントリに `@import "tailwindcss";` + `@theme` 移植を行う
-  - `src/styles/global.css` (または該当エントリ) に追加
-  - 独自値を `@theme` へ移す
-  - `tailwind.config.mjs` は参照用に残置する
-- [ ] `3-5` ビルド + Preflight差分確認
-  ```bash
-  rm -rf dist node_modules/.vite
-  npm run build 2>&1 | tail -20
-  ```
+- [x] `3-1` 現行Tailwind拡張の棚卸し
+  - 済: `tailwind.config.mjs` のextend 6種 (shadow xs/2xs, radius xs, blur xs, font serif/newsreader/sans)。
+    `src` での `shadow-xs/2xs・rounded-xs・backdrop-blur-xs` 直接使用はなし (config定義のみ+標準utility使用)
+- [x] `3-2` 移行する
+  - 済: `@astrojs/tailwind` 削除 / `tailwindcss 4.3.3` + `@tailwindcss/vite 4.3.3` 導入 (`bf75531`)
+- [x] `3-3` `astro.config.mjs` を修正する (`tailwind()` → vite plugin)
+  - 済 (`bf75531`): `plugins: [tailwindcss()]` 化
+- [x] `3-4` CSSエントリに `@import "tailwindcss";` + `@theme` 移植を行う
+  - 済 (`bf75531`): `src/styles/global.css` 先頭にimport+`@theme` 6種移植 (値同一)。
+    `tailwind.config.mjs` は参照用に残置
+- [x] `3-5` ビルド + Preflight差分確認
+  - 済: 17ページ・2.37s・緑。CSSは `global.C0w55xoE.css` (Tailwind v4) に再生成。可視テキスト差分は `Part 1` 空白のみ
 - [ ] `3-6` 全ページ目視 (Preflight v4差分は全体に影響するため3ページでは足りない)
   - `/` : [ ]  - `/blog/` : [ ]  - 記事 (長文・画像グリッド・カルタ): [ ]  - `/about` `/contact` : [ ]
-- [ ] `3-7` コミットする
-  ```bash
-  git add -A && git status --short
-  git commit -m "Tailwind 3→4: @astrojs/tailwind廃止→@tailwindcss/vite移行"
-  ```
+- [x] `3-7` コミットする
+  - 済: `bf75531` に包含 (Phase 2と同一コミット)
 
-出口条件: `3-5` ビルド緑 + `3-6` 目視OK。
-中断時: Phase 2コミットまで `git reset --hard` で戻れる。Tailwindは単独フェーズなのでAstro 7自体は維持できる。
+出口条件: `3-5` ビルド緑 + `3-6` 目視OK。← `3-6` のみ残り
+中断時: `bf75531` が安全地帯。このコミットまで戻れば Astro7+Tailwind4 の緑状態。
 
 ---
 
 ## Phase 4 — Cloudflare Pages 最終確認 + マージ判断 (所要 ~20分)
 
-- [ ] `4-1` 本番相当ビルド (CF_PAGES=1 で keystatic除外を確認)
+- [x] `4-1` 本番相当ビルド (CF_PAGES=1 で keystatic除外を確認)
+  - 済: 17ページ・1.55s・緑。`dist/keystatic` なし (想定通り)
   ```bash
   CF_PAGES=1 npm run build 2>&1 | tail -10
   ls dist/keystatic 2>&1 || echo "(distにkeystatic無し=想定通り)"
@@ -259,6 +234,7 @@ fontFamily serif/newsreader/sans) はCSSへ移植が必要。
 | 日時 | フェーズ | 結果 | メモ |
 |---|---|---|---|
 | 2026-10-04 | Phase 1 | 完了 | `compressHTML:true`固定・差分ゼロ・`93d5ef3`+`57ce818` |
+| 2026-10-04 | Phase 2+3 | ビルド緑 (目視残) | `bf75531`: Astro 7.3.5+React19+TW4。`Part 1`空白正常化のみ。目視(`2-8`,`3-6`)とPhase4が残り |
 | | | | |
 
 
