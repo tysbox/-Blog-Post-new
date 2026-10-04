@@ -24,6 +24,7 @@ const nodeModulesReal = (() => {
 const isDev = process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES;
 
 export default defineConfig({
+	compressHTML: true, // Astro7予防: v6までのHTML空白規則を維持 (jsx連結を防ぐ)
 	site: process.env.SITE_URL || process.env.CF_PAGES_URL || process.env.URL || 'https://hidden-treasure.bisen-kyoto.com',
 	integrations: [
 		mdx(),

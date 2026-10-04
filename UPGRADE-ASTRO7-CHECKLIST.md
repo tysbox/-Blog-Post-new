@@ -88,12 +88,22 @@ node -v   # v22.23.3 であること
 背景: Astro 7 で `compressHTML` のデフォルトが `'jsx'` に変わり、インライン要素+式の空白が連結する。
 先に旧規則 (`true`) を固定して差分を予防する。
 
-- [ ] `1-1` `astro.config.mjs` に1行追加する
+- [x] `1-1` `astro.config.mjs` に1行追加する
+  - 済 (2026-10-04): `compressHTML: true` 追加
   ```diff
    export default defineConfig({
   +    compressHTML: true, // Astro7予防: v6までのHTML空白規則を維持
        site: ...
   ```
+- [ ] `1-3` コミットする
+  ```bash
+  git add astro.config.mjs UPGRADE-ASTRO7-CHECKLIST.md
+  git commit -m "Astro7準備: compressHTML:true を固定 (jsx空白連結の予防)"
+  ```
+
+出口条件: ビルド緑 + テキスト連結なし。中断時: このコミットまでが安全地帯。
+
+---
 
 ## Phase 2 — Astro 7 + 周辺追従 + React 19 (所要 30〜90分) [本体]
 
@@ -241,7 +251,8 @@ fontFamily serif/newsreader/sans) はCSSへ移植が必要。
 失敗がTailwind由来と確定したら Phase 3 へ進まず記録して中断可。
 
 
-- [ ] `1-2` 差分ビルドで変化がないことを確認する
+- [x] `1-2` 差分ビルドで変化がないことを確認する
+  - 済 (2026-10-04): 17ページ・3.13s・緑。`diff -rq baseline/dist dist` → 差分ゼロ。`index.html` バイト同一確認
   ```bash
   npm run build 2>&1 | tail -10
   ```
