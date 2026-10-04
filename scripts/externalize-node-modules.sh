@@ -31,10 +31,15 @@ if [[ "$restore_mode" == "--ensure-link" ]]; then
     # キャッシュの親ディレクトリが未作成だと mv が失敗するため必ず用意する。
     mkdir -p "$cache_root"
     if [[ -n "$(ls -A "$external_node_modules" 2>/dev/null)" ]]; then
-      # キャッシュに既に依存が入っている場合、実体を捨てると消える。
-      # プロジェクト内の実体を破棄し、キャッシュ側を正とする。
-      echo "node_modules link check: cache already populated, keeping cache" >&2
-      rm -rf "$repo_node_modules"
+      # キャッシュも実体も存在する場合:
+      # 実体は直近の npm install / npm ci の結果（現在の package-lock.json に
+      # 合わせて npm が作ったツリー）なので、実体を正としてキャッシュを置き換える。
+      # （旧実装はキャッシュを正として実体を捨てていたため、依存のバージョン升格後、
+      #   古いキャッシュが残ったまま新しいインストール結果が捨てられ、
+      #   旧バージョンで起動し続ける問題が起きていた）
+      echo "node_modules link check: replacing cache with freshly installed repo copy" >&2
+      rm -rf "$external_node_modules"
+      mv "$repo_node_modules" "$external_node_modules"
       ln -s "$external_node_modules" "$repo_node_modules"
       echo "node_modules symlinked to cache: $external_node_modules"
       exit 0

@@ -8,8 +8,10 @@
 # 手順:
 #   1. .nvmrc の Node を解決する（nvm / volta / 既存の順に探索。見つからなければ取得）
 #   2. node_modules を自己修復する（リンク切れ・実体化していても自動で直す）
+#      + package.json / package-lock.json とのバージョン同期（依存の升格後に対応）
 #   3. Git インデックスを自己修復する（.git/index が欠落していれば再構築）
 #   4. 開発サーバーを起動し、応答したらブラウザで管理画面 (/keystatic) を開く
+#      （ポート 4321 が別プロセスに占用されている場合はエラーで停止）
 #
 # 使い分け:
 #   - ターミナルから : npm run edit
@@ -273,6 +275,26 @@ if ! nm_resolves; then
 fi
 
 # ---------------------------------------------------------------------------
+# 2.5) 依存関係のバージョン同期
+#    git pull で package.json / package-lock.json が上がった直後（依存のバージョン
+#    升格時）、node_modules に旧バージョンが残っていると、そのまま古い状態で
+#    起動してしまう。npm ls --depth=0 は「インストール済みが package.json の
+#    範囲に収まるか」で終了コードを返すため、不一致なら npm install で同期する。
+# ---------------------------------------------------------------------------
+if ! npm ls --depth=0 >/dev/null 2>&1; then
+  warn "node_modules が package.json と一致していません（依存のバージョン更新の可能性）"
+  info "npm install で依存関係を同期します（数分かかります）…"
+  if npm install && npm ls --depth=0 >/dev/null 2>&1; then
+    info "依存関係を同期しました ✓"
+    nm_externalize
+  else
+    fail "依存関係の同期に失敗しました。'rm -rf node_modules' と"
+    fail "'rm -rf ${CACHE_DIR}' を実行してから再試行してください。"
+    exit 1
+  fi
+fi
+
+# ---------------------------------------------------------------------------
 # 3) Git インデックスを自己修復する
 #    iCloud 同期で .git/index が欠落することがあり、その場合 git status や
 #    pre-commit が 'fatal: bad object HEAD' / 'bad index file' で失敗する。
@@ -354,6 +376,17 @@ if curl -sf -o /dev/null --max-time 2 "${ADMIN_URL}"; then
   info "開発サーバーは既に起動しています（${BASE_URL}）"
   [ "${MA_NO_OPEN:-0}" = "1" ] || open_browsers
   exit 0
+fi
+
+# --- 4.5) ポート占有ガード -------------------------------------------------
+# /keystatic に応答しないのにポート 4321 が別プロセスに占有されている場合
+# （例: astro preview や他の開発サーバー）、後段の npm run dev は
+# EADDRINUSE で失敗する。原因を明示して停止する。
+if command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:"${PORT}" -sTCP:LISTEN >/dev/null 2>&1; then
+  warn "ポート ${PORT} は開発サーバー以外のプロセスが使用中です。"
+  lsof -nP -iTCP:"${PORT}" -sTCP:LISTEN | sed -n '2p' >&2 || true
+  fail "該当プロセスを停止してから再実行してください（例: 対象のターミナルで Ctrl+C）。"
+  exit 1
 fi
 
 # ---------------------------------------------------------------------------
