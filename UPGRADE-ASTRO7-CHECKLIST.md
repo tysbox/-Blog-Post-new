@@ -90,16 +90,10 @@ node -v   # v22.23.3 であること
 
 - [x] `1-1` `astro.config.mjs` に1行追加する
   - 済 (2026-10-04): `compressHTML: true` 追加
-  ```diff
-   export default defineConfig({
-  +    compressHTML: true, // Astro7予防: v6までのHTML空白規則を維持
-       site: ...
-  ```
-- [ ] `1-3` コミットする
-  ```bash
-  git add astro.config.mjs UPGRADE-ASTRO7-CHECKLIST.md
-  git commit -m "Astro7準備: compressHTML:true を固定 (jsx空白連結の予防)"
-  ```
+- [x] `1-2` 差分ビルドで変化がないことを確認する
+  - 済 (2026-10-04): 17ページ・3.13s・緑。`diff -rq baseline/dist dist` → 差分ゼロ
+- [x] `1-3` コミットする
+  - 済 (2026-10-04): `93d5ef3` + 記録 `57ce818`
 
 出口条件: ビルド緑 + テキスト連結なし。中断時: このコミットまでが安全地帯。
 
@@ -240,7 +234,7 @@ fontFamily serif/newsreader/sans) はCSSへ移植が必要。
 
 | 日時 | フェーズ | 結果 | メモ |
 |---|---|---|---|
-| 2026-10-04 | 開始 | 検証ブランチ `upgrade/astro7-verify` 作成 | 安定点 `redesign-20261001@17da389` から分岐 |
+| 2026-10-04 | Phase 1 | 完了 | `compressHTML:true`固定・差分ゼロ・`93d5ef3`+`57ce818` |
 | | | | |
 
 
@@ -249,21 +243,3 @@ fontFamily serif/newsreader/sans) はCSSへ移植が必要。
 出口条件: `2-4` ビルド緑 + `2-8` 目視OK。
 中断時: `2-1` の退避から戻せる: `cp /tmp/package.json.astro5.bak package.json && npm install`。
 失敗がTailwind由来と確定したら Phase 3 へ進まず記録して中断可。
-
-
-- [x] `1-2` 差分ビルドで変化がないことを確認する
-  - 済 (2026-10-04): 17ページ・3.13s・緑。`diff -rq baseline/dist dist` → 差分ゼロ
-- [x] `1-3` コミットする
-  - 済 (2026-10-04): `93d5ef3`
-  ```bash
-  npm run build 2>&1 | tail -10
-  ```
-- [ ] `1-3` コミットする
-  ```bash
-  git add astro.config.mjs UPGRADE-ASTRO7-CHECKLIST.md
-  git commit -m "Astro7準備: compressHTML:true を固定 (jsx空白連結の予防)"
-  ```
-
-出口条件: ビルド緑 + テキスト連結なし。中断時: このコミットまでが安全地帯。
-
----
