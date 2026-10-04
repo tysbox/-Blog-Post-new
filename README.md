@@ -1,6 +1,6 @@
 # 間　MA (Vide Signifiant) — Blog / Portal
 
-Astro 5 による日本語・英語のブログ＋ポータルサイト。**Keystatic** でコンテンツを編集し、
+Astro 7 による日本語・英語のブログ＋ポータルサイト。**Keystatic** でコンテンツを編集し、
 静的生成（`astro build`）した成果物を Cloudflare Pages に配信します。
 
 > CMS は Tina CMS から **Keystatic へ完全移行済み**です（Tina 関連の設定・スクリプトは削除済み）。
@@ -10,9 +10,9 @@ Astro 5 による日本語・英語のブログ＋ポータルサイト。**Keys
 
 | 領域 | 採用 |
 | --- | --- |
-| フレームワーク | Astro 5.18 |
+| フレームワーク | Astro 7.3 |
 | CMS | **Keystatic** (`@keystatic/astro` / `@keystatic/core`) |
-| スタイル | Tailwind CSS 3.4 |
+| スタイル | Tailwind CSS 4.3（`@tailwindcss/vite`） |
 | 統合 | `@astrojs/mdx` / `@astrojs/react` / `@astrojs/sitemap` / `@astrojs/rss` |
 | ランタイム | **Node.js 22.23.3**（`.nvmrc` / `.node-version` で固定） |
 
@@ -40,8 +40,11 @@ npm run dev             # 開発サーバー起動
 
 1. `.nvmrc`（Node 22.23.3）へ切り替える。未インストールなら `nvm install` して続行
 2. `node_modules` が外部キャッシュへの symlink であることを保証する（無ければ `npm ci`）
-3. 開発サーバーを起動し、応答したら **ブラウザで管理画面 `/keystatic` を自動で開く**
-4. 既にサーバーが起動中の場合は、重複起動せずブラウザを開くだけで終了
+3. **依存バージョンの同期**：`npm ls --depth=0` で `package.json` との一致を検査し、不一致なら
+   `npm install` を実行してから続行（依存をバージョンアップした直後でも古いまま起動しません）
+4. 開発サーバーを起動し、応答したら **ブラウザで管理画面 `/keystatic` を自動で開く**
+5. 既にサーバーが起動中の場合は、重複起動せずブラウザを開くだけで終了
+6. ポート 4321 が別プロセス（例: `npm run preview`）に使われている場合は、その旨を表示して停止
 
 開発サーバーはフォアグラウンドで動き続けるので、ログ確認や `Ctrl+C` による停止操作はそのままできます。
 Finder から起動した場合は、失敗時のみウィンドウが保持されます（メッセージを読んで Enter で閉じる）。
@@ -49,6 +52,24 @@ Finder から起動した場合は、失敗時のみウィンドウが保持さ�
 > 実体は `scripts/start-editing.sh` です。`start.command` はそのラッパーなので、
 > 挙動を変えたいときは `scripts/start-editing.sh` を編集してください。
 > `Dock` に `start.command` のエイリアスを作っておくと、そこから直接起動できます。
+
+### 別デバイスで編集を始める / 最新状態に追いつく
+
+**他のデバイスで最新の状態にするときも、`start.command` を実行するだけで完了します。**
+Node の切り替え・依存の再インストール・外部キャッシュの更新・管理画面の表示まで自動です。
+
+```sh
+git pull                      # または git clone → git checkout <作業ブランチ>
+./start.command               # Finder ならダブルクリック
+#   → Node 22.23.3 を解決 → 依存を package.json と同期 → /keystatic が開く
+```
+
+- 依存を更新した直後（`package.json` / `package-lock.json` が更新された後）でも、
+  上記「3. 依存バージョンの同期」が差分を検出して `npm install` を実行するため、
+  **手動での `npm install` は不要**です。
+- 外部キャッシュ（`~/Library/Caches/com.tystudio/<repo>/node_modules`）が古い場合は、
+  新しいインストール結果でキャッシュ側を置き換えます（旧バージョンが残ったままの起動を防ぎます）。
+- ターミナルから実行したい場合は `npm run edit` でも同じ処理になります。
 
 ## コマンド
 
@@ -116,8 +137,11 @@ Keystatic の管理画面は **ローカル開発時のみ**利用できます�
 ## Node バージョンと依存の運用
 
 - Node は **22.23.3** に統一しています（`.nvmrc` / `.node-version` / `package.json` の `engines`）。
-- `astro` は推移的に `unifont` → `undici` を参照し、`undici@8` は **Node 22.19.0 以上**を要求します。
+- Astro 7 系は **Node 22.12.0 以上**を要求します（`package.json` の `engines` は `>=22.19.0`）。
   そのため Node 20 系では `npm ci` が `EBADENGINE` で失敗します。
+- 依存のバージョンを更新して `package.json` / `package-lock.json` が変わった場合は、
+  `start.command`（`npm run edit`）が起動時に差分を検出して自動で同期します。
+  手動で揃えたい場合のみ `npm install` を実行してください。
 - Cloudflare Pages は `.nvmrc` を読み取って Node 22.23.3 を使用します。
   ダッシュボードに `NODE_VERSION` 環境変数が設定されている場合は、そちらが優先される点に注意してください
   （`22.19.0` 以上に設定してください）。
@@ -142,12 +166,16 @@ npm run backup:icloud      # ソースのみを $HOME/Desktop/Blog-Post-backup �
 完全に一致させたい場合は、依存をすべて作り直します。
 
 ```sh
-nvm use                                                          # Node 22.23.3
-rm -rf node_modules .astro dist                                  # symlink を削除
-rm -rf "$HOME/Library/Caches/com.tystudio/blog-post/node_modules"  # 外部キャッシュも削除
-npm ci                                                           # lock から再現インストール
-npm run deps:externalize                                         # キャッシュへ移動して symlink 化
+nvm use                                                             # Node 22.23.3
+rm -rf node_modules .astro dist                                     # symlink を削除
+rm -rf "$HOME/Library/Caches/com.tystudio/Blog-Post-new/node_modules"  # 外部キャッシュも削除
+npm ci                                                              # lock から再現インストール
+npm run deps:externalize                                            # キャッシュへ移動して symlink 化
 ```
+
+> **まず `start.command` を試してください。** 依存の不一致（バージョン更新後の旧残り）や
+> symlink のリンク切れ、外部キャッシュの陳腐化は、起動時に自動で検出・修復されます。
+> 上記の手順は、それでも解消しない（キャッシュ自体が壊れている等）場合の最終手段です。
 
 > 外部キャッシュを残したまま `npm ci` すると、プロジェクト内に実ディレクトリの `node_modules` ができ、
 > `deps:externalize` が「外部ターゲットが既に存在する」として失敗します。その場合は上記のように
