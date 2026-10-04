@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /*
   新デザイン（ma-portal / mablogx）共用スタイル。
 
@@ -9,6 +11,17 @@
     /tmp/ma-portal/src/index.css
     /tmp/mablogx/src/index.css
  */
+
+/* Tailwind v4 テーマ (旧 tailwind.config.mjs の extend 移植・値は同一) */
+@theme {
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-2xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --radius-xs: 0.125rem;
+  --blur-xs: 2px;
+  --font-serif: "Noto Serif", "Noto Serif JP", serif;
+  --font-newsreader: Newsreader, "Noto Serif JP", serif;
+  --font-sans: Manrope, ui-sans-serif, system-ui, sans-serif;
+}
 
 :root {
 /* --- mablogx design tokens --- */

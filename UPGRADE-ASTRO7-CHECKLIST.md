@@ -106,25 +106,42 @@ node -v   # v22.23.3 であること
 対象 (npm latest 2026-10-04 照会済):
 `astro 7.3.5` / `@astrojs/react 7.0.0` / `@astrojs/mdx 8.0.2` / `@astrojs/rss/sitemap/check 最新`
 / `react 19.3.0` / `react-dom 19.3.0` / `@types/react,@types/react-dom 19系`
+/ `tailwindcss 4.3.3` + `@tailwindcss/vite` (新規・Phase 3統合)
 保持: `@keystatic/astro 6.0.0` / `@keystatic/core 0.6.9` (最新済み・peer `astro 5||6||7` OK)
-触らない: Tailwind一式 (Phase 3 に隔離)
+削除: `@astrojs/tailwind 6.0.2` (peer `astro ^3||^4||^5` のためAstro 7と共存不可・2-2で同時入替)
 
-- [ ] `2-1` 変更前の `package.json` を退避する
+> 計画変更メモ: チェックシート当初は「TailwindはPhase 3に隔離」だったが、
+> 実機で `npm install` が `@astrojs/tailwind` のpeer制約でERESOLVE失敗することを確認。
+> 依存解決を通すには `@astrojs/tailwind` 除去が必須のため、Tailwind 4移行 (Phase 3) を
+> Phase 2と同一トランザクションに前倒し統合する。見た目の検証は従来通りPhase 3手順で行う。
+
+- [x] `2-1` 変更前の `package.json` を退避する
+  - 済 (前回): `/tmp/package.json.astro5.bak` + `/tmp/package-lock.json.astro5.bak`
+  - 追記: astro単体先行 (`astro@latest` → 7.3.5) のため中間状態。残りは2-2で1トランザクション解決する
   ```bash
   cp package.json /tmp/package.json.astro5.bak && cp package-lock.json /tmp/package-lock.json.astro5.bak 2>/dev/null
   ```
-- [ ] `2-2` インストールする
+- [x] `2-2` インストールする (Tailwind入替を同時実施・1トランザクション)
+  - 済: `astro 7.3.5` / `@astrojs/mdx 8.0.2` / `@astrojs/react 7.0.0` / `@astrojs/rss 4.0.19`
+    / `@astrojs/sitemap 3.7.4` / `@astrojs/check 0.9.10` / `react(-dom) 19.3.0`
+    / `tailwindcss 4.3.3` + `@tailwindcss/vite 4.3.3` / `@astrojs/tailwind` 削除
+  - 手法: `npm install` 単発ではなく `package.json` 直接編集→`node_modules`+lock再生成 (peer衝突回避)
   ```bash
-  npm install astro@latest @astrojs/react@latest @astrojs/mdx@latest @astrojs/rss@latest @astrojs/sitemap@latest @astrojs/check@latest react@latest react-dom@latest
+  npm uninstall @astrojs/tailwind
+  npm install @astrojs/mdx@latest @astrojs/react@latest @astrojs/rss@latest @astrojs/sitemap@latest @astrojs/check@latest react@latest react-dom@latest tailwindcss@latest @tailwindcss/vite@latest
   npm install -D @types/react@latest @types/react-dom@latest
-  npm ls astro @astrojs/react @astrojs/mdx react 2>&1 | head -20
+  npm ls astro @astrojs/react @astrojs/mdx react tailwindcss 2>&1 | head -20
   ```
-- [ ] `2-3` peer警告を確認し、Tailwind由来のものだけであることを切り分ける
+- [x] `2-3` peer警告を確認し、Tailwind由来のものだけであることを切り分ける
+  - 済: `npm ls` peer/invalid/EBAD警告ゼロ。`@astrojs/tailwind` 除去で想定警告自体が消滅
   ```bash
   npm ls 2>&1 | grep -i -E "peer|invalid|EBAD" | head -20
   # 想定: @astrojs/tailwind@6.0.2 の astro peer 警告のみ。以��は異常として記録する
   ```
-- [ ] `2-4` ビルドする
+- [x] `2-4` ビルドする
+  - 済: 初回は `CloudflareBeacon.astro:7` でRustコンパイラ `Unexpected token` (式内HTMLコメント)。
+    コメントを `{...}` 外へ移動し再ビルド→17ページ・2.37s・緑。
+    残警告はMDX `use astro:head-inject` のRolldown注意のみ (無害・既知)
   ```bash
   rm -rf dist node_modules/.vite
   npm run build 2>&1 | tee /tmp/astro7-build.log | tail -30
@@ -133,17 +150,24 @@ node -v   # v22.23.3 であること
     - `unexpected token` + `<!--` → 式内HTMLコメントを `{...}` の外へ移動 (該当なしのはず)
     - `astro:transitions` 内部API削除エラー → 該当コードなしのはず。あれば新イベント名へ
     - `@astrojs/db` エラー → 未使用のはず。あれば削除
-- [ ] `2-5` 型チェック (ベースライン差分が増えていないこと)
+- [x] `2-5` 型チェック (ベースライン差分が増えていないこと)
+  - 済: `astro check` → 0 errors / 0 warnings / 228 hints (hintsは既存の未使用変数)
   ```bash
   npx astro check 2>&1 | tail -20
   ```
-- [ ] `2-6` 成果物差分を確認する (Phase 0 のベースラインと比較)
+- [x] `2-6` 成果物差分を確認する (Phase 0 のベースラインと比較)
+  - 済 (`/tmp/txtdiff.py`): blog一覧・about・contactは可視テキスト完全一致。
+    `index.html`と記事1件のみ `Episode 1 Part1`→`Part 1` の空白差 (2文字)。
+    原因は `compressHTML:true` 固定でAstro 5では潰れていた `{L.bundleEpisodeLabel} {idx+1}` 間の
+    空白が、Astro 7では正しく保持されるようになったため=**修正方向の改善**。CSS差分は
+    ハッシュ名変更+Tailwind v4出力 (`global.C0w55xoE.css`) で想定内。要目視 (2-8)
   ```bash
   for p in index.html blog/index.html "blog/2025-12-08-from-kyoto-to-the-world/index.html"; do
     echo "== $p =="; python3 -c "import re,sys,html; t=open('dist/$p',encoding='utf-8',errors='ignore').read(); t=re.sub(r'<script.*?</script>',' ',t,flags=re.S|re.I); t=re.sub(r'<style.*?</style>',' ',t,flags=re.S|re.I); t=html.unescape(re.sub(r'<[^>]+>',' ',t)); print(re.sub(r'\s+',' ',t)[:300])"
   done
   ```
-- [ ] `2-7` dev + Keystatic管理画面を確認する
+- [x] `2-7` dev + Keystatic管理画面を確認する
+  - 済: `astro v7.3.5 ready` / `/` →200 / `/keystatic` →200
   ```bash
   npm run dev 2>&1 | tail -10
   # http://127.0.0.1:4321/keystatic を開き、一覧・編集・Previewボタンが表示されること

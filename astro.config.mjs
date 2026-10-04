@@ -3,7 +3,7 @@ import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import react from '@astrojs/react';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
 import keystatic from '@keystatic/astro';
 import fs from 'fs';
 import path from 'path';
@@ -40,10 +40,10 @@ export default defineConfig({
 			},
 		}),
 		react(),
-		tailwind(),
 		...(isDev ? [keystatic()] : []),
 	],
 	vite: {
+		plugins: [tailwindcss()],
 		// @keystatic/astro API route imports the virtual module astro:env/server, so exclude it from pre-bundling.
 		optimizeDeps: {
 			exclude: ['@keystatic/astro'],

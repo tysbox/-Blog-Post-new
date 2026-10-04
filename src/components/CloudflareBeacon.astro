@@ -3,8 +3,7 @@
 const token = import.meta.env.PUBLIC_CLOUDFLARE_BEACON_TOKEN;
 ---
 
+<!-- Cloudflare Web Analytics -->
 {token && (
-  <!-- Cloudflare Web Analytics -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={`{"token":"${token}"}`}></script>
-  <!-- End Cloudflare Web Analytics -->
 )}
