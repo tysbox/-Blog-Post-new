@@ -9,7 +9,7 @@ const L = (await getUiLabels()).contact;
 ---
 
 <section id="contact-section" class="contact-section">
-  <h1>{L.heading}</h1>
+  <h1 class="text-sm font-bold">{L.heading}</h1>
   <form id="contact-form" class="contact-form" method="post" novalidate data-access-key={accessKey} data-quiz-label={L.quizLabel} data-quiz-question={L.quizQuestion}>
     <div class="flex flex-col gap-2">
       <label class="text-gray-600 text-sm font-medium" for="name">{L.nameLabel}</label>

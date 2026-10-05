@@ -53,131 +53,133 @@
 	--box-shadow: 0 2px 6px rgba(var(--gray), 25%), 0 8px 24px rgba(var(--gray), 33%),
 		0 16px 32px rgba(var(--gray), 33%);
 }
-html {
-	scroll-behavior: smooth;
-}
-body {
-	font-family: 'Noto Serif', 'Noto Serif JP', serif;
-	margin: 0;
-	padding: 0;
-	text-align: left;
-	word-wrap: break-word;
-	overflow-wrap: break-word;
-	color: #374151;
-	font-size: 16px;
-	line-height: 1.7;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-}
-main > :first-child {
-	margin-top: 0 !important;
-}
-main > :last-child {
-	margin-bottom: 0 !important;
-}
-main {
-	width: auto;
-	max-width: none;
-}
-article {
-	width: auto;
-	max-width: none;
-}
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-	line-height: 1.2;
-}
-h1 {
-	font-size: 3.052em;
-}
-h2 {
-	font-size: 2.441em;
-}
-h3 {
-	font-size: 1.953em;
-}
-h4 {
-	font-size: 1.563em;
-}
-h5 {
-	font-size: 1.25em;
-}
-h6 {
-	font-size: 1em;
-}
-.bear-prose p {
-	margin-bottom: 2em;
-}
-h1 {
-	font-size: 3.052em;
-}
-h2 {
-	font-size: 2.441em;
-}
-h3 {
-	font-size: 1.953em;
-}
-h4 {
-	font-size: 1.563em;
-}
-h5 {
-	font-size: 1.25em;
-}
-strong,
-b {
-	font-weight: 700;
-}
-/* リンクの既定色・hover 色は各コンポーネントの utility（text-* / hover:text-*）で
-   制御するため、ここで color を上書きしない（text-gray-900 等を無効化してしまうため）。 */
-p {
-	margin-bottom: 1em;
-}
-.prose p {
-	margin-bottom: 1em;
-}
-textarea {
-	width: 100%;
-	font-size: 16px;
-}
-input {
-	font-size: 16px;
-}
-table {
-	width: 100%;
-}
-img {
-	max-width: 100%;
-	height: auto;
-}
-code {
-	padding: 2px 5px;
-	background-color: rgb(var(--gray-light));
-	border-radius: 2px;
-}
-pre {
-	padding: 1.5em;
-	border-radius: 8px;
-}
-pre > code {
-	all: unset;
-}
-blockquote {
-	border-left: 4px solid var(--accent);
-	padding: 0 0 0 20px;
-	margin: 0px;
-	font-size: 1.333em;
-}
-hr {
-	border: none;
-	border-top: 1px solid rgb(var(--gray-light));
-}
-@media (max-width: 720px) {
+@layer base {
+	html {
+		scroll-behavior: smooth;
+	}
 	body {
+		font-family: 'Noto Serif', 'Noto Serif JP', serif;
+		margin: 0;
+		padding: 0;
+		text-align: left;
+		word-wrap: break-word;
+		overflow-wrap: break-word;
+		color: #374151;
 		font-size: 16px;
+		line-height: 1.7;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+	main > :first-child {
+		margin-top: 0 !important;
+	}
+	main > :last-child {
+		margin-bottom: 0 !important;
+	}
+	main {
+		width: auto;
+		max-width: none;
+	}
+	article {
+		width: auto;
+		max-width: none;
+	}
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		line-height: 1.2;
+	}
+	h1 {
+		font-size: 3.052em;
+	}
+	h2 {
+		font-size: 2.441em;
+	}
+	h3 {
+		font-size: 1.953em;
+	}
+	h4 {
+		font-size: 1.563em;
+	}
+	h5 {
+		font-size: 1.25em;
+	}
+	h6 {
+		font-size: 1em;
+	}
+	.bear-prose p {
+		margin-bottom: 2em;
+	}
+	h1 {
+		font-size: 3.052em;
+	}
+	h2 {
+		font-size: 2.441em;
+	}
+	h3 {
+		font-size: 1.953em;
+	}
+	h4 {
+		font-size: 1.563em;
+	}
+	h5 {
+		font-size: 1.25em;
+	}
+	strong,
+	b {
+		font-weight: 700;
+	}
+	/* リンクの既定色・hover 色は各コンポーネントの utility（text-* / hover:text-*）で
+	   制御するため、ここで color を上書きしない（text-gray-900 等を無効化してしまうため）。 */
+	p {
+		margin-bottom: 1em;
+	}
+	.prose p {
+		margin-bottom: 1em;
+	}
+	textarea {
+		width: 100%;
+		font-size: 16px;
+	}
+	input {
+		font-size: 16px;
+	}
+	table {
+		width: 100%;
+	}
+	img {
+		max-width: 100%;
+		height: auto;
+	}
+	code {
+		padding: 2px 5px;
+		background-color: rgb(var(--gray-light));
+		border-radius: 2px;
+	}
+	pre {
+		padding: 1.5em;
+		border-radius: 8px;
+	}
+	pre > code {
+		all: unset;
+	}
+	blockquote {
+		border-left: 4px solid var(--accent);
+		padding: 0 0 0 20px;
+		margin: 0px;
+		font-size: 1.333em;
+	}
+	hr {
+		border: none;
+		border-top: 1px solid rgb(var(--gray-light));
+	}
+	@media (max-width: 720px) {
+		body {
+			font-size: 16px;
+		}
 	}
 }
 

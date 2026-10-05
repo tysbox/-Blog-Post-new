@@ -2,6 +2,9 @@
 import { getEntry } from 'astro:content';
 import Header from '../components/Header.astro';
 import CloudflareBeacon from '../components/CloudflareBeacon.astro';
+// Tailwind 4 は @astrojs/tailwind のような全ページ自動注入を行わないため、
+// このレイアウトを使うページ（/about など）でも明示的に読み込む。
+import '../styles/global.css';
 
 interface Props {
   title: string;

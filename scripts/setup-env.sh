@@ -1,3 +1,3 @@
 #!/usr/bin/env zsh
-# Activate local npm binaries for TinaSCM and other tools
+# Activate local npm binaries (legacy helper; not used by start.command).
 export PATH=$(npm bin):$PATH
