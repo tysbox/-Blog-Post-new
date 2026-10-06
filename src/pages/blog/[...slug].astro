@@ -10,6 +10,7 @@ import { extractToc, addHeadingIds } from '../../utils/toc';
 import { orderPosts, permalinkOf } from '../../utils/postOrder';
 import { timestamp } from '../../utils/date';
 import { getUiLabels } from '../../utils/uiLabels';
+import { getGlossary, annotateGlossary } from '../../utils/glossary';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -76,7 +77,9 @@ const japaneseHtml = (() => {
   return richTextToHtml(normalized);
 })();
 
-// Index は textBlock の見出しから自動生成（既存本文の書き換えなし）。
+// 用語集（Keystatic「用語集」）。英語本文（.article-body）内の一致語句だけを
+// 注釈ボタン化する。ヒーロー / 日本語 / 目次 / カルタは対象外。
+const glossary = await getGlossary();
 const tocEntries = extractToc(contentSections);
 
 // 記事固有のカルタブロック（Keystatic contentSections の karutaGrid）。
@@ -109,6 +112,7 @@ const readMinutes = (() => {
 })();
 
 // Index（目次）: 表示順（order → 無ければ公開日の昇順）に沿って全記事を列挙する。
+// （用語集の読み込みは上で済ませている。目次テキスト自体は注釈対象外）
 // 記事数が増えてもドロワーが溢れないよう、既定は「現在位置の前後5件」のみ表示し、
 // 「すべて表示」で全件をスクロールさせる（50記事でも破綻しない設計）。
 const INDEX_WINDOW = 5;
@@ -387,7 +391,7 @@ const indexRange = `${L.tocAllArticles} · ${indexArticles.length}`;
           )}
           <div
             class="article-body space-y-5 font-serif text-base sm:text-lg text-[#1b1c1a] leading-relaxed"
-            set:html={addHeadingIds(richTextToHtml(section.bodyText), ids)}
+            set:html={annotateGlossary(addHeadingIds(richTextToHtml(section.bodyText), ids), glossary)}
           />
         </section>
       );
@@ -526,6 +530,65 @@ const indexRange = `${L.tocAllArticles} · ${indexArticles.length}`;
     if (langChevron) {
       langChevron.style.transform = hidden ? 'rotate(0deg)' : 'rotate(180deg)';
     }
+  });
+
+  // --- 用語集注釈（glossary）: タップで開閉、他所タップ・Esc で閉じる ---
+  // ClientRouter（ビュートランジション）で遷移した直後も確実にバインドするため、
+  // ①即時 ②astro:page-load の両方で init を呼ぶ。data-gloss-bound ガードで
+  // 二重バインド（トグルが打ち消し合って何も起きない事象）を防ぐ。
+  const closeAllGloss = (except?: HTMLElement) => {
+    document.querySelectorAll('.article-body .gloss[aria-expanded="true"]').forEach((el) => {
+      if (el !== except) el.setAttribute('aria-expanded', 'false');
+    });
+  };
+  // POPUP が画面の左右端・上端からはみ出さないよう位置を補正する。
+  // 幅は max-content なので、開いてから測る必要がある。
+  const positionGlossPop = (el: HTMLElement) => {
+    const pop = el.querySelector<HTMLElement>('.gloss-pop');
+    if (!pop) return;
+    const margin = 8;
+    el.style.setProperty('--gloss-shift', '0px');
+    el.removeAttribute('data-gloss-flip');
+
+    const rect = pop.getBoundingClientRect();
+    const vw = document.documentElement.clientWidth;
+    let shift = 0;
+    if (rect.left < margin) shift = margin - rect.left;
+    else if (rect.right > vw - margin) shift = vw - margin - rect.right;
+    if (shift !== 0) el.style.setProperty('--gloss-shift', `${Math.round(shift)}px`);
+
+    // 上に POPUP の高さぶんの余白が無ければ下側へ開く。
+    const after = pop.getBoundingClientRect();
+    if (after.top < margin) el.setAttribute('data-gloss-flip', '1');
+  };
+  const initGloss = () => {
+    document.querySelectorAll('.article-body .gloss').forEach((btn) => {
+      const el = btn as HTMLElement;
+      if (el.getAttribute('data-gloss-bound') === '1') return;
+      el.setAttribute('data-gloss-bound', '1');
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = el.getAttribute('aria-expanded') === 'true';
+        closeAllGloss(el);
+        el.setAttribute('aria-expanded', open ? 'false' : 'true');
+        if (!open) positionGlossPop(el);
+      });
+    });
+  };
+  initGloss();
+  document.addEventListener('astro:page-load', initGloss);
+  // 開いたままウィンドウ幅が変わると補正値が古くなるため、開いているものを再補正する。
+  window.addEventListener('resize', () => {
+    document
+      .querySelectorAll<HTMLElement>('.article-body .gloss[aria-expanded="true"]')
+      .forEach(positionGlossPop);
+  });
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.article-body .gloss')) closeAllGloss();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAllGloss();
   });
 
   // --- Toast ---

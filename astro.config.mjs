@@ -45,14 +45,26 @@ export default defineConfig({
 	vite: {
 		plugins: [tailwindcss()],
 		// @keystatic/astro API route imports the virtual module astro:env/server, so exclude it from pre-bundling.
+		//
+		// @keystatic/core は逆に「起動時に必ず事前バンドルする」ため include に入れる。
+		//   @keystatic/astro を exclude している関係で @keystatic/core は実行時に初めて
+		//   発見され、その時点で dep optimizer が再実行される。すると browserHash が変わり、
+		//   既に配信済みの keystatic-page.js が古い `?v=` を参照し続けて
+		//   504 (Outdated Optimize Dep) → /keystatic が真っ白（ハイドレーション失敗）になる。
+		//   include で先に宣言しておけば再最適化が起きず、ハッシュが陳腐化しない。
+		//   （exclude にすると lodash などの CJS 依存の interop が壊れるため不可）
 		optimizeDeps: {
 			exclude: ['@keystatic/astro'],
+			include: ['@keystatic/core', '@keystatic/core/ui'],
 		},
 		server: {
 			fs: {
 				allow: [
 					path.resolve('.'),
 					nodeModulesReal,
+					// 外部キャッシュ（node_modules の symlink 先）へのパスを許可
+					// Keystatic の仮想モジュールがこのパスを経由して解決されるため必須
+					path.resolve(process.env.HOME || '~', 'Library/Caches/com.tystudio/blog-post/node_modules'),
 				],
 			},
 			watch: {

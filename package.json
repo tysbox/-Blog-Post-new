@@ -8,6 +8,7 @@
   "packageManager": "npm@9",
   "scripts": {
     "check:node-version": "node ./scripts/check-node-version.mjs",
+    "check:glossary": "node ./scripts/check-glossary.mjs",
     "deps:check": "bash ./scripts/check-node-modules-duplicates.sh",
     "deps:externalize": "bash ./scripts/externalize-node-modules.sh",
     "deps:localize": "bash ./scripts/externalize-node-modules.sh --restore",

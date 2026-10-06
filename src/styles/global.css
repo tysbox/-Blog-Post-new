@@ -534,6 +534,76 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 	transform: translateY(0) !important;
 }
 
+/* ==========================================================================
+   用語集注釈（glossary）— 英語本文（.article-body）内のみ
+   B方式: 本文インク #1b1c1a → パープリッシュナイトブルー #3d3a6b、
+   控えめな点下線。ホバー時のみ実線化。ヒーロー/日本語/カルタは対象外
+   （.article-body スコープのため自動除外）。
+   ========================================================================== */
+.article-body .gloss {
+	position: relative;
+	display: inline;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #3d3a6b;
+	font: inherit;
+	text-decoration: underline dotted #8f8bb8 1px;
+	text-underline-offset: 0.22em;
+	cursor: pointer;
+}
+.article-body .gloss:hover,
+.article-body .gloss:focus-visible {
+	color: #3d3a6b;
+	text-decoration-style: solid;
+}
+.article-body .gloss:focus-visible {
+	outline: 2px solid #8f8bb8;
+	outline-offset: 2px;
+	border-radius: 2px;
+}
+.article-body .gloss-pop {
+	position: absolute;
+	left: 50%;
+	bottom: calc(100% + 0.55em);
+	/* --gloss-shift は JS が設定する。行頭・行末の語で POPUP が画面外へ
+	   はみ出すのを防ぐための水平オフセット（既定 0）。 */
+	transform: translate(calc(-50% + var(--gloss-shift, 0px)), 4px);
+	z-index: 60;
+	display: none;
+	width: max-content;
+	max-width: min(18rem, 70vw);
+	padding: 0.6em 0.8em;
+	border: 1px solid #d6c3ba;
+	border-radius: 8px;
+	background: #fcf9f5;
+	box-shadow: 0 8px 24px rgba(27, 28, 26, 0.16);
+	text-align: left;
+	white-space: normal;
+	line-height: 1.6;
+}
+.article-body .gloss[aria-expanded="true"] .gloss-pop {
+	display: block;
+	transform: translate(calc(-50% + var(--gloss-shift, 0px)), 0);
+}
+/* 語が画面上端付近にあり、上に十分な余白が取れない場合は下側へ開く。 */
+.article-body .gloss[data-gloss-flip="1"] .gloss-pop {
+	bottom: auto;
+	top: calc(100% + 0.55em);
+}
+.article-body .gloss-reading {
+	display: block;
+	font-size: 0.8em;
+	font-weight: 700;
+	color: #6f4229;
+	margin-bottom: 0.25em;
+}
+.article-body .gloss-desc {
+	display: block;
+	font-size: 0.8em;
+	color: #1b1c1a;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	html {
 		scroll-behavior: auto;

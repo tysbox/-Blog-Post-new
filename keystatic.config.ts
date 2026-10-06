@@ -248,6 +248,59 @@ export default config({
 
 
     // ============================================================
+    // 用語集 (glossary): src/content/glossary/*.json
+    //
+    // 英語本文（.article-body）内の用語を自動で注釈ボタン化し、
+    // タップすると reading / description を POPUP 表示する。
+    // 登録内容はこの画面で編集するだけで全記事に自動反映される。
+    // スキーマは `src/content.config.ts` の glossary と一致させること。
+    // ============================================================
+    glossary: collection({
+      label: '用語集 (Glossary)',
+      slugField: 'slug',
+      path: 'src/content/glossary/*',
+      format: 'json',
+      schema: {
+        slug: fields.slug({
+          name: {
+            label: 'スラッグ (slug)',
+            description:
+              'ファイル名と同じにしてください（変更するとファイル名が変わります）。ここに入力すると下の「Slug」が自動生成されます。',
+          },
+          slug: {
+            label: 'Slug（自動生成・通常は編集不要）',
+            description:
+              '上の「スラッグ (slug)」から自動生成されます。空のままだと Create 時に「Slug must not be empty」で失敗するので、空なら右の再生成ボタンを押してください。',
+          },
+        }),
+        term: fields.text({
+          label: '用語 (term)',
+          description:
+            '本文で注釈化する語句（例: Kekkai）。記事の英語本文に実在する語を指定してください。本文に出てこない語はハイライトされません（`npm run check:glossary` で確認できます）。',
+          validation: { isRequired: true },
+        }),
+        reading: fields.text({
+          label: '読み (reading)',
+          description: 'POPUP 1行目に表示（例: けっかい）。空欄なら非表示。',
+        }),
+        description: fields.text({
+          label: '説明 (description)',
+          description: 'POPUP 2行目に表示。2行程度の簡潔な説明推奨。',
+          multiline: true,
+        }),
+        caseSensitive: fields.checkbox({
+          label: '大文字・小文字を区別 (caseSensitive)',
+          description: 'ON にすると "ma" と "MA" を別語として扱います。',
+        }),
+        excludeSpellings: fields.array(fields.text({ label: '表記' }), {
+          label: '除外表記 (excludeSpellings)',
+          description:
+            'この語を含む表記は注釈化しません（例: term が Ma のとき ["Mausoleum"] を登録すると Ma-part だけが除外されます）。',
+        }),
+      },
+    }),
+
+    // ============================================================
     // `page` コレクション (src/content/pages/*.json) は削除済み。
     //
     // 同じ記事が blog コレクション (src/content/blog/*.mdx) に重複して存在し、
@@ -691,6 +744,7 @@ export default config({
       'ページ': ['home', 'about'],
       'Folio': ['folio'],
       'Karuta': ['karuta'],
+      '用語集': ['glossary'],
       'サイト共通': ['site', 'siteConfig'],
       'UI ラベル': ['labels'],
     },

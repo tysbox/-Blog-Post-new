@@ -82,6 +82,7 @@ git pull                      # または git clone → git checkout <作業ブ�
 | `npm run preview` | ビルド結果をプレビュー |
 | `npm run astro -- check` | 型チェック（`@astrojs/check`） |
 | `npm run check:node-version` | `.nvmrc` と現在の Node の一致を検証 |
+| `npm run check:glossary` | 用語集の語が記事本文に実在するか検証（0件の語を検出） |
 | `npm run deps:check` | `node_modules` 内の重複フォルダ（`* 2`）を検出 |
 | `npm run deps:externalize` | `node_modules` をキャッシュ（リポジトリ外）へ移動し symlink 化 |
 | `npm run deps:localize` | 外部化した `node_modules` をリポジトリ内に戻す |
@@ -103,6 +104,7 @@ Keystatic の管理画面は **ローカル開発時のみ**利用できます�
 | 対象 | パス |
 | --- | --- |
 | ブログ記事（本文ブロック含む） | `src/content/blog/*.mdx` |
+| **用語集（Glossary）** | `src/content/glossary/*.json` |
 | フロントページ（FUSUMA / Prologue / 注目記事 / Bundle / ニュースレター） | `src/content/portal/home.json` |
 | Folio（デッキ＋カード） | `src/content/folio/folio.json` |
 | Karuta（空間語彙のカルタ） | `src/content/karuta/karuta.json` |
@@ -112,8 +114,122 @@ Keystatic の管理画面は **ローカル開発時のみ**利用できます�
 
 サイト全体の設定値（レイアウトが直接読み込む静的 JSON）は `src/content/settings/site.json` です。
 
+### 用語集（Glossary）を追加するときの注意
+
+用語集は「記事の英語本文に実在する語」を登録すると、その語がハイライトされ、
+タップで注釈が POPUP します。登録時に次の 2 点に注意してください。
+
+1. **「スラッグ (slug)」欄に入力すると、下の「Slug」が自動生成されます。**
+   「用語 (term)」欄だけでは自動生成されません。Slug が空のまま Create すると
+   `Slug must not be empty` で失敗します。
+2. **本文に出てこない語はハイライトされません。** 登録前に
+   `npm run check:glossary` で本文中の出現を確認できます（0 件の語を検出して終了コード 1）。
+
 編集の全体像（ルーティング、ファイル命名、Index 番号の決まり方、Folio／日本語版の扱いなど）は
 **[MANUAL.md](MANUAL.md)** にまとめています。
+
+## アニメーション / エフェクト一覧
+
+サイト内で動くものの全一覧です。実装は **CSS（`src/styles/global.css`）** と
+**JS（`public/scripts/fusuma-hero.js` / 各コンポーネントの `<script>`）** の2系統に分かれます。
+
+### 1. FUSUMA（襖）ヒーロー — トップページ
+
+画像とメッセージを**直列**に巡回させる 14 秒 1 サイクルの演出です。
+テキストとイメージが同時に動く瞬間を作らないことで、明るい写真にテキストが重なったときの
+「光って見える」現象を避けています。
+
+| 時刻 | フェーズ | 実装 |
+| --- | --- | --- |
+| 0.0s | 前イメージ フェードアウト開始（3s） | `.hero-slide` `transition: opacity 3s` |
+| 3.0s | メッセージ フェードイン開始（1s） | `.hero-text-block` `transition: opacity 1s` |
+| 4.0s | 暗転（2s）— メッセージ全表示 | `fusuma-hero.js` の `BLACK` |
+| 6.0s | メッセージ フェードアウト開始（1s） | 同上 |
+| 7.0s | 次イメージ フェードイン開始（3s） | `.hero-slide` |
+| 10.0s | ハイライト（4s） | `.hero-slide.highlight` `filter: contrast(1.08) brightness(1.04)` |
+| 14.0s | 次のサイクルへ | `STEP = 14000` |
+
+- **襖の開閉**：`.fusuma-panel` が `transform: translateX(±100%)` で左右へ開く
+  （`transition: transform 2.25s cubic-bezier(0.25, 1, 0.5, 1)`）。`.fusuma-open` の付け外しで制御。
+- **スモーク風ハロー**：`.hero-title` / `.hero-subtitle` の多重 `text-shadow`。
+  グロー要素（`filter: blur`）は撤去済み — `filter` は合成レイヤーを作るため、
+  フェード開始時の再ラスタライズで一瞬光るフリッカーを起こすためです。
+- **`間` トリガーボタン**：`#ma-trigger-btn` がホバーで `scale(1.04)`、押下で `scale(0.96)`。
+- **`prefers-reduced-motion`**：`fusuma-hero.js` が `matchMedia` で検出し、CSS 側も
+  `transition/animation: none !important` で停止します。
+
+### 2. Book stack deck（フォリオ） — トップページ
+
+カードが重なった束を、ホバーで扇状に展開する演出です。
+
+- **束の展開**：`.book-deck-container:hover` で高さ `570px → 790px`
+  （`transition: height 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)`）。
+  各カードが `translateY(95/190/285px)` と `translateX(-4/-8/-12px)` で段階的にずれます。
+- **タイトルの退避**：`.book-card-title` が展開時に `translateY(12px)` だけ下がり、
+  手前のカードに隠れるのを防ぎます（カード寸法・重なり量は変えません）。
+- **2段階ホバー**：
+  1. カード本体（下部タイトル）へホバー → `z-index: 50` で最前面へ浮上
+  2. 上部イメージ `.book-card-hero` へホバー → `.book-card-preview` が `opacity: 0 → 1`（0.3s）
+- 要約を `.book-card-hero` の**子**に置くことで、要約上へポインタが移ってもホバーが途切れず、
+  要約内リンクも操作できます（判定のちらつき防止）。
+
+### 3. 用語集（Glossary）注釈 — 記事ページ
+
+英語本文中の用語をタップすると注釈が POPUP する仕組みです。
+
+- **対象範囲**：`src/pages/blog/[...slug].astro` の `section.bodyText` のみ。
+  CSS が `.article-body .gloss` にスコープされているため、ヒーロー・`<title>`・OGP・
+  画像 `alt`・カルタ・日本語本文は自動的に除外されます。
+- **見た目**：本文インク `#1b1c1a` → パープリッシュナイトブルー `#3d3a6b`、
+  控えめな点下線（`underline dotted #8f8bb8 1px`）。ホバー / フォーカスで実線化。
+- **POPUP の開閉**：`aria-expanded` の切り替えのみで、CSS が `display: block` にします。
+  外側クリック・`Escape` で閉じます。
+- **画面端の補正**：開いた瞬間に POPUP の実寸を測り、左右端から 8px 内側に収まるよう
+  `--gloss-shift` を設定します。上に余白が無い場合は `data-gloss-flip="1"` で下側に開きます。
+  ウィンドウリサイズ時も再補正します。
+- **ビュートランジション対応**：`ClientRouter` 遷移直後にも確実にバインドするため、
+  即時と `astro:page-load` の両方で初期化します（`data-gloss-bound` ガードで二重バインドを防止）。
+
+> 用語集の語は**記事の英語本文に実在する必要があります**。本文に出てこない語は
+> ハイライトされません。`npm run check:glossary` で検出できます。
+
+### 4. Karuta（空間語彙のカルタ） — 記事ページ
+
+- **カードのホバー**：イメージが `scale(1.10)`（0.7s）、
+  下部グラデーションが `opacity: 0.2` へ、白いオーバーレイ `.karuta-overlay` が
+  `opacity: 0 → 1`（0.3s）で内容を表示。
+- **内容のせり上がり**：`.karuta-content` が `translateY(2px) → 0`（0.3s）。
+- **タップ固定**：カードをクリックすると `.active` がトグルされ、
+  ホバーが外れても内容が開いたままになります（`.group.active` の `!important` ルール）。
+- **カルーセル**：前/次ボタンとドットでページ切り替え。ドットは `transition-colors` で
+  現在位置を `#6f4229` に変えます。
+
+### 5. マイクロインタラクション
+
+| 対象 | 効果 |
+| --- | --- |
+| ヘッダー / フッターのリンク | `transition-colors` でホバー時に `#A36A4F` へ |
+| ヘッダーのロゴ | `transition-transform hover:scale-105` |
+| ポータルシェルフのカード | `hover:shadow-lg`、イメージ `group-hover:scale-105`（0.5s）、要約オーバーレイ `opacity 0 → 1`（0.3s） |
+| お問い合わせフォーム | 入力欄の `transition-colors duration-300`、送信ボタンのホバー |
+| 記事の目次 / 言語ドロワー | `.animate-fade-in`（`maFadeIn` 0.25s：`opacity 0→1` + `translateY(-4px)→0`） |
+| 言語ドロワーのシェブロン | `style.transform` を `rotate(0deg)` ⇄ `rotate(180deg)` |
+| ブックマークボタン | アイコンが `bookmark_border` ⇄ `bookmark`、色が `#6f4229` に |
+| トースト | 3 秒表示して自動で `hidden` |
+| 「もっと見る」バッジ | Tailwind `animate-bounce` |
+| ページ遷移 | `ClientRouter`（`astro:transitions`）によるビュートランジション |
+| スクロール | `html { scroll-behavior: smooth }` |
+
+### 6. モーション設定の尊重
+
+`@media (prefers-reduced-motion: reduce)` で以下を停止します。
+
+- `html { scroll-behavior: auto }`
+- `.fusuma-panel` / `.hero-slide` / `.hero-text-block` / `.book-page-card` /
+  `.book-card-title` / `.book-card-preview` / `.animate-fade-in` の
+  `transition` と `animation` を `none !important`
+- `fusuma-hero.js` は `matchMedia('(prefers-reduced-motion: reduce)')` を検出して
+  巡回を停止します
 
 ## ディレクトリ構成
 
@@ -180,6 +296,38 @@ npm run deps:externalize                                            # キャッ�
 > 外部キャッシュを残したまま `npm ci` すると、プロジェクト内に実ディレクトリの `node_modules` ができ、
 > `deps:externalize` が「外部ターゲットが既に存在する」として失敗します。その場合は上記のように
 > キャッシュを先に削除してください。
+
+### Keystatic の管理画面が真っ白（何も表示されない）
+
+`/keystatic` は HTTP 200 を返すのに画面が空、という症状です。ブラウザのコンソールに
+`504 (Outdated Optimize Dep)` や `Failed to fetch dynamically imported module` が出ていれば
+これに該当します。
+
+**原因**：Vite の依存最適化（dep optimizer）が開発サーバー起動後に再実行され、
+`browserHash` が変わると、既に配信済みの `keystatic-page.js` が古い `?v=` を参照し続けて
+504 になります。アイランドのハイドレーションが失敗するため画面が空になります。
+
+**対処**：`astro.config.mjs` の `optimizeDeps.include` に `@keystatic/core` を入れて
+起動時に事前バンドルさせ、再最適化を起こさないようにしています（設定済み）。
+それでも発生した場合は Vite キャッシュを消して再起動してください。
+
+```sh
+npm run clean:caches   # node_modules/.vite を削除
+npm run dev
+```
+
+> `@keystatic/core` を `exclude` にしてはいけません。`lodash` などの CJS 依存の
+> interop が壊れ、`does not provide an export named 'default'` で同じく真っ白になります。
+
+### 用語集の語がハイライトされない
+
+| 症状 | 原因 / 対処 |
+| --- | --- |
+| Keystatic の一覧には出るが本文でハイライトされない | その語が**記事の英語本文に存在しない**。`npm run check:glossary` で確認 |
+| 登録直後に反映されない | 開発サーバーのコンテンツ監視が新規 JSON を拾わないことがあります。`npm run dev` を再起動 |
+| Create で `Slug must not be empty` | 「スラッグ (slug)」欄が空。ここに入力すると下の「Slug」が自動生成されます |
+| 一覧に追加した項目が見えない | Keystatic のテーブルは仮想スクロールです。下へスクロールしてください |
+| ヒーローや日本語本文でハイライトされない | 仕様です。注釈は記事の英語本文（`.article-body`）のみが対象です |
 
 ## クレジット
 

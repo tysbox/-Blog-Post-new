@@ -302,4 +302,19 @@ const labels = defineCollection({
   }),
 });
 
-export const collections = { blog, global, portal, folio, karuta, siteConfig, labels };
+// 用語集（英語本文のローマ字・英語用語の注釈辞書）: src/content/glossary/*.json
+// Keystatic「用語集」コレクションと1対1。term / reading / description ほか
+// 除外表記（excludeSpellings）・大小文字区別（caseSensitive）を持つ。
+const glossary = defineCollection({
+  loader: glob({ pattern: '**/*.json', base: './src/content/glossary' }),
+  schema: z.object({
+    slug: z.string().optional(),
+    term: z.string(),
+    reading: z.string().optional(),
+    description: z.string().optional(),
+    caseSensitive: z.boolean().optional(),
+    excludeSpellings: z.array(z.string()).optional(),
+  }),
+});
+
+export const collections = { blog, global, portal, folio, karuta, siteConfig, labels, glossary };
