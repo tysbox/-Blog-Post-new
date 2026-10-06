@@ -2,6 +2,11 @@
 
 最終結果のみを記載。失敗や途中経過は含まない。
 
+> **注記（履歴記録）**: 本書は TinaCMS → Keystatic 移行時点の作業記録です。
+> 本文中に登場する Tina 関連スクリプト（`scripts/start-tina-dev.mjs` 等）および
+> `backup/tina-json-original/` は移行完了後に撤去済みで、現在は存在しません。
+> 現行の構成は [README.md](./README.md) を参照してください。
+
 - 対象: `/Users/tysbox/Project/blog-post`
 - ビルド: **17ページ成功** / 型エラー **17件**（§13-2 に引き継ぎ事项として記載）
 - 参照プロトタイプ: `/tmp/ma-portal/src/App.tsx`, `/tmp/mablogx/src/App.tsx`
@@ -105,7 +110,6 @@
 | ファイル | 内容 |
 |---|---|
 | `src/styles/global.css` | mablogx トークン、FUSUMA CSS、book-deck CSS、Karuta utility |
-| `tailwind.config.mjs` | v4 互換 utility（`shadow-xs` / `backdrop-blur-xs` / `rounded-xs`）、フォント |
 | `src/components/BaseHead.astro` | OG画像・既定SEO を `config.json` から取得 |
 | `src/components/mdx/ImageGrid.astro` | mablogx の画像グリッド（FIG.番号付き） |
 
@@ -269,7 +273,7 @@ CMS を **Keystatic のみ**に統一。Tina 関連の設定・スクリプト�
 
 **A を直す際の禁止事項**: `global` を `config` / `about` の 2 コレクションへ**分割**すると、Keystatic 設定・パス・データ移動・全参照の書き換えを伴い、デザイン回帰リスクが最大になる。ナローイング追加のみ推奨。
 
-A を解消した後は **1 件（F のみ）** になる見込み。F まで直せば `astro check` を `scripts/pre-commit-check.sh` や CI に導入できる。
+A を解消した後は **1 件（F のみ）** になる見込み。F まで直せば `astro check` を CI に導入できる。
 
 ---
 

@@ -86,7 +86,6 @@ git pull                      # または git clone → git checkout <作業ブ�
 | `npm run deps:check` | `node_modules` 内の重複フォルダ（`* 2`）を検出 |
 | `npm run deps:externalize` | `node_modules` をキャッシュ（リポジトリ外）へ移動し symlink 化 |
 | `npm run deps:localize` | 外部化した `node_modules` をリポジトリ内に戻す |
-| `npm run images:convert` | 画像変換（`scripts/convert-images.cjs`） |
 | `npm run clean:caches` | Vite キャッシュ削除（`node_modules/.vite`） |
 | `npm run backup:icloud` | ソースのみをバックアップ先へ同期（`node_modules`/`dist` 等は除外） |
 
@@ -258,7 +257,6 @@ Keystatic の管理画面は **ローカル開発時のみ**利用できます�
 .
 ├── astro.config.mjs        # Astro 設定（Keystatic は dev 時のみ有効）
 ├── keystatic.config.ts     # Keystatic のコレクション定義
-├── tailwind.config.mjs
 ├── public/                 # 静的アセット（images / scripts）
 ├── scripts/                # 運用・移行・検証スクリプト
 └── src

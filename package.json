@@ -17,7 +17,6 @@
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1",
     "dev:keystatic": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1",
     "edit": "bash ./scripts/start-editing.sh",
-    "images:convert": "node scripts/convert-images.cjs",
     "clean:caches": "rm -rf node_modules/.vite",
     "build": "astro build",
     "preview": "astro preview",

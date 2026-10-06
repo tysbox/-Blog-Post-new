@@ -192,14 +192,15 @@ node -v   # v22.23.3 であること
 
 - [x] `3-1` 現行Tailwind拡張の棚卸し
   - 済: `tailwind.config.mjs` のextend 6種 (shadow xs/2xs, radius xs, blur xs, font serif/newsreader/sans)。
-    `src` での `shadow-xs/2xs・rounded-xs・backdrop-blur-xs` 直接使用はなし (config定義のみ+標準utility使用)
+    `src` での `shadow-xs/2xs・rounded-xs・backdrop-blur-xs` 直接使用はなし (config定義のみ+標準utility使用)。
+    同ファイルは `@theme` 移植完了後に撤去済み
 - [x] `3-2` 移行する
   - 済: `@astrojs/tailwind` 削除 / `tailwindcss 4.3.3` + `@tailwindcss/vite 4.3.3` 導入 (`bf75531`)
 - [x] `3-3` `astro.config.mjs` を修正する (`tailwind()` → vite plugin)
   - 済 (`bf75531`): `plugins: [tailwindcss()]` 化
 - [x] `3-4` CSSエントリに `@import "tailwindcss";` + `@theme` 移植を行う
   - 済 (`bf75531`): `src/styles/global.css` 先頭にimport+`@theme` 6種移植 (値同一)。
-    `tailwind.config.mjs` は参照用に残置
+    移植完了に伴い `tailwind.config.mjs` は撤去済み
 - [x] `3-5` ビルド + Preflight差分確認
   - 済: 17ページ・2.37s・緑。CSSは `global.C0w55xoE.css` (Tailwind v4) に再生成。可視テキスト差分は `Part 1` 空白のみ
 - [x] `3-6` 全ページ目視
