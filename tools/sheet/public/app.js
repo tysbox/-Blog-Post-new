@@ -73,7 +73,7 @@ function karutaColumns() {
     label: state.meta.karutaLabels[field] ?? field,
     multiline: state.meta.karutaMultiline.includes(field),
     wide: state.meta.karutaMultiline.includes(field) || field === 'alt',
-    narrow: ['number', 'kanjiNum', 'folioId', 'icon'].includes(field),
+    narrow: ['number', 'folioId'].includes(field),
   }));
 }
 
@@ -359,7 +359,6 @@ function addKarutaRow() {
   const next = state.karuta.cards.length + 1;
   state.karuta.cards.push({
     number: String(next).padStart(2, '0'),
-    kanjiNum: '',
     tag: '',
     romaji: '',
     titleJp: '',
@@ -367,8 +366,6 @@ function addKarutaRow() {
     image: '',
     alt: '',
     folioId: `FOLIO ${String(next).padStart(2, '0')}`,
-    category: '',
-    icon: '',
     bodyJp: '',
     bodyEn: '',
   });

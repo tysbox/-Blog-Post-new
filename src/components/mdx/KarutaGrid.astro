@@ -7,7 +7,6 @@ import { getUiLabels } from '../../utils/uiLabels';
 
 interface KarutaCard {
   number?: string;
-  kanjiNum?: string;
   tag?: string;
   romaji?: string;
   titleJp?: string;
@@ -15,8 +14,6 @@ interface KarutaCard {
   image?: string;
   alt?: string;
   folioId?: string;
-  category?: string;
-  icon?: string;
   bodyJp?: string;
   bodyEn?: string;
   title?: string;
@@ -49,6 +46,8 @@ const all = source
 const perPage = Number(karutaData.perPage) > 0 ? Number(karutaData.perPage) : 3;
 const pageCount = Math.max(1, Math.ceil(all.length / perPage));
 const num = (n: number) => String(n).padStart(2, '0');
+// 本物のカルタ様式: 表面の大文字は日本語タイトルの最初の1文字（例: 八百万の神 → 八）
+const headChar = (card: KarutaCard) => (card.titleJp || card.title || '').trim().charAt(0);
 ---
 
 {all.length > 0 && (
@@ -101,7 +100,7 @@ const num = (n: number) => String(n).padStart(2, '0');
 
                     <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-between p-6 transition-opacity duration-300 group-hover:opacity-20">
                       <div class="flex justify-between items-start">
-                        <span class="font-serif text-2xl text-white tracking-widest">{card.kanjiNum || n}</span>
+                        <span class="font-serif text-2xl text-white tracking-widest">{headChar(card) || n}</span>
                         <span class="font-sans text-[10px] uppercase tracking-widest text-white/90 bg-black/40 px-2 py-0.5">{tag}</span>
                       </div>
                       <div class="space-y-1 text-white">
@@ -116,7 +115,7 @@ const num = (n: number) => String(n).padStart(2, '0');
                     <div class="karuta-overlay absolute inset-0 bg-white/95 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-6 flex flex-col justify-between pointer-events-none group-hover:pointer-events-auto">
                       <div class="space-y-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 karuta-content">
                         <div class="flex justify-between items-baseline">
-                          <span class="font-serif text-2xl text-[#6f4229] font-bold">{card.kanjiNum || n}</span>
+                          <span class="font-serif text-2xl text-[#6f4229] font-bold">{headChar(card) || n}</span>
                           <span class="font-sans text-[10px] uppercase tracking-widest text-[#84746c]">{folioId}</span>
                         </div>
                         <h4 class="font-serif text-lg font-semibold text-[#1b1c1a]">{jp}</h4>
@@ -131,10 +130,7 @@ const num = (n: number) => String(n).padStart(2, '0');
                         )}
                       </div>
                       <div class="pt-2 flex items-center justify-between text-[#84746c] text-[10px] font-sans uppercase tracking-widest">
-                        <span>{card.category || 'Folio'}</span>
-                        {card.icon && (
-                          <span class="material-symbols-outlined text-[16px] text-[#6f4229]">{card.icon}</span>
-                        )}
+                        <span>{folioId}</span>
                       </div>
                     </div>
                   </div>

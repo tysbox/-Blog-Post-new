@@ -216,7 +216,6 @@ export default config({
             karutaCards: fields.array(
               fields.object({
                 number: fields.text({ label: '番号 (number)', description: '例: 01' }),
-                kanjiNum: fields.text({ label: '漢数字 (kanjiNum)', description: '例: 壱' }),
                 tag: fields.text({ label: 'タグ (tag)', description: '例: BOUNDARY' }),
                 romaji: fields.text({ label: 'ローマ字 (romaji)', description: '例: SHINBOKU & KEKKAI' }),
                 titleJp: fields.text({ label: '日本語タイトル (titleJp)', description: '例: 神木と結界' }),
@@ -227,8 +226,6 @@ export default config({
                 }),
                 alt: fields.text({ label: '代替テキスト (alt)' }),
                 folioId: fields.text({ label: 'Folios ID', description: '例: FOLIO 01' }),
-                category: fields.text({ label: 'カテゴリ (category)' }),
-                icon: fields.text({ label: 'アイコン (icon)', description: 'Material Symbols 名。例: verified' }),
                 bodyJp: fields.text({ label: '本文日本語 (bodyJp)', multiline: true }),
                 bodyEn: fields.text({ label: '本文英語 (bodyEn)', multiline: true }),
               }),
@@ -527,6 +524,8 @@ export default config({
      * Karuta（空間語彙のカルタ）: src/content/karuta/karuta.json
      * 全ブログ記事共通で表示されるカード。ブログ記事とは別に独立編集する。
      * 1ページ3枚で表示し、上限は100枚（KARUTA_MAX）。
+     * カード表面の大文字は日本語タイトルの最初の1文字を自動表示する
+     * （本物のカルタ様式。kanjiNum 欄は廃止）。
      */
     karuta: singleton({
       label: 'Karuta（空間語彙のカルタ）',
@@ -549,7 +548,6 @@ export default config({
         cards: fields.array(
           fields.object({
             number: fields.text({ label: '番号 (number)', description: '例: 01' }),
-            kanjiNum: fields.text({ label: '漢数字 (kanjiNum)', description: '例: 壱' }),
             tag: fields.text({ label: 'タグ (tag)', description: '例: BOUNDARY' }),
             romaji: fields.text({ label: 'ローマ字 (romaji)', description: '例: SHINBOKU & KEKKAI' }),
             titleJp: fields.text({ label: '日本語タイトル (titleJp)', description: '例: 神木と結界' }),
@@ -560,11 +558,6 @@ export default config({
             }),
             alt: fields.text({ label: '代替テキスト (alt)' }),
             folioId: fields.text({ label: 'Folio ID', description: '例: FOLIO 01' }),
-            category: fields.text({ label: 'カテゴリ (category)' }),
-            icon: fields.text({
-              label: 'アイコン (icon)',
-              description: 'Material Symbols 名。例: verified',
-            }),
             bodyJp: fields.text({ label: '本文日本語 (bodyJp)', multiline: true }),
             bodyEn: fields.text({ label: '本文英語 (bodyEn)', multiline: true }),
           }),

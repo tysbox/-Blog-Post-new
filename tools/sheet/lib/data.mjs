@@ -18,7 +18,6 @@ import {
 
 export const KARUTA_CARD_FIELDS = [
   'number',
-  'kanjiNum',
   'tag',
   'romaji',
   'titleJp',
@@ -26,15 +25,12 @@ export const KARUTA_CARD_FIELDS = [
   'image',
   'alt',
   'folioId',
-  'category',
-  'icon',
   'bodyJp',
   'bodyEn',
 ];
 
 export const KARUTA_CARD_LABELS = {
   number: '番号',
-  kanjiNum: '漢数字',
   tag: 'タグ',
   romaji: 'ローマ字',
   titleJp: '日本語タイトル',
@@ -42,8 +38,6 @@ export const KARUTA_CARD_LABELS = {
   image: '画像',
   alt: '代替テキスト',
   folioId: 'Folio ID',
-  category: 'カテゴリ',
-  icon: 'アイコン',
   bodyJp: '本文（日本語）',
   bodyEn: '本文（英語）',
 };

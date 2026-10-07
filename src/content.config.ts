@@ -47,7 +47,6 @@ const blog = defineCollection({
               .array(
                 z.object({
                   number: z.string().optional(),
-                  kanjiNum: z.string().optional(),
                   tag: z.string().optional(),
                   romaji: z.string().optional(),
                   titleJp: z.string().optional(),
@@ -55,8 +54,6 @@ const blog = defineCollection({
                   image: z.string().optional(),
                   alt: z.string().optional(),
                   folioId: z.string().optional(),
-                  category: z.string().optional(),
-                  icon: z.string().optional(),
                   bodyJp: z.string().optional(),
                   bodyEn: z.string().optional(),
                   // 後方互換（旧スキーマ）
@@ -185,7 +182,6 @@ const karuta = defineCollection({
     max: z.number().optional(),
     cards: z.array(z.object({
       number: z.string().optional(),
-      kanjiNum: z.string().optional(),
       tag: z.string().optional(),
       romaji: z.string().optional(),
       titleJp: z.string().optional(),
@@ -193,8 +189,6 @@ const karuta = defineCollection({
       image: z.string().optional(),
       alt: z.string().optional(),
       folioId: z.string().optional(),
-      category: z.string().optional(),
-      icon: z.string().optional(),
       bodyJp: z.string().optional(),
       bodyEn: z.string().optional(),
     })).optional(),
