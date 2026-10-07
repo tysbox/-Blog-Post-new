@@ -118,7 +118,12 @@ const headChar = (card: KarutaCard) => (card.titleJp || card.title || '').trim()
                           <span class="font-serif text-2xl text-[#6f4229] font-bold">{headChar(card) || n}</span>
                           <span class="font-sans text-[10px] uppercase tracking-widest text-[#84746c]">{folioId}</span>
                         </div>
-                        <h4 class="font-serif text-lg font-semibold text-[#1b1c1a]">{jp}</h4>
+                        <h4 class="font-serif text-lg font-semibold text-[#1b1c1a]">
+                          {jp}
+                          {card.romaji && (
+                            <span class="font-sans text-[10px] uppercase tracking-widest text-[#865138] ml-2 whitespace-nowrap align-middle">{card.romaji}</span>
+                          )}
+                        </h4>
                         {en && (
                           <span class="font-sans text-[11px] tracking-wider uppercase text-[#865138] block">{en}</span>
                         )}
