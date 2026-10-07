@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>カルタ / 用語集 スプレッドシート</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">MA</span>
+        <div>
+          <h1>カルタ / 用語集 スプレッドシート</h1>
+          <p class="brand-sub">
+            Keystatic と同じ JSON を直接編集します（
+            <code>src/content/karuta/karuta.json</code> /
+            <code>src/content/glossary/*.json</code>）
+          </p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <span id="dirty-badge" class="badge badge-muted" hidden>未保存の変更あり</span>
+        <button id="btn-reload" type="button" class="btn">再読込</button>
+        <button id="btn-export" type="button" class="btn">CSV 出力</button>
+        <button id="btn-import" type="button" class="btn">CSV 取込</button>
+        <button id="btn-backups" type="button" class="btn">バックアップ</button>
+        <button id="btn-save" type="button" class="btn btn-primary">保存</button>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button id="tab-karuta" type="button" class="tab is-active" role="tab">カルタ</button>
+      <button id="tab-glossary" type="button" class="tab" role="tab">用語集</button>
+    </nav>
+
+    <main>
+      <section id="panel-karuta" class="panel">
+        <div class="panel-head">
+          <div class="settings">
+            <label>
+              1ページの枚数
+              <input id="karuta-per-page" type="number" min="1" step="1" />
+            </label>
+            <label>
+              最大枚数
+              <input id="karuta-max" type="number" min="1" step="1" />
+            </label>
+            <span id="karuta-count" class="muted"></span>
+          </div>
+          <div class="panel-actions">
+            <button id="karuta-add" type="button" class="btn">行を追加</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="karuta-table" class="sheet"></table>
+        </div>
+      </section>
+
+      <section id="panel-glossary" class="panel" hidden>
+        <div class="panel-head">
+          <div class="settings">
+            <span id="glossary-count" class="muted"></span>
+            <span id="glossary-usage" class="muted"></span>
+          </div>
+          <div class="panel-actions">
+            <button id="glossary-add" type="button" class="btn">行を追加</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="glossary-table" class="sheet"></table>
+        </div>
+      </section>
+    </main>
+
+    <div id="status" class="status" hidden></div>
+
+    <dialog id="dialog-import" class="dialog">
+      <form method="dialog">
+        <h2>CSV / TSV 取込</h2>
+        <p class="muted">
+          スプレッドシートからコピーした内容をそのまま貼り付けられます（タブ区切り自動判定）。
+          1行目はヘッダーとして扱います。
+        </p>
+        <textarea id="import-text" rows="10" spellcheck="false"></textarea>
+        <p id="import-note" class="muted"></p>
+        <div class="dialog-actions">
+          <button value="cancel" class="btn">キャンセル</button>
+          <button id="import-apply" value="apply" class="btn btn-primary">取り込む</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="dialog-backups" class="dialog">
+      <form method="dialog">
+        <h2>バックアップ</h2>
+        <p class="muted">保存のたびに <code>.sheet-backups/</code> へ退避しています。</p>
+        <ul id="backup-list" class="backup-list"></ul>
+        <div class="dialog-actions">
+          <button value="cancel" class="btn">閉じる</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

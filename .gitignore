@@ -33,6 +33,9 @@ pnpm-debug.log*
 *.code-workspace
 scripts/webp-backup-*/
 
+# スプレッドシート型エディタ (npm run sheet) の保存前バックアップ
+.sheet-backups/
+
 # ローカルのみ / コミット対象外
 # backup/ は Tina 移行時の退避データ（移行元の原本 JSON を含む）。
 # .vscode/ はエディタ個別の設定。

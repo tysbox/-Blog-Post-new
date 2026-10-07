@@ -78,6 +78,7 @@ git pull                      # または git clone → git checkout <作業ブ�
 | `npm run edit` | **編集セッションをワンクリック開始**（Node切替 → 依存確認 → サーバー起動 → 管理画面を開く） |
 | `npm run dev` | 開発サーバー起動（`http://127.0.0.1:4321`）／Keystatic 管理画面つき |
 | `npm run dev:keystatic` | `dev` と同義（明示用エイリアス） |
+| `npm run sheet` | **カルタ / 用語集のスプレッドシート型エディタ**（`http://127.0.0.1:4322`） |
 | `npm run build` | 静的ビルド（出力: `dist/`） |
 | `npm run preview` | ビルド結果をプレビュー |
 | `npm run astro -- check` | 型チェック（`@astrojs/check`） |
@@ -126,6 +127,29 @@ Keystatic の管理画面は **ローカル開発時のみ**利用できます�
 
 編集の全体像（ルーティング、ファイル命名、Index 番号の決まり方、Folio／日本語版の扱いなど）は
 **[MANUAL.md](MANUAL.md)** にまとめています。
+
+### カルタ / 用語集をまとめて編集する（スプレッドシート型エディタ）
+
+カルタと用語集は件数が多く、1 件ずつ管理画面を開くより表で見渡したいことがあります。
+その場合は Keystatic とは別に、同じ JSON を直接読み書きするローカルアプリを使えます。
+
+```sh
+npm run sheet
+# → http://127.0.0.1:4322/ が開きます
+```
+
+- **Keystatic の編集構造は変わりません。** 書き込むファイルは
+  `src/content/karuta/karuta.json` と `src/content/glossary/*.json` のままで、
+  スキーマ・フィールド順・ファイル配置も維持されます。Keystatic での個別修正も従来どおり可能です。
+- 表のセルを直接編集し、**保存**（`Cmd/Ctrl + S` でも可）でファイルに反映します。
+- 用語集の「本文での出現」列は `npm run check:glossary` と同じ判定で、記事本文に実在する回数を表示します。
+- **CSV 出力 / CSV 取込**で表計算ソフトと受け渡しできます（タブ区切りにも対応）。
+- 保存のたびに `.sheet-backups/<日時>/` へ退避し、**バックアップ**から復元できます（最大 20 世代）。
+- ポートを変えたい場合は `SHEET_PORT=4400 npm run sheet`、ブラウザを自動で開かない場合は
+  `SHEET_NO_OPEN=1 npm run sheet` を使います。
+
+> 保存時は既知のフィールドだけを更新し、Keystatic 側で追加された未知のフィールドは元の位置のまま保持します。
+> 内容が変わらない保存ではファイルの差分は発生しません。
 
 ## アニメーション / エフェクト一覧
 
@@ -259,6 +283,7 @@ Keystatic の管理画面は **ローカル開発時のみ**利用できます�
 ├── keystatic.config.ts     # Keystatic のコレクション定義
 ├── public/                 # 静的アセット（images / scripts）
 ├── scripts/                # 運用・移行・検証スクリプト
+├── tools/sheet/            # カルタ / 用語集のスプレッドシート型エディタ（npm run sheet）
 └── src
     ├── components/         # Astro/React コンポーネント（mdx/ 配下に画像グリッド等）
     ├── content/            # Keystatic の編集対象（上表）
