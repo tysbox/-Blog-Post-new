@@ -36,6 +36,10 @@ npm run dev             # 開発サーバー起動
 | **Finder から** | リポジトリ直下の **`start.command`** をダブルクリック |
 | **ターミナルから** | `npm run edit` |
 
+カルタ / 用語集のスプレッドシート型エディタだけを起動したい場合は、
+**`start-sheet.command`**（Finder）または `npm run sheet`（ターミナル）を使います。
+こちらはブラウザを自動で開かないため、既に開いているタブを再読込してください。
+
 どちらの場合でも、以下を自動的に順番に処理します。
 
 1. `.nvmrc`（Node 22.23.3）へ切り替える。未インストールなら `nvm install` して続行
@@ -76,9 +80,9 @@ git pull                      # または git clone → git checkout <作業ブ�
 | コマンド | 内容 |
 | --- | --- |
 | `npm run edit` | **編集セッションをワンクリック開始**（Node切替 → 依存確認 → サーバー起動 → 管理画面を開く） |
+| `npm run sheet` | **カルタ / 用語集のスプレッドシート型エディタ**（`http://127.0.0.1:4322`） |
 | `npm run dev` | 開発サーバー起動（`http://127.0.0.1:4321`）／Keystatic 管理画面つき |
 | `npm run dev:keystatic` | `dev` と同義（明示用エイリアス） |
-| `npm run sheet` | **カルタ / 用語集のスプレッドシート型エディタ**（`http://127.0.0.1:4322`） |
 | `npm run build` | 静的ビルド（出力: `dist/`） |
 | `npm run preview` | ビルド結果をプレビュー |
 | `npm run astro -- check` | 型チェック（`@astrojs/check`） |
@@ -137,6 +141,10 @@ Keystatic の管理画面は **ローカル開発時のみ**利用できます�
 npm run sheet
 # → http://127.0.0.1:4322/ が開きます
 ```
+
+Finder から起動したい場合は、リポジトリ直下の **`start-sheet.command`** をダブルクリックします
+（Node の切り替えとポート占有チェックを行います）。**ブラウザは自動で開かない**ため、
+既に開いているタブを再読込して使ってください。
 
 - **Keystatic の編集構造は変わりません。** 書き込むファイルは
   `src/content/karuta/karuta.json` と `src/content/glossary/*.json` のままで、
