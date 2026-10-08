@@ -12,6 +12,7 @@
 #   3. Git インデックスを自己修復する（.git/index が欠落していれば再構築）
 #   4. 開発サーバーを起動し、応答したらブラウザで管理画面 (/keystatic) を開く
 #      （ポート 4321 が別プロセスに占用されている場合はエラーで停止）
+#   5. スプレッドシート型エディタ（4322）を同時起動する（ブラウザは開かない）
 #
 # 使い分け:
 #   - ターミナルから : npm run edit
@@ -20,6 +21,7 @@
 # 環境変数:
 #   MA_NO_OPEN=1 … ブラウザを自動で開かない（動作確認用）
 #   MA_SKIP_GIT=1 … Git インデックスの再構築を行わない
+#   SHEET_PORT=4400 … スプレッドシート型エディタの待ち受けポートを変更（既定 4322）
 #
 # 冪等性:
 #   本スクリプトは冪等です。各ステップは「今の状態を検査し、壊れていれば直す」
@@ -320,6 +322,41 @@ fi
 ) &
 
 bold "--- 開発サーバー（Ctrl+C で停止）---"
+
+# ---------------------------------------------------------------------------
+# 6) スプレッドシート型エディタ（4322）を同時起動する
+#    start.command 一つで Keystatic（4321）とシート（4322）の両方が立ち上がる。
+#    シートは Node 標準モジュールのみで動くため起動は即時。ブラウザは開かない
+#    （SHEET_NO_OPEN=1 を常時付与。開いているタブを再読込して使う）。
+#    既に起動している場合は何もしない（冪等）。
+#    バックグラウンドで起動し、失敗しても開発サーバーは止めない。
+# ---------------------------------------------------------------------------
+SHEET_PORT="${SHEET_PORT:-4322}"
+if curl -sf -o /dev/null --max-time 2 "http://${HOST}:${SHEET_PORT}/api/state"; then
+  info "スプレッドシート型エディタは既に起動しています（http://${HOST}:${SHEET_PORT}）"
+else
+  if command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:"${SHEET_PORT}" -sTCP:LISTEN >/dev/null 2>&1; then
+    warn "ポート ${SHEET_PORT} は別のプロセスが使用中のため、シートを起動できません。"
+    warn "SHEET_PORT=4400 のように変更するか、該当プロセスを停止してください。"
+  else
+    info "スプレッドシート型エディタを起動します（http://${HOST}:${SHEET_PORT}）…"
+    (
+      SHEET_NO_OPEN=1 SHEET_PORT="${SHEET_PORT}" npm run sheet >/dev/null 2>&1 &
+      SHEET_PID=$!
+      # 起動を確認してから案内する（最大 10 秒）
+      for _ in $(seq 1 10); do
+        if curl -sf -o /dev/null --max-time 2 "http://${HOST}:${SHEET_PORT}/api/state"; then
+          info "スプレッドシート型エディタを起動しました ✓（http://${HOST}:${SHEET_PORT}/）"
+          break
+        fi
+        sleep 1
+      done
+      wait "${SHEET_PID}" 2>/dev/null
+    ) &
+    disown 2>/dev/null || true
+  fi
+fi
+
 npm run dev
 
 bold "--- 開発サーバーを停止しました ---"
