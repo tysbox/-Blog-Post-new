@@ -15,7 +15,6 @@
     "tocFooter": "ISSN 2814-9902 • Kyoto Dispatch",
     "prevLabel": "PREVIOUS ARTICLE",
     "nextLabel": "NEXT ARTICLE",
-    "figLabel": "FIG. 00 / ARCHIVE",
     "editorialName": "間 MA Editorial",
     "editorialByline": "BiScène Kyoto",
     "readSuffix": "min read"
@@ -42,8 +41,7 @@
     "foliosSuffix": "Folios",
     "chapterPrefix": "CHAPTER",
     "pageCategory": "Page",
-    "bundleEpisodeLabel": "Page • Vol. I Episode 1 Part",
-    "pageRange": "p. 01–24"
+    "bundleEpisodeLabel": "Page • Vol. I Episode 1 Part"
   },
   "karuta": {
     "cardFolioLabel": "Card Folio • 空間語彙のカルタ",

@@ -22,7 +22,6 @@ export const DEFAULT_LABELS = {
     tocFooter: 'ISSN 2814-9902 • Kyoto Dispatch',
     prevLabel: 'PREVIOUS ARTICLE',
     nextLabel: 'NEXT ARTICLE',
-    figLabel: 'FIG. 00 / ARCHIVE',
     editorialName: '間 MA Editorial',
     editorialByline: 'BiScène Kyoto',
     readSuffix: 'min read',
@@ -50,7 +49,6 @@ export const DEFAULT_LABELS = {
     chapterPrefix: 'CHAPTER',
     pageCategory: 'Page',
     bundleEpisodeLabel: 'Page • Vol. I Episode 1 Part',
-    pageRange: 'p. 01–24',
   },
   karuta: {
     cardFolioLabel: 'Card Folio • 空間語彙のカルタ',

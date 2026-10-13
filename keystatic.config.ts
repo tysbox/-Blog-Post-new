@@ -33,7 +33,7 @@ const imageItem = fields.object({
 		validation: { isRequired: true },
 	}),
 	label: fields.text({ label: 'ラベル (label)' }),
-	caption: fields.text({ label: 'キャプション (caption)', multiline: true }),
+	caption: fields.mdx.inline({ label: 'キャプション (caption)', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
 });
 
 export default config({
@@ -81,9 +81,19 @@ export default config({
         }),
 
         // Display title, independent of the slug, freely editable.
-        title: fields.text({
+        // タイトル / 概要も本文と同じ GUI（WYSIWYG）エディタにする。
+        // これで全テキスト欄が同じ操作（太字・斜体・改行）になり、
+        // 保存値は Markdown 文字列なので描画側の richTextToHtml*() と互換。
+        title: fields.mdx.inline({
           label: 'タイトル (Title)',
-          multiline: true,
+          description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。',
+          options: {
+            bold: true,
+            italic: true,
+            strikethrough: true,
+            link: true,
+            code: true,
+          },
         }),
 
         // 表示順 No.（通常は空）。
@@ -95,9 +105,16 @@ export default config({
             '通常は空のままで問題ありません（公開日の順で 1,2,3… と自動採番されます）。順序を日付から切り離したい場合だけ数字を入れます。',
         }),
 
-        description: fields.text({
+        description: fields.mdx.inline({
           label: '概要 (Description)',
-          multiline: true,
+          description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。',
+          options: {
+            bold: true,
+            italic: true,
+            strikethrough: true,
+            link: true,
+            code: true,
+          },
         }),
 
         pubDate: fields.date({
@@ -118,16 +135,39 @@ export default config({
 
         // タイトルは Markdown が使えるため、レンダリング側で解釈される。
         // 例: **太字** / *斜体*
-        heroTitle: fields.text({
+        // ヒーロー見出し / サブタイトルも本文と同じ GUI（WYSIWYG）エディタにする。
+        // これにより見出しレベル（H3/H4）を選べ、太字・斜体・改行も画面上で編集できる。
+        // 保存値はプレーンな Markdown 文字列なので、描画側の richTextToHtml*() と互換。
+        heroTitle: fields.mdx.inline({
           label: 'ヒーロー見出し (Hero Title)',
-          description: 'Markdown が使えます。例: **強調**',
-          multiline: true,
+          description:
+            'GUIエディタです。見出し（H3/H4）を選ぶと文字サイズを変えられます。B（太字）/ I（斜体）も使えます。',
+          options: {
+            bold: true,
+            italic: true,
+            strikethrough: true,
+            heading: [3, 4],
+            blockquote: true,
+            unorderedList: true,
+            orderedList: true,
+            link: true,
+            code: true,
+          },
         }),
 
-        heroSubtitle: fields.text({
+        heroSubtitle: fields.mdx.inline({
           label: 'ヒーローサブタイトル (Hero Subtitle)',
-          description: 'Markdown が使えます。',
-          multiline: true,
+          description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。',
+          options: {
+            bold: true,
+            italic: true,
+            strikethrough: true,
+            blockquote: true,
+            unorderedList: true,
+            orderedList: true,
+            link: true,
+            code: true,
+          },
         }),
 
         // 日本語と英語の本文は GUI（WYSIWYG）エディタで編集する。
@@ -211,23 +251,23 @@ export default config({
             }),
 
             // --- カルタ3列 (Step3-3: 任意のみ・既存 imageGrid 互換) ---
-            karutaTitle: fields.text({ label: 'カルタ見出し (karutaTitle)' }),
+            karutaTitle: fields.mdx.inline({ label: 'カルタ見出し (karutaTitle)', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
 
             karutaCards: fields.array(
               fields.object({
                 number: fields.text({ label: '番号 (number)', description: '例: 01' }),
                 tag: fields.text({ label: 'タグ (tag)', description: '例: BOUNDARY' }),
                 romaji: fields.text({ label: 'ローマ字 (romaji)', description: '例: SHINBOKU & KEKKAI' }),
-                titleJp: fields.text({ label: '日本語タイトル (titleJp)', description: '例: 神木と結界' }),
-                titleEn: fields.text({ label: '英語タイトル (titleEn)' }),
+                titleJp: fields.mdx.inline({ label: '日本語タイトル (titleJp)', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+                titleEn: fields.mdx.inline({ label: '英語タイトル (titleEn)', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
                 image: fields.text({
                   label: '画像',
                   description: '例: /images/IMG_0581_DxO.webp',
                 }),
                 alt: fields.text({ label: '代替テキスト (alt)' }),
                 folioId: fields.text({ label: 'Folios ID', description: '例: FOLIO 01' }),
-                bodyJp: fields.text({ label: '本文日本語 (bodyJp)', multiline: true }),
-                bodyEn: fields.text({ label: '本文英語 (bodyEn)', multiline: true }),
+                bodyJp: fields.mdx.inline({ label: '本文日本語 (bodyJp)', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+                bodyEn: fields.mdx.inline({ label: '本文英語 (bodyEn)', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
               }),
               { label: 'カルタカード (karutaCards)' },
             ),
@@ -280,10 +320,10 @@ export default config({
           label: '読み (reading)',
           description: 'POPUP 1行目に表示（例: けっかい）。空欄なら非表示。',
         }),
-        description: fields.text({
+        description: fields.mdx.inline({
           label: '説明 (description)',
-          description: 'POPUP 2行目に表示。2行程度の簡潔な説明推奨。',
-          multiline: true,
+          description: 'POPUP 2行目に表示。GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。',
+          options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
         }),
         caseSensitive: fields.checkbox({
           label: '大文字・小文字を区別 (caseSensitive)',
@@ -340,8 +380,8 @@ export default config({
             ),
             fusumaTexts: fields.array(
               fields.object({
-                title: fields.text({ label: 'タイトル' }),
-                subtitle: fields.text({ label: 'サブタイトル', multiline: true }),
+                title: fields.mdx.inline({ label: 'タイトル', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+                subtitle: fields.mdx.inline({ label: 'サブタイトル', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
               }),
               {
                 label: 'FUSUMA テキスト（最大5件）',
@@ -353,8 +393,8 @@ export default config({
           { label: 'ヒーロー（FUSUMA）' },
         ),
 
-        introTitle: fields.text({ label: '導入見出し', multiline: true }),
-        introText: fields.text({ label: '導入本文', multiline: true }),
+        introTitle: fields.mdx.inline({ label: '導入見出し', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+        introText: fields.mdx.inline({ label: '導入本文', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
 
         // --- 6. Dispatches from Kyoto（ニュースレター）---
         // フロントページ最下部に固定表示。編集はここだけ行う。
@@ -365,41 +405,45 @@ export default config({
               description: 'オフにするとフロントページ最下部のニュースレターを非表示にします。',
               defaultValue: true,
             }),
-            eyebrow: fields.text({
+            eyebrow: fields.mdx.inline({
               label: '上見出し (eyebrow)',
-              description: '例: DISPATCHES FROM KYOTO',
-              defaultValue: 'DISPATCHES FROM KYOTO',
+              description: 'GUIエディタです。例: DISPATCHES FROM KYOTO',
+              options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
             }),
-            heading: fields.text({
+            heading: fields.mdx.inline({
               label: '見出し (heading)',
-              description: '例: Receive Quiet Reflections',
-              defaultValue: 'Receive Quiet Reflections',
+              description: 'GUIエディタです。例: Receive Quiet Reflections',
+              options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
             }),
-            body: fields.text({
+            body: fields.mdx.inline({
               label: '本文 (body)',
-              multiline: true,
-              description: '例: Quiet essays and photography from Kyoto, delivered only on nights of the new moon. Free subscription, unsubscribe anytime.',
+              description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。',
+              options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
             }),
-            note: fields.text({
+            note: fields.mdx.inline({
               label: '注記 (note)',
-              description: '例: Strictly privacy conscious. No noise, only stillness.',
-              defaultValue: 'Strictly privacy conscious. No noise, only stillness.',
+              description: 'GUIエディタです。例: Strictly privacy conscious. No noise, only stillness.',
+              options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
             }),
-            successTitle: fields.text({
+            successTitle: fields.mdx.inline({
               label: '送信完了メッセージ (successTitle)',
-              defaultValue: 'Thank you for subscribing to MA (Vide Signifiant).',
+              description: 'GUIエディタです。',
+              options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
             }),
-            successBody: fields.text({
+            successBody: fields.mdx.inline({
               label: '送信完了補足 (successBody)',
-              defaultValue: 'Dispatches will arrive on nights of the new moon.',
+              description: 'GUIエディタです。',
+              options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
             }),
-            buttonLabel: fields.text({
+            buttonLabel: fields.mdx.inline({
               label: '送信ボタン (buttonLabel)',
-              defaultValue: 'Subscribe',
+              description: 'GUIエディタです。',
+              options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
             }),
-            placeholder: fields.text({
+            placeholder: fields.mdx.inline({
               label: '入力欄プレースホルダ (placeholder)',
-              defaultValue: 'Your email address...',
+              description: 'GUIエディタです。',
+              options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
             }),
           },
           { label: 'ニュースレター (DISPATCHES FROM KYOTO)' },
@@ -450,13 +494,13 @@ export default config({
       format: { data: 'json' },
       previewUrl: '/about',
       schema: {
-        mainTitle: fields.text({ label: 'メインタイトル', multiline: true }),
-        subTitle: fields.text({ label: 'サブタイトル', multiline: true }),
-        aboutAuthorTitle: fields.text({ label: '著者見出し', multiline: true }),
-        aboutAuthorText: fields.text({ label: '著者紹介', multiline: true }),
-        aboutBlogTitle: fields.text({ label: 'ブログ説明の見出し', multiline: true }),
-        aboutBlogText: fields.text({ label: 'ブログ説明', multiline: true }),
-        contactTitle: fields.text({ label: 'お問い合わせ見出し', multiline: true }),
+        mainTitle: fields.mdx.inline({ label: 'メインタイトル', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+        subTitle: fields.mdx.inline({ label: 'サブタイトル', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+        aboutAuthorTitle: fields.mdx.inline({ label: '著者見出し', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+        aboutAuthorText: fields.mdx.inline({ label: '著者紹介', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+        aboutBlogTitle: fields.mdx.inline({ label: 'ブログ説明の見出し', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+        aboutBlogText: fields.mdx.inline({ label: 'ブログ説明', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+        contactTitle: fields.mdx.inline({ label: 'お問い合わせ見出し', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
       },
     }),
 
@@ -467,12 +511,12 @@ export default config({
       format: { data: 'json' },
       previewUrl: '/',
       schema: {
-        siteTitle: fields.text({ label: 'サイトタイトル', multiline: true }),
+        siteTitle: fields.mdx.inline({ label: 'サイトタイトル', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
 
         lpLogo: fields.text({ label: 'LPロゴ画像', description: '例: /images/IMG_0581_DxO.webp' }),
         lpUrl: fields.text({ label: 'LPリンク先URL' }),
 
-        footerText: fields.text({ label: 'フッター文言', multiline: true }),
+        footerText: fields.mdx.inline({ label: 'フッター文言', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
       },
     }),
 
@@ -490,15 +534,16 @@ export default config({
       schema: {
         volumes: fields.array(
           fields.object({
-            title: fields.text({
+            title: fields.mdx.inline({
               label: 'デッキ名',
-              description: '例: Vol. I • Shinto as Cultural OS',
+              description: 'GUIエディタです。例: Vol. I • Shinto as Cultural OS',
+              options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
             }),
-            badge: fields.text({ label: 'バッジ', description: '任意。例: New' }),
+            badge: fields.mdx.inline({ label: 'バッジ', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
             chapters: fields.array(
               fields.object({
-                title: fields.text({ label: 'カード名' }),
-                description: fields.text({ label: 'カード説明', multiline: true }),
+                title: fields.mdx.inline({ label: 'カード名', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+                description: fields.mdx.inline({ label: 'カード説明', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
                 article: fields.text({
                   label: '記事パス',
                   description: '例: src/content/blog/shinto-as-japanese-cultural-os-pt1.mdx',
@@ -558,8 +603,8 @@ export default config({
             }),
             alt: fields.text({ label: '代替テキスト (alt)' }),
             folioId: fields.text({ label: 'Folio ID', description: '例: FOLIO 01' }),
-            bodyJp: fields.text({ label: '本文日本語 (bodyJp)', multiline: true }),
-            bodyEn: fields.text({ label: '本文英語 (bodyEn)', multiline: true }),
+            bodyJp: fields.mdx.inline({ label: '本文日本語 (bodyJp)', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+            bodyEn: fields.mdx.inline({ label: '本文英語 (bodyEn)', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
           }),
           {
             label: 'カード（最大100枚）',
@@ -654,7 +699,6 @@ export default config({
             tocFooter: fields.text({ label: '目次フッター', description: '例: ISSN 2814-9902 • Kyoto Dispatch' }),
             prevLabel: fields.text({ label: '前の記事ラベル' }),
             nextLabel: fields.text({ label: '次の記事ラベル' }),
-            figLabel: fields.text({ label: '図版ラベル', description: '例: FIG. 00 / ARCHIVE' }),
             editorialName: fields.text({ label: '編集部名', description: '例: 間 MA Editorial' }),
             editorialByline: fields.text({ label: '編集部の所属', description: '例: BiScène Kyoto' }),
             readSuffix: fields.text({ label: '読了時間の単位', description: '例: min read' }),
@@ -688,16 +732,15 @@ export default config({
             chapterPrefix: fields.text({ label: 'チャプター接頭辞' }),
             pageCategory: fields.text({ label: 'カードのカテゴリ' }),
             bundleEpisodeLabel: fields.text({ label: 'Bundle カードの表記', description: '例: Page • Vol. I Episode 1 Part' }),
-            pageRange: fields.text({ label: 'ページ範囲' }),
           },
           { label: 'ポータル（ホーム）' },
         ),
         karuta: fields.object(
           {
             cardFolioLabel: fields.text({ label: 'カルタの小見出し', description: '例: Card Folio • 空間語彙のカルタ' }),
-            heading: fields.text({ label: 'カルタ見出し' }),
-            hint: fields.text({ label: 'カルタの説明（英語）', multiline: true }),
-            hintJp: fields.text({ label: 'カルタの説明（日本語）', multiline: true }),
+            heading: fields.mdx.inline({ label: 'カルタ見出し', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+            hint: fields.mdx.inline({ label: 'カルタの説明（英語）', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+            hintJp: fields.mdx.inline({ label: 'カルタの説明（日本語）', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
           },
           { label: 'カルタ' },
         ),

@@ -5,10 +5,16 @@ import { getCollection } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
 import ImageGrid from '../../components/mdx/ImageGrid.astro';
 import KarutaGrid from '../../components/mdx/KarutaGrid.astro';
-import { richTextToHtml, stripMarkdown } from '../../utils/richText';
+import {
+  richTextToHtml,
+  richTextToHtmlHeading,
+  richTextToHtmlInline,
+  hasMarkdownHeading,
+  stripMarkdown,
+} from '../../utils/richText';
 import { extractToc, addHeadingIds } from '../../utils/toc';
 import { orderPosts, permalinkOf } from '../../utils/postOrder';
-import { timestamp } from '../../utils/date';
+import { readMinutesOf } from '../../utils/readTime';
 import { getUiLabels } from '../../utils/uiLabels';
 import { getGlossary, annotateGlossary } from '../../utils/glossary';
 
@@ -51,6 +57,14 @@ const {
   contentSections = [],
 } = post.data;
 
+// ヒーロー見出し / サブタイトルは Markdown（**太字** / *斜体* / 改行）を解釈して描画する。
+// 素のテキストとして出すと `**` がそのまま見え、改行も潰れるため。
+// 見出しは本文と同じ GUI エディタで編集するので `### 見出し` のようにレベルを選べる。
+// 見出し記法があるときは <h1> で包まず、そのタグをそのまま出す（入れ子の回避）。
+const headingHasTag = hasMarkdownHeading(heroTitle || title);
+const headingHtml = richTextToHtmlHeading(heroTitle || title);
+const subtitleHtml = richTextToHtmlInline(heroSubtitle || description);
+// <title> / alt / 一覧表示など「装飾できない場所」用のプレーンテキスト。
 const headingPlain = stripMarkdown(heroTitle || title);
 const subtitlePlain = stripMarkdown(heroSubtitle || description);
 
@@ -102,14 +116,9 @@ tocEntries.forEach((entry) => {
   tocIdsBySection.set(entry.sectionIndex, list);
 });
 
-// 読了時間（本文の文字数ベース）
-const readMinutes = (() => {
-  const all = (contentSections || [])
-    .map((s: any) => (typeof s?.bodyText === 'string' ? s.bodyText : ''))
-    .join(' ');
-  const chars = all.replace(/\s+/g, '').length;
-  return Math.max(1, Math.round(chars / 700));
-})();
+// 読了時間（本文の文字数ベース）。記事ページ上部とフロントページの Folio で
+// 同じ値になるよう、計算は src/utils/readTime.ts に集約している。
+const readMinutes = readMinutesOf(post);
 
 // Index（目次）: 表示順（order → 無ければ公開日の昇順）に沿って全記事を列挙する。
 // （用語集の読み込みは上で済ませている。目次テキスト自体は注釈対象外）
@@ -127,7 +136,8 @@ const indexArticles = allPosts.map(({ post: p, numberText }) => ({
   href: `/blog/${permalinkOf(p.id)}`,
   number: numberText,
   // Index は目次なので記事の正式タイトル（title）を使う。heroTitle はヒーロー用見出しのため使わない。
-  title: stripMarkdown(p.data.title || p.data.heroTitle),
+  // Markdown（**太字** / *斜体*）は描画側で解釈するため、ここでは HTML に変換しておく。
+  titleHtml: richTextToHtmlInline(p.data.title || p.data.heroTitle),
   date: p.data.pubDate
     ? new Date(p.data.pubDate).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -162,13 +172,22 @@ const indexRange = `${L.tocAllArticles} · ${indexArticles.length}`;
             {headingJp}
           </span>
         )}
-        <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl text-[#1b1c1a] font-normal tracking-tight leading-[1.15]">
-          {headingPlain}
-        </h1>
-        {subtitlePlain && (
-          <p class="font-serif text-lg md:text-xl text-[#51443d] italic font-light pt-3 leading-relaxed whitespace-pre-line">
-            {subtitlePlain}
-          </p>
+        {headingHasTag ? (
+          <div
+            class="hero-heading font-serif text-[#1b1c1a] font-normal tracking-tight leading-[1.15]"
+            set:html={headingHtml}
+          />
+        ) : (
+          <h1
+            class="font-serif text-2xl sm:text-3xl md:text-4xl text-[#1b1c1a] font-normal tracking-tight leading-[1.15]"
+            set:html={headingHtml}
+          />
+        )}
+        {subtitleHtml && (
+          <p
+            class="font-serif text-lg md:text-xl text-[#51443d] italic font-light pt-3 leading-relaxed"
+            set:html={subtitleHtml}
+          />
         )}
       </div>
 
@@ -203,13 +222,6 @@ const indexRange = `${L.tocAllArticles} · ${indexArticles.length}`;
           <img src={heroImage} alt={headingPlain || 'Hero image'} class="w-full h-full object-cover" />
         </div>
         <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
-      </div>
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between py-2.5 text-xs text-[#51443d] font-sans gap-1 border-b border-[#d6c3ba]/30">
-        <div class="flex items-center space-x-2">
-          <span class="w-1.5 h-1.5 bg-[#6f4229] rounded-full shrink-0"></span>
-          <span class="tracking-wide">{headingPlain}</span>
-        </div>
-        <span class="text-[11px] tracking-widest uppercase text-[#84746c] shrink-0">{L.figLabel}</span>
       </div>
     </section>
   )}
@@ -313,11 +325,12 @@ const indexRange = `${L.tocAllArticles} · ${indexArticles.length}`;
                     {L.tocNoPrefix} {entry.number}
                     {entry.date && <span class="text-[#84746c]"> — {entry.date}</span>}
                   </div>
-                  <div class={`font-serif text-sm font-medium transition-colors ${
-                    entry.isCurrent ? 'text-[#6f4229]' : 'text-[#1b1c1a] group-hover:text-[#6f4229]'
-                  }`}>
-                    {entry.title}
-                  </div>
+                  <div
+                    class={`font-serif text-sm font-medium transition-colors ${
+                      entry.isCurrent ? 'text-[#6f4229]' : 'text-[#1b1c1a] group-hover:text-[#6f4229]'
+                    }`}
+                    set:html={entry.titleHtml}
+                  />
                 </div>
               </a>
             );
@@ -442,6 +455,41 @@ const indexRange = `${L.tocAllArticles} · ${indexArticles.length}`;
 </BlogPost>
 
 <style>
+  /* ヒーロー見出し: 本文と同じ GUI エディタで `### 見出し` を選べるため、
+     見出しレベルごとのサイズをここで定義する（Tailwind の typography 既定は
+     本文用に最適化されていて大きすぎるため、ヒーロー用に調整）。
+     見出し記法が無いときは <h1> に text-2xl〜4xl が当たる。 */
+  .hero-heading h1 {
+    font-size: 2.25rem;
+    line-height: 1.15;
+  }
+  .hero-heading h2 {
+    font-size: 1.875rem;
+    line-height: 1.2;
+  }
+  .hero-heading h3 {
+    font-size: 1.5rem;
+    line-height: 1.25;
+  }
+  .hero-heading h4 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+  .hero-heading h5 {
+    font-size: 1.125rem;
+    line-height: 1.35;
+  }
+  .hero-heading h6 {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  .hero-heading > :first-child {
+    margin-top: 0;
+  }
+  .hero-heading > :last-child {
+    margin-bottom: 0;
+  }
+
   /* 本文組版（mablogx の article body に相当） */
   .article-body p {
     margin-bottom: 0;
@@ -482,149 +530,202 @@ const indexRange = `${L.tocAllArticles} · ${indexArticles.length}`;
 </style>
 
 <script>
-  // --- Index (Frosted Glass TOC) ---
-  const tocBtn = document.getElementById('toc-trigger-btn');
-  const tocDrawer = document.getElementById('toc-drawer');
-  const tocClose = document.getElementById('toc-close-btn');
+  // ==========================================================================
+  // ビュートランジション（ClientRouter）対応
+  //
+  // Astro の <script> はモジュールとして「ページ読み込み時に 1 回」だけ実行される。
+  // ClientRouter でクライアント遷移すると DOM は差し替わるが、このスクリプトは
+  // 再実行されない。そのため、モジュール先頭で取得した要素参照は遷移後には
+  // 削除済みの古い DOM を指したままになり、ドロワーが開かなくなる。
+  //
+  // 対策: 要素の取得とバインドは必ず init() の中で行い、
+  //   ① 即時（初回読み込み）
+  //   ② astro:page-load（クライアント遷移のたび）
+  // の両方で呼ぶ。要素側は data-*-bound ガードで二重バインドを防ぐ。
+  // document / window へのリスナーは 1 回だけ登録する（重複防止）。
+  // ==========================================================================
 
-  const closeToc = () => tocDrawer?.classList.add('hidden');
-  tocBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    tocDrawer?.classList.toggle('hidden');
-  });
-  tocClose?.addEventListener('click', closeToc);
-  document.querySelectorAll('[data-toc-link]').forEach((link) => {
-    link.addEventListener('click', closeToc);
-  });
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (tocDrawer && !tocDrawer.classList.contains('hidden') && !target.closest('#toc-container')) {
-      closeToc();
+  /** 現在の DOM から要素を引き直す（遷移後も常に最新を返す）。 */
+  const el = (id: string) => document.getElementById(id);
+
+  const closeToc = () => el('toc-drawer')?.classList.add('hidden');
+
+  const initArticleUi = () => {
+    // --- Index (Frosted Glass TOC) ---
+    const tocBtn = el('toc-trigger-btn');
+    const tocDrawer = el('toc-drawer');
+    const tocClose = el('toc-close-btn');
+
+    if (tocBtn && tocBtn.getAttribute('data-toc-bound') !== '1') {
+      tocBtn.setAttribute('data-toc-bound', '1');
+      tocBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        el('toc-drawer')?.classList.toggle('hidden');
+      });
     }
-  });
-
-  // --- Index: 前後5件表示 ⇄ 全件スクロール ---
-  const modeBtn = document.getElementById('toc-mode-btn');
-  const articleList = document.getElementById('toc-article-list');
-  const modeLabel = modeBtn?.querySelector('[data-toc-mode-label]');
-  const fullLabel = modeBtn?.getAttribute('data-full-label') || '';
-  const windowLabel = modeBtn?.getAttribute('data-window-label') || '';
-  let fullMode = false;
-  modeBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    fullMode = !fullMode;
-    articleList?.classList.toggle('is-full', fullMode);
-    articleList?.querySelectorAll('[data-toc-outside]').forEach((el) => {
-      el.classList.toggle('hidden', !fullMode);
+    if (tocClose && tocClose.getAttribute('data-toc-bound') !== '1') {
+      tocClose.setAttribute('data-toc-bound', '1');
+      tocClose.addEventListener('click', closeToc);
+    }
+    document.querySelectorAll('[data-toc-link]').forEach((link) => {
+      const a = link as HTMLElement;
+      if (a.getAttribute('data-toc-bound') === '1') return;
+      a.setAttribute('data-toc-bound', '1');
+      a.addEventListener('click', closeToc);
     });
-    if (modeLabel) modeLabel.textContent = fullMode ? windowLabel : fullLabel;
-  });
 
-  // --- 日本語ドロワー ---
-  const langBtn = document.getElementById('lang-trigger-btn');
-  const langDrawer = document.getElementById('lang-drawer');
-  const langChevron = document.getElementById('lang-chevron');
-  langBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const hidden = langDrawer?.classList.toggle('hidden');
-    if (langChevron) {
-      langChevron.style.transform = hidden ? 'rotate(0deg)' : 'rotate(180deg)';
+    // --- Index: 前後5件表示 ⇄ 全件スクロール ---
+    const modeBtn = el('toc-mode-btn');
+    const articleList = el('toc-article-list');
+    const modeLabel = modeBtn?.querySelector('[data-toc-mode-label]');
+    const fullLabel = modeBtn?.getAttribute('data-full-label') || '';
+    const windowLabel = modeBtn?.getAttribute('data-window-label') || '';
+    if (modeBtn && modeBtn.getAttribute('data-toc-bound') !== '1') {
+      modeBtn.setAttribute('data-toc-bound', '1');
+      let fullMode = false;
+      modeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fullMode = !fullMode;
+        el('toc-article-list')?.classList.toggle('is-full', fullMode);
+        el('toc-article-list')
+          ?.querySelectorAll('[data-toc-outside]')
+          .forEach((node) => node.classList.toggle('hidden', !fullMode));
+        if (modeLabel) modeLabel.textContent = fullMode ? windowLabel : fullLabel;
+      });
     }
-  });
+    void tocDrawer;
+    void articleList;
+
+    // --- 日本語ドロワー ---
+    const langBtn = el('lang-trigger-btn');
+    if (langBtn && langBtn.getAttribute('data-lang-bound') !== '1') {
+      langBtn.setAttribute('data-lang-bound', '1');
+      langBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const hidden = el('lang-drawer')?.classList.toggle('hidden');
+        const chevron = el('lang-chevron');
+        if (chevron) chevron.style.transform = hidden ? 'rotate(0deg)' : 'rotate(180deg)';
+      });
+    }
+
+    // --- Toast ---
+    // （showToast は下で定義。ここでは要素の存在確認のみ）
+
+    // --- Bookmark ---
+    const bookmarkBtn = document.querySelector('[data-bookmark]') as HTMLElement | null;
+    if (bookmarkBtn && bookmarkBtn.getAttribute('data-bookmark-bound') !== '1') {
+      bookmarkBtn.setAttribute('data-bookmark-bound', '1');
+      let bookmarked = false;
+      bookmarkBtn.addEventListener('click', () => {
+        bookmarked = !bookmarked;
+        const icon = bookmarkBtn.querySelector('span');
+        if (icon) icon.textContent = bookmarked ? 'bookmark' : 'bookmark_border';
+        bookmarkBtn.classList.toggle('text-[#6f4229]', bookmarked);
+        showToast(bookmarked ? 'Article bookmarked (保存しました)' : 'Bookmark removed');
+      });
+    }
+
+    // --- Share ---
+    const shareBtn = document.querySelector('[data-share]') as HTMLElement | null;
+    if (shareBtn && shareBtn.getAttribute('data-share-bound') !== '1') {
+      shareBtn.setAttribute('data-share-bound', '1');
+      shareBtn.addEventListener('click', async () => {
+        const url = window.location.href;
+        const nav = navigator as any;
+        if (nav.share) {
+          try {
+            await nav.share({ title: document.title, url });
+          } catch {
+            /* cancelled */
+          }
+        } else {
+          await nav.clipboard?.writeText(url);
+          showToast('Link copied to clipboard (クリップボードにコピーしました)');
+        }
+      });
+    }
+
+    // --- 用語集注釈（glossary）: タップで開閉 ---
+    initGloss();
+  };
+
+  // --- Toast ---
+  const showToast = (msg: string) => {
+    const toast = el('ma-toast');
+    if (!toast) return;
+    const label = toast.querySelector('span:last-child');
+    if (label) label.textContent = msg;
+    toast.classList.remove('hidden');
+    window.setTimeout(() => toast.classList.add('hidden'), 3000);
+  };
 
   // --- 用語集注釈（glossary）: タップで開閉、他所タップ・Esc で閉じる ---
-  // ClientRouter（ビュートランジション）で遷移した直後も確実にバインドするため、
-  // ①即時 ②astro:page-load の両方で init を呼ぶ。data-gloss-bound ガードで
-  // 二重バインド（トグルが打ち消し合って何も起きない事象）を防ぐ。
   const closeAllGloss = (except?: HTMLElement) => {
-    document.querySelectorAll('.article-body .gloss[aria-expanded="true"]').forEach((el) => {
-      if (el !== except) el.setAttribute('aria-expanded', 'false');
+    document.querySelectorAll('.article-body .gloss[aria-expanded="true"]').forEach((node) => {
+      if (node !== except) node.setAttribute('aria-expanded', 'false');
     });
   };
   // POPUP が画面の左右端・上端からはみ出さないよう位置を補正する。
   // 幅は max-content なので、開いてから測る必要がある。
-  const positionGlossPop = (el: HTMLElement) => {
-    const pop = el.querySelector<HTMLElement>('.gloss-pop');
+  const positionGlossPop = (target: HTMLElement) => {
+    const pop = target.querySelector<HTMLElement>('.gloss-pop');
     if (!pop) return;
     const margin = 8;
-    el.style.setProperty('--gloss-shift', '0px');
-    el.removeAttribute('data-gloss-flip');
+    target.style.setProperty('--gloss-shift', '0px');
+    target.removeAttribute('data-gloss-flip');
 
     const rect = pop.getBoundingClientRect();
     const vw = document.documentElement.clientWidth;
     let shift = 0;
     if (rect.left < margin) shift = margin - rect.left;
     else if (rect.right > vw - margin) shift = vw - margin - rect.right;
-    if (shift !== 0) el.style.setProperty('--gloss-shift', `${Math.round(shift)}px`);
+    if (shift !== 0) target.style.setProperty('--gloss-shift', `${Math.round(shift)}px`);
 
     // 上に POPUP の高さぶんの余白が無ければ下側へ開く。
     const after = pop.getBoundingClientRect();
-    if (after.top < margin) el.setAttribute('data-gloss-flip', '1');
+    if (after.top < margin) target.setAttribute('data-gloss-flip', '1');
   };
   const initGloss = () => {
     document.querySelectorAll('.article-body .gloss').forEach((btn) => {
-      const el = btn as HTMLElement;
-      if (el.getAttribute('data-gloss-bound') === '1') return;
-      el.setAttribute('data-gloss-bound', '1');
-      el.addEventListener('click', (e) => {
+      const target = btn as HTMLElement;
+      if (target.getAttribute('data-gloss-bound') === '1') return;
+      target.setAttribute('data-gloss-bound', '1');
+      target.addEventListener('click', (e) => {
         e.stopPropagation();
-        const open = el.getAttribute('aria-expanded') === 'true';
-        closeAllGloss(el);
-        el.setAttribute('aria-expanded', open ? 'false' : 'true');
-        if (!open) positionGlossPop(el);
+        const open = target.getAttribute('aria-expanded') === 'true';
+        closeAllGloss(target);
+        target.setAttribute('aria-expanded', open ? 'false' : 'true');
+        if (!open) positionGlossPop(target);
       });
     });
   };
-  initGloss();
-  document.addEventListener('astro:page-load', initGloss);
-  // 開いたままウィンドウ幅が変わると補正値が古くなるため、開いているものを再補正する。
-  window.addEventListener('resize', () => {
-    document
-      .querySelectorAll<HTMLElement>('.article-body .gloss[aria-expanded="true"]')
-      .forEach(positionGlossPop);
-  });
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest('.article-body .gloss')) closeAllGloss();
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeAllGloss();
-  });
 
-  // --- Toast ---
-  const showToast = (msg: string) => {
-    const el = document.getElementById('ma-toast');
-    if (!el) return;
-    el.querySelector('span:last-child')!.textContent = msg;
-    el.classList.remove('hidden');
-    window.setTimeout(() => el.classList.add('hidden'), 3000);
-  };
+  // document / window へのリスナーは 1 回だけ登録する（遷移ごとの重複を防ぐ）。
+  if (!(window as any).__maArticleUiBound) {
+    (window as any).__maArticleUiBound = true;
 
-  // --- Bookmark ---
-  const bookmarkBtn = document.querySelector('[data-bookmark]');
-  let bookmarked = false;
-  bookmarkBtn?.addEventListener('click', () => {
-    bookmarked = !bookmarked;
-    const icon = bookmarkBtn.querySelector('span');
-    if (icon) icon.textContent = bookmarked ? 'bookmark' : 'bookmark_border';
-    bookmarkBtn.classList.toggle('text-[#6f4229]', bookmarked);
-    showToast(bookmarked ? 'Article bookmarked (保存しました)' : 'Bookmark removed');
-  });
-
-  // --- Share ---
-  const shareBtn = document.querySelector('[data-share]');
-  shareBtn?.addEventListener('click', async () => {
-    const url = window.location.href;
-    const nav = navigator as any;
-    if (nav.share) {
-      try {
-        await nav.share({ title: document.title, url });
-      } catch {
-        /* cancelled */
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const tocDrawer = el('toc-drawer');
+      if (tocDrawer && !tocDrawer.classList.contains('hidden') && !target.closest('#toc-container')) {
+        closeToc();
       }
-    } else {
-      await nav.clipboard?.writeText(url);
-      showToast('Link copied to clipboard (クリップボードにコピーしました)');
-    }
-  });
+      if (!target.closest('.article-body .gloss')) closeAllGloss();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeAllGloss();
+    });
+
+    // 開いたままウィンドウ幅が変わると補正値が古くなるため、開いているものを再補正する。
+    window.addEventListener('resize', () => {
+      document
+        .querySelectorAll<HTMLElement>('.article-body .gloss[aria-expanded="true"]')
+        .forEach(positionGlossPop);
+    });
+  }
+
+  // ① 初回読み込み ② クライアント遷移のたび に初期化する。
+  initArticleUi();
+  document.addEventListener('astro:page-load', initArticleUi);
 </script>

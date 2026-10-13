@@ -7,10 +7,14 @@ import PortalLayout from '../components/PortalLayout.astro';
 import PortalShelf from '../components/PortalShelf.astro';
 import { getEntry, getCollection } from 'astro:content';
 import { timestamp } from '../utils/date';
+import { readMinutesOf } from '../utils/readTime';
+import { richTextToHtmlInline, stripMarkdown } from '../utils/richText';
 import { permalinkOf } from '../utils/postOrder';
 import { getUiLabels } from '../utils/uiLabels';
 
-const L = (await getUiLabels()).portal;
+const labels = await getUiLabels();
+const L = labels.portal;
+const LA = labels.article;
 
 const homePage = await getEntry('portal', 'home');
 const pageData: any = homePage?.data || {};
@@ -24,6 +28,8 @@ type Post = {
   heroImage?: string;
   href: string;
   ts: number;
+  /** 通読所要時間（記事ページ上部の「N min read」と同じ値） */
+  readMinutes: number;
 };
 
 // Anthology & Folios のデッキ。2つの生成分岐（folio.json 由来 / 自動補完）を
@@ -33,7 +39,8 @@ type DeckChapter = {
   category: string;
   title: string;
   description: string;
-  pageRange: string;
+  /** 通読所要時間（記事ページ上部の「N min read」と同じ値） */
+  readMinutes: number;
   href: string | null;
   heroImage: string | null;
 };
@@ -53,6 +60,7 @@ const posts: Post[] = allPosts
     heroImage: p.data.heroImage || undefined,
     href: `/blog/${permalinkOf(p.id)}`,
     ts: timestamp(p.data.updatedDate, p.data.pubDate),
+    readMinutes: readMinutesOf(p),
   }))
   .sort((a, b) => b.ts - a.ts);
 
@@ -155,7 +163,7 @@ const volumes: DeckVolume[] = configuredVolumes
           category: L.pageCategory,
           title: c.title || entry?.title || '',
           description: c.description || entry?.description || '',
-          pageRange: L.pageRange,
+          readMinutes: entry?.readMinutes ?? 1,
           href: entry ? entry.href : null,
           heroImage: entry?.heroImage ?? null,
         };
@@ -174,12 +182,14 @@ const volumes: DeckVolume[] = configuredVolumes
       <span class="text-xs uppercase tracking-[0.2em] text-[#865138] font-semibold">{L.prologueLabel}</span>
       <span class="w-1.5 h-1.5 rounded-full bg-[#865138]"></span>
     </div>
-    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-8 font-serif">
-      {pageData.introTitle}
-    </h2>
-    <blockquote class="text-lg md:text-xl text-gray-600 leading-relaxed font-normal whitespace-pre-line max-w-3xl mx-auto font-serif">
-      {pageData.introText}
-    </blockquote>
+    <h2
+      class="text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-8 font-serif"
+      set:html={richTextToHtmlInline(pageData.introTitle)}
+    />
+    <blockquote
+      class="text-lg md:text-xl text-gray-600 leading-relaxed font-normal max-w-3xl mx-auto font-serif"
+      set:html={richTextToHtmlInline(pageData.introText)}
+    />
     <div class="mt-10 flex justify-center items-center gap-6 text-[#84746c]">
       <span class="text-xs uppercase tracking-widest font-sans">{L.locationLabel}</span>
       <span class="text-xs">•</span>
@@ -209,18 +219,21 @@ const volumes: DeckVolume[] = configuredVolumes
             <span class="text-xs text-gray-400">{L.featuredVolumeLabel}</span>
           </div>
           <a href={featured.href}>
-            <h3 class="text-2xl sm:text-3xl font-bold text-gray-900 hover:text-[#A36A4F] transition-colors leading-tight mb-3 cursor-pointer font-serif">
-              {featured.title}
-            </h3>
+            <h3
+              class="text-2xl sm:text-3xl font-bold text-gray-900 hover:text-[#A36A4F] transition-colors leading-tight mb-3 cursor-pointer font-serif"
+              set:html={richTextToHtmlInline(featured.title)}
+            />
           </a>
           {featured.description && (
-            <p class="text-base sm:text-lg text-gray-700 italic font-serif mb-4">
-              {featured.description}
-            </p>
+            <p
+              class="text-base sm:text-lg text-gray-700 italic font-serif mb-4"
+              set:html={richTextToHtmlInline(featured.description)}
+            />
           )}
-          <p class="text-sm text-gray-600 line-clamp-3 leading-relaxed mb-6 font-serif">
-            {pageData.featuredBody || ''}
-          </p>
+          <p
+            class="text-sm text-gray-600 line-clamp-3 leading-relaxed mb-6 font-serif"
+            set:html={richTextToHtmlInline(pageData.featuredBody)}
+          />
         </div>
         <div class="flex items-center justify-between pt-4 border-t border-gray-100">
           <a
@@ -268,8 +281,12 @@ const volumes: DeckVolume[] = configuredVolumes
           </div>
 
           <div class="book-deck-container w-4/5 mx-auto">
-            {volume.chapters.map((chapter, itemIdx) => (
-              <div
+            {volume.chapters.map((chapter, itemIdx) => {
+              const CardTag = chapter.href ? 'a' : 'div';
+              return (
+              <CardTag
+                href={chapter.href ?? undefined}
+                aria-label={chapter.href ? `${chapter.title} — ${L.readMoreLabel}` : undefined}
                 class="book-page-card group relative bg-white rounded-lg overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 border border-gray-100 flex flex-col h-[360px] cursor-pointer"
                 style={`z-index: ${40 - itemIdx * 10};`}
               >
@@ -287,21 +304,24 @@ const volumes: DeckVolume[] = configuredVolumes
                       loading="lazy"
                     />
                   )}
-                  {/* 第2段階: 上部イメージのホバーで記事紹介（上の記事紹介と同じ形式） */}
+                  {/* 第2段階: 上部イメージのホバーで記事紹介（上の記事紹介と同じ形式）。
+                      カード全体がリンクのため、ここは入れ子の <a> にせず div にする。 */}
                   {chapter.href && (
-                    <a href={chapter.href} class="block">
+                    <div class="block">
                       <div class="book-card-preview absolute inset-0 bg-[#faf8f5]/95 backdrop-blur-xs p-6 flex flex-col justify-between z-20">
                         <div>
                           <div class="text-xs font-bold text-[#A36A4F] uppercase tracking-wider mb-2">
                             {chapter.chapterNumber} • {chapter.category}
                           </div>
-                          <h4 class="text-lg font-bold text-gray-900 font-serif leading-snug mb-3">
-                            {chapter.title}
-                          </h4>
+                          <h4
+                            class="text-lg font-bold text-gray-900 font-serif leading-snug mb-3"
+                            set:html={richTextToHtmlInline(chapter.title)}
+                          />
                           {chapter.description && (
-                            <p class="text-gray-700 text-xs sm:text-sm leading-relaxed whitespace-pre-line text-justify font-serif">
-                              {chapter.description}
-                            </p>
+                            <p
+                              class="text-gray-700 text-xs sm:text-sm leading-relaxed text-justify font-serif"
+                              set:html={richTextToHtmlInline(chapter.description)}
+                            />
                           )}
                         </div>
                         <div class="pt-4 border-t border-gray-200 flex items-center justify-between mt-auto">
@@ -311,7 +331,7 @@ const volumes: DeckVolume[] = configuredVolumes
                           </span>
                         </div>
                       </div>
-                    </a>
+                    </div>
                   )}
                 </div>
                 <div class="p-6 flex flex-col justify-end grow">
@@ -320,17 +340,19 @@ const volumes: DeckVolume[] = configuredVolumes
                       <span class="font-bold tracking-widest font-sans">{chapter.chapterNumber}</span>
                       <span class="opacity-70 font-sans">{chapter.category}</span>
                     </div>
-                    <h4 class="text-lg font-bold text-gray-900 leading-snug font-serif">
-                      {chapter.title}
-                    </h4>
+                    <h4
+                      class="text-lg font-bold text-gray-900 leading-snug font-serif"
+                      set:html={richTextToHtmlInline(chapter.title)}
+                    />
                   </div>
                   <div class="flex items-center justify-between pt-4 border-t border-gray-100">
                     <span class="text-xs text-[#865138] uppercase font-semibold">{L.openLabel}</span>
-                    <span class="text-xs text-gray-400">{chapter.pageRange}</span>
+                    <span class="text-xs text-gray-400">{chapter.readMinutes} {LA.readSuffix}</span>
                   </div>
                 </div>
-              </div>
-            ))}
+              </CardTag>
+              );
+            })}
           </div>
         </div>
       ))}
@@ -342,30 +364,30 @@ const volumes: DeckVolume[] = configuredVolumes
   <section class="w-full max-w-[1200px] mx-auto px-4 mb-16">
     <div class="bg-[#f0edea] p-8 md:p-14 rounded-sm flex flex-col md:flex-row items-center justify-between gap-8 border border-[#e5e2df]">
       <div class="max-w-xl">
-        <span class="text-xs uppercase tracking-[0.2em] text-[#865138] font-bold">{newsletter.eyebrow}</span>
-        <h4 class="text-2xl font-bold text-gray-900 mt-1 mb-3 font-serif">{newsletter.heading}</h4>
+        <span class="text-xs uppercase tracking-[0.2em] text-[#865138] font-bold" set:html={richTextToHtmlInline(newsletter.eyebrow)} />
+        <h4 class="text-2xl font-bold text-gray-900 mt-1 mb-3 font-serif" set:html={richTextToHtmlInline(newsletter.heading)} />
         {newsletter.body && (
-          <p class="text-sm text-gray-600 leading-relaxed font-serif">{newsletter.body}</p>
+          <p class="text-sm text-gray-600 leading-relaxed font-serif" set:html={richTextToHtmlInline(newsletter.body)} />
         )}
       </div>
       <div class="w-full md:w-auto flex-1 max-w-md">
         <div data-newsletter-thanks class="hidden p-4 bg-white rounded border border-[#d6c3ba] text-center text-sm text-[#6f4229]">
-          <p class="font-semibold">{newsletter.successTitle}</p>
-          <p class="text-xs text-gray-500 mt-1">{newsletter.successBody}</p>
+          <p class="font-semibold" set:html={richTextToHtmlInline(newsletter.successTitle)} />
+          <p class="text-xs text-gray-500 mt-1" set:html={richTextToHtmlInline(newsletter.successBody)} />
         </div>
         <form data-newsletter-form class="flex flex-col sm:flex-row gap-2">
           <input
             class="w-full px-4 py-3 bg-white text-gray-900 placeholder:text-gray-400 text-sm border border-gray-200 focus:outline-none focus:border-[#8B593E] rounded-sm"
-            placeholder={newsletter.placeholder}
+            placeholder={stripMarkdown(newsletter.placeholder)}
             required
             type="email"
           />
           <button class="text-xs uppercase tracking-wider px-6 py-3 bg-[#1b1c1a] hover:bg-[#8B593E] text-white shrink-0 transition-colors font-medium rounded-sm cursor-pointer" type="submit">
-            {newsletter.buttonLabel}
+            <Fragment set:html={richTextToHtmlInline(newsletter.buttonLabel)} />
           </button>
         </form>
         {newsletter.note && (
-          <span class="block text-[11px] text-gray-400 mt-2">{newsletter.note}</span>
+          <span class="block text-[11px] text-gray-400 mt-2" set:html={richTextToHtmlInline(newsletter.note)} />
         )}
       </div>
     </div>

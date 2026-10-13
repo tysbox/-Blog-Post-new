@@ -4,6 +4,7 @@
 // データは独立編集ページ src/content/karuta/karuta.json から読む。
 import { getEntry } from 'astro:content';
 import { getUiLabels } from '../../utils/uiLabels';
+import { richTextToHtmlInline, stripMarkdown } from '../../utils/richText';
 
 interface KarutaCard {
   number?: string;
@@ -47,21 +48,23 @@ const perPage = Number(karutaData.perPage) > 0 ? Number(karutaData.perPage) : 3;
 const pageCount = Math.max(1, Math.ceil(all.length / perPage));
 const num = (n: number) => String(n).padStart(2, '0');
 // 本物のカルタ様式: 表面の大文字は日本語タイトルの最初の1文字（例: 八百万の神 → 八）
-const headChar = (card: KarutaCard) => (card.titleJp || card.title || '').trim().charAt(0);
+// 頭文字は「見た目の 1 文字」なので、Markdown 記号を除いた素のテキストから取る。
+const headChar = (card: KarutaCard) =>
+  stripMarkdown(card.titleJp || card.title || '').trim().charAt(0);
 ---
 
 {all.length > 0 && (
   <section id="section-karuta" class="scroll-mt-28 space-y-6 pt-8 border-t border-[#d6c3ba]/40">
     <div class="space-y-1">
       <span class="font-sans text-xs uppercase tracking-[0.2em] text-[#865138] font-semibold">
-        {L.cardFolioLabel}
+        <Fragment set:html={richTextToHtmlInline(L.cardFolioLabel)} />
       </span>
       <h2 class="font-serif text-2xl sm:text-3xl text-[#1b1c1a] font-normal">
-        {title || L.heading}
+        <Fragment set:html={richTextToHtmlInline(title || L.heading)} />
       </h2>
       <p class="font-serif text-sm sm:text-base text-[#51443d]">
-        {L.hint}
-        {L.hintJp}
+        <Fragment set:html={richTextToHtmlInline(L.hint)} />
+        <Fragment set:html={richTextToHtmlInline(L.hintJp)} />
       </p>
     </div>
 
@@ -83,6 +86,9 @@ const headChar = (card: KarutaCard) => (card.titleJp || card.title || '').trim()
                 const en = card.titleEn;
                 const bodyJp = card.bodyJp || card.hoverText;
                 const tag = card.tag || 'Folio';
+                // 表示は Markdown を解釈、alt は素のテキスト。
+                const jpHtml = richTextToHtmlInline(jp);
+                const jpPlain = stripMarkdown(jp);
                 const folioId = card.folioId || `FOLIO ${n}`;
 
                 const inner = (
@@ -91,7 +97,7 @@ const headChar = (card: KarutaCard) => (card.titleJp || card.title || '').trim()
                       {card.image && (
                         <img
                           src={card.image}
-                          alt={card.alt || jp || `Karuta card ${n}`}
+                          alt={card.alt || jpPlain || `Karuta card ${n}`}
                           class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                           loading="lazy"
                         />
@@ -101,14 +107,14 @@ const headChar = (card: KarutaCard) => (card.titleJp || card.title || '').trim()
                     <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-between p-6 transition-opacity duration-300 group-hover:opacity-20">
                       <div class="flex justify-between items-start">
                         <span class="font-serif text-2xl text-white tracking-widest">{headChar(card) || n}</span>
-                        <span class="font-sans text-[10px] uppercase tracking-widest text-white/90 bg-black/40 px-2 py-0.5">{tag}</span>
+                        <span class="font-sans text-[10px] uppercase tracking-widest text-white/90 bg-black/40 px-2 py-0.5" set:html={richTextToHtmlInline(tag)} />
                       </div>
                       <div class="space-y-1 text-white">
                         {card.romaji && (
-                          <span class="font-sans text-[10px] uppercase tracking-widest text-[#f8b897] block">{card.romaji}</span>
+                          <span class="font-sans text-[10px] uppercase tracking-widest text-[#f8b897] block" set:html={richTextToHtmlInline(card.romaji)} />
                         )}
-                        <h3 class="font-serif text-xl font-medium">{jp}</h3>
-                        {en && <p class="font-serif text-xs text-white/80">{en}</p>}
+                        <h3 class="font-serif text-xl font-medium" set:html={jpHtml} />
+                        {en && <p class="font-serif text-xs text-white/80" set:html={richTextToHtmlInline(en)} />}
                       </div>
                     </div>
 
@@ -119,19 +125,19 @@ const headChar = (card: KarutaCard) => (card.titleJp || card.title || '').trim()
                           <span class="font-sans text-[10px] uppercase tracking-widest text-[#84746c]">{folioId}</span>
                         </div>
                         <h4 class="font-serif text-lg font-semibold text-[#1b1c1a]">
-                          {jp}
+                          <Fragment set:html={jpHtml} />
                           {card.romaji && (
-                            <span class="font-sans text-[10px] uppercase tracking-widest text-[#865138] ml-2 whitespace-nowrap align-middle">{card.romaji}</span>
+                            <span class="font-sans text-[10px] uppercase tracking-widest text-[#865138] ml-2 whitespace-nowrap align-middle" set:html={richTextToHtmlInline(card.romaji)} />
                           )}
                         </h4>
                         {en && (
-                          <span class="font-sans text-[11px] tracking-wider uppercase text-[#865138] block">{en}</span>
+                          <span class="font-sans text-[11px] tracking-wider uppercase text-[#865138] block" set:html={richTextToHtmlInline(en)} />
                         )}
                         {bodyJp && (
-                          <p class="font-serif text-xs sm:text-sm text-[#4f4d48] pt-2 leading-relaxed">{bodyJp}</p>
+                          <p class="font-serif text-xs sm:text-sm text-[#4f4d48] pt-2 leading-relaxed" set:html={richTextToHtmlInline(bodyJp)} />
                         )}
                         {card.bodyEn && (
-                          <p class="font-serif italic text-xs text-[#51443d] pt-1 leading-relaxed border-t border-[#d6c3ba]/40">{card.bodyEn}</p>
+                          <p class="font-serif italic text-xs text-[#51443d] pt-1 leading-relaxed border-t border-[#d6c3ba]/40" set:html={richTextToHtmlInline(card.bodyEn)} />
                         )}
                       </div>
                       <div class="pt-2 flex items-center justify-between text-[#84746c] text-[10px] font-sans uppercase tracking-widest">
@@ -142,7 +148,7 @@ const headChar = (card: KarutaCard) => (card.titleJp || card.title || '').trim()
                 );
 
                 return card.link ? (
-                  <a href={card.link} class="block" aria-label={jp || `Karuta card ${n}`}>{inner}</a>
+                  <a href={card.link} class="block" aria-label={jpPlain || `Karuta card ${n}`}>{inner}</a>
                 ) : (
                   inner
                 );
@@ -178,29 +184,40 @@ const headChar = (card: KarutaCard) => (card.titleJp || card.title || '').trim()
 )}
 
 <script>
-  document.querySelectorAll('[data-karuta-carousel]').forEach((root) => {
-    const pages = Array.from(root.querySelectorAll('[data-karuta-page]'));
-    const dots = Array.from(root.querySelectorAll('[data-karuta-dot]'));
-    const prev = root.querySelector('[data-karuta-prev]');
-    const next = root.querySelector('[data-karuta-next]');
-    if (pages.length <= 1) return;
-    let current = 0;
-    const show = (i: number) => {
-      current = (i + pages.length) % pages.length;
-      pages.forEach((p, idx) => {
-        p.classList.toggle('hidden', idx !== current);
-        p.setAttribute('aria-hidden', idx === current ? 'false' : 'true');
+  // ビュートランジション（ClientRouter）対応:
+  // Astro の <script> は初回しか実行されないため、クライアント遷移後は
+  // 新しい DOM に再バインドする必要がある。data-karuta-bound で二重バインドを防ぐ。
+  const initKaruta = () => {
+    document.querySelectorAll('[data-karuta-carousel]').forEach((root) => {
+      if (root.getAttribute('data-karuta-bound') === '1') return;
+      root.setAttribute('data-karuta-bound', '1');
+
+      const pages = Array.from(root.querySelectorAll('[data-karuta-page]'));
+      const dots = Array.from(root.querySelectorAll('[data-karuta-dot]'));
+      const prev = root.querySelector('[data-karuta-prev]');
+      const next = root.querySelector('[data-karuta-next]');
+      if (pages.length <= 1) return;
+      let current = 0;
+      const show = (i: number) => {
+        current = (i + pages.length) % pages.length;
+        pages.forEach((p, idx) => {
+          p.classList.toggle('hidden', idx !== current);
+          p.setAttribute('aria-hidden', idx === current ? 'false' : 'true');
+        });
+        dots.forEach((d, idx) => {
+          d.className = `w-2 h-2 rounded-full transition-colors ${idx === current ? 'bg-[#6f4229]' : 'bg-[#d6c3ba] hover:bg-[#8b593e]'}`;
+        });
+      };
+      prev?.addEventListener('click', () => show(current - 1));
+      next?.addEventListener('click', () => show(current + 1));
+      dots.forEach((d, idx) => d.addEventListener('click', () => show(idx)));
+      root.querySelectorAll('.karuta-card').forEach((card) => {
+        card.addEventListener('click', () => card.classList.toggle('active'));
       });
-      dots.forEach((d, idx) => {
-        d.className = `w-2 h-2 rounded-full transition-colors ${idx === current ? 'bg-[#6f4229]' : 'bg-[#d6c3ba] hover:bg-[#8b593e]'}`;
-      });
-    };
-    prev?.addEventListener('click', () => show(current - 1));
-    next?.addEventListener('click', () => show(current + 1));
-    dots.forEach((d, idx) => d.addEventListener('click', () => show(idx)));
-    root.querySelectorAll('.karuta-card').forEach((card) => {
-      card.addEventListener('click', () => card.classList.toggle('active'));
     });
-  });
+  };
+
+  initKaruta();
+  document.addEventListener('astro:page-load', initKaruta);
 </script>
 

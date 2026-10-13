@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ContactForm from '../components/ContactForm.astro';
 import { getEntry } from 'astro:content';
+import { richTextToHtmlInline } from '../utils/richText';
 
 const aboutConfig = await getEntry('global', 'about');
 const { mainTitle, subTitle, aboutBlogTitle, aboutBlogText, aboutAuthorTitle, aboutAuthorText, contactTitle } = aboutConfig?.data || {};
@@ -15,27 +16,27 @@ const siteTitle = globalConfig?.data?.siteTitle || '間　MA (Vide Signifiant)';
   <div class="flex flex-col gap-10">
     <div class="flex flex-wrap justify-between gap-3 px-4 sm:px-0">
       <div class="flex flex-col gap-3">
-        <h1 class="text-gray-900 text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em] font-serif">{mainTitle}</h1>
-        <p class="text-gray-500 text-base font-normal leading-normal">{subTitle}</p>
+        <h1 class="text-gray-900 text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em] font-serif" set:html={richTextToHtmlInline(mainTitle)}></h1>
+        <p class="text-gray-500 text-base font-normal leading-normal" set:html={richTextToHtmlInline(subTitle)}></p>
       </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-12 px-4 sm:px-0">
       <div class="lg:col-span-3 flex flex-col gap-10">
         <div>
-          <h2 class="text-gray-900 text-[22px] font-bold leading-tight tracking-[-0.015em] pb-3 pt-5 font-serif">{aboutAuthorTitle}</h2>
-          <p class="text-gray-700 text-base font-normal leading-relaxed pb-3 pt-1 whitespace-pre-line">{aboutAuthorText}</p>
+          <h2 class="text-gray-900 text-[22px] font-bold leading-tight tracking-[-0.015em] pb-3 pt-5 font-serif" set:html={richTextToHtmlInline(aboutAuthorTitle)}></h2>
+          <p class="text-gray-700 text-base font-normal leading-relaxed pb-3 pt-1" set:html={richTextToHtmlInline(aboutAuthorText)}></p>
         </div>
         <hr class="border-gray-200"/>
         <div>
-          <h2 class="text-gray-900 text-[22px] font-bold leading-tight tracking-[-0.015em] pb-3 pt-5 font-serif">{aboutBlogTitle}</h2>
-          <p class="text-gray-700 text-base font-normal leading-relaxed pb-3 pt-1 whitespace-pre-line">{aboutBlogText}</p>
+          <h2 class="text-gray-900 text-[22px] font-bold leading-tight tracking-[-0.015em] pb-3 pt-5 font-serif" set:html={richTextToHtmlInline(aboutBlogTitle)}></h2>
+          <p class="text-gray-700 text-base font-normal leading-relaxed pb-3 pt-1" set:html={richTextToHtmlInline(aboutBlogText)}></p>
         </div>
       </div>
       
       <div class="lg:col-span-2">
         <div class="bg-white p-8 rounded-xl h-full sticky top-10 border border-gray-200 shadow-sm">
-          <h2 class="text-gray-900 text-[22px] font-bold leading-tight tracking-[-0.015em] pb-5 font-serif">{contactTitle}</h2>
+          <h2 class="text-gray-900 text-[22px] font-bold leading-tight tracking-[-0.015em] pb-5 font-serif" set:html={richTextToHtmlInline(contactTitle)}></h2>
       <ContactForm />
         </div>
       </div>

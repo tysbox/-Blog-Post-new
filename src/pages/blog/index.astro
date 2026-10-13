@@ -3,7 +3,7 @@
 // （記事ページと同じ fixed header / editorial footer を使う）
 import { getCollection } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
-import { stripMarkdown } from '../../utils/richText';
+import { richTextToHtmlInline, stripMarkdown } from '../../utils/richText';
 import { permalinkOf } from '../../utils/postOrder';
 import config from '../../content/config/config.json';
 import { timestamp, formatYear } from '../../utils/date';
@@ -62,14 +62,16 @@ const readMinutes = (p: (typeof posts)[number]) => {
             <span class="font-sans text-xs uppercase tracking-[0.2em] text-[#865138] font-semibold">
               {L.latestEssayLabel}
             </span>
-            <h2 class="font-serif text-2xl sm:text-3xl text-[#1b1c1a] font-normal leading-snug group-hover:text-[#6f4229] transition-colors">
-              {stripMarkdown(lead.data.title)}
-            </h2>
+            <h2
+              class="font-serif text-2xl sm:text-3xl text-[#1b1c1a] font-normal leading-snug group-hover:text-[#6f4229] transition-colors"
+              set:html={richTextToHtmlInline(lead.data.title)}
+            />
           </div>
           {lead.data.description && (
-            <p class="font-serif text-base sm:text-lg text-[#1b1c1a] leading-relaxed mt-4 line-clamp-3">
-              {stripMarkdown(lead.data.description)}
-            </p>
+            <p
+              class="font-serif text-base sm:text-lg text-[#1b1c1a] leading-relaxed mt-4 line-clamp-3"
+              set:html={richTextToHtmlInline(lead.data.description)}
+            />
           )}
         </a>
       </section>
@@ -104,13 +106,15 @@ const readMinutes = (p: (typeof posts)[number]) => {
                   <span class="text-[#d6c3ba]">•</span>
                   <span>{readMinutes(post)} {LA.readSuffix}</span>
                 </div>
-                <h3 class="font-serif text-lg text-[#1b1c1a] group-hover:text-[#6f4229] transition-colors leading-snug">
-                  {stripMarkdown(post.data.title)}
-                </h3>
+                <h3
+                  class="font-serif text-lg text-[#1b1c1a] group-hover:text-[#6f4229] transition-colors leading-snug"
+                  set:html={richTextToHtmlInline(post.data.title)}
+                />
                 {post.data.description && (
-                  <span class="font-serif text-xs text-[#51443d] leading-relaxed line-clamp-2">
-                    {stripMarkdown(post.data.description)}
-                  </span>
+                  <span
+                    class="font-serif text-xs text-[#51443d] leading-relaxed line-clamp-2"
+                    set:html={richTextToHtmlInline(post.data.description)}
+                  />
                 )}
               </div>
             </a>

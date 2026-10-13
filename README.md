@@ -5,6 +5,9 @@ Astro 7 による日本語・英語のブログ＋ポータルサイト。**Keys
 
 > CMS は Tina CMS から **Keystatic へ完全移行済み**です（Tina 関連の設定・スクリプトは削除済み）。
 > 移行の経緯は [WALKTHROUGH.md](WALKTHROUGH.md) を参照してください。
+>
+> ドロワー / カルーセル / リッチテキスト改行の修正（2026-10-13）は
+> [WALKTHROUGH-2026-10-13.md](WALKTHROUGH-2026-10-13.md) にまとめています。
 
 ## 技術スタック
 

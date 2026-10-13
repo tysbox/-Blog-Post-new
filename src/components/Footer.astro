@@ -4,6 +4,7 @@
 // SNSリンクは Keystatic「SEO / ナビゲーション設定」socialLinks から読む。
 import { getEntry } from 'astro:content';
 import config from '../content/config/config.json';
+import { richTextToHtmlInline } from '../utils/richText';
 
 const globalConfig = await getEntry('global', 'config');
 const footerText =
@@ -16,7 +17,7 @@ const logo = globalConfig?.data?.siteTitle || '間　MA (Vide Signifiant)';
   <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500 font-serif">
     <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
       <span class="font-bold text-gray-900">{logo}</span>
-      <span>{footerText}</span>
+      <span set:html={richTextToHtmlInline(footerText)} />
     </div>
     <nav class="flex gap-6">
       {links.map((l: any) => (

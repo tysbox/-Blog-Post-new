@@ -1,4 +1,5 @@
 import { getCollection } from 'astro:content';
+import { richTextToHtmlInline } from './richText';
 
 export type GlossaryEntry = {
   term: string;
@@ -102,8 +103,10 @@ export function annotateGlossary(html: string, glossary: GlossaryEntry[]): strin
     `<button type="button" class="gloss" data-gloss-term="${escapeHtml(entry.term)}" aria-expanded="false">` +
     `<span class="gloss-term">${escapeHtml(matched)}</span>` +
     `<span class="gloss-pop" role="note">` +
-    (entry.reading ? `<span class="gloss-reading">${escapeHtml(entry.reading)}</span>` : '') +
-    (entry.description ? `<span class="gloss-desc">${escapeHtml(entry.description)}</span>` : '') +
+    // 読み・説明は Keystatic の GUI エディタで編集するため Markdown を解釈する。
+    // （escapeHtml すると `**太字**` がそのまま見えてしまう）
+    (entry.reading ? `<span class="gloss-reading">${richTextToHtmlInline(entry.reading)}</span>` : '') +
+    (entry.description ? `<span class="gloss-desc">${richTextToHtmlInline(entry.description)}</span>` : '') +
     `</span></button>`;
 
   // タグとテキストを分離して走査する

@@ -9,6 +9,7 @@ import config from '../content/config/config.json';
 import { timestamp } from '../utils/date';
 import { permalinkOf } from '../utils/postOrder';
 import { getUiLabels } from '../utils/uiLabels';
+import { richTextToHtmlInline } from '../utils/richText';
 
 type Props = CollectionEntry<'blog'>['data'];
 
@@ -67,7 +68,7 @@ const resolveHref = (href: string) => (href === '/latest' ? latestUrl : href);
     <header class="flex justify-between items-center py-6 border-b border-gray-200">
       <div class="flex items-center gap-6">
         <h1 class="text-2xl font-bold text-gray-900">
-          <a href="/" class="hover:text-[#A36A4F] transition-colors">{siteTitle}</a>
+          <a href="/" class="hover:text-[#A36A4F] transition-colors" set:html={richTextToHtmlInline(siteTitle)} />
         </h1>
       </div>
       <nav class="hidden md:flex items-center space-x-8 text-sm font-medium">
@@ -105,7 +106,7 @@ const resolveHref = (href: string) => (href === '/latest' ? latestUrl : href);
         <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-baseline">
           <div class="md:col-span-5 space-y-3">
             <div class="flex items-baseline space-x-2">
-              <span class="font-serif text-2xl text-[#1b1c1a]">{siteTitle}</span>
+              <span class="font-serif text-2xl text-[#1b1c1a]" set:html={richTextToHtmlInline(siteTitle)} />
             </div>
             {footerDescription && (
               <p class="font-serif text-xs text-[#51443d] max-w-sm leading-relaxed">
@@ -140,8 +141,8 @@ const resolveHref = (href: string) => (href === '/latest' ? latestUrl : href);
     <footer class="py-8 px-4 border-t border-gray-200 mt-10">
       <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500 font-serif">
         <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
-          <span class="font-bold text-gray-900">{siteTitle}</span>
-          <span>{footerText}</span>
+          <span class="font-bold text-gray-900" set:html={richTextToHtmlInline(siteTitle)} />
+          <span set:html={richTextToHtmlInline(footerText)} />
         </div>
         <nav class="flex gap-6">
           {links.map((l: any) => (

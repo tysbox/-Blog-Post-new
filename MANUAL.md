@@ -2,6 +2,7 @@
 
 本書は **サイト構成** と **Keystatic での編集規約** をまとめたものです。
 環境構築・起動・トラブル対応は [README.md](README.md)、移行経緯は [WALKTHROUGH.md](WALKTHROUGH.md) を参照してください。
+ドロワー / カルーセル / リッチテキスト改行の修正（2026-10-13）は [WALKTHROUGH-2026-10-13.md](WALKTHROUGH-2026-10-13.md) にまとめています。
 
 > 最重要の原則：**管理画面で入力した内容が、そのままサイトに出る**こと。
 > 表示だけ特別扱いにする箇所（自動採番など）は必ず本書で明記しています。
@@ -70,9 +71,56 @@ src/content/blog/2025-12-08-from-kyoto-to-the-world.mdx
 | `pubDate` | ○ | 公開日。**並び順と Index の NO. はこの日付で決まります** |
 | `updatedDate` | — | 更新日（一覧の並びにも補助的に使用） |
 | `heroImage` | — | ヒーロー画像（`/images/...`） |
-| `heroTitle` / `heroSubtitle` | — | ヒーロー用表示（`title` / `description` の上書き） |
+| `heroTitle` / `heroSubtitle` | — | ヒーロー用表示（`title` / `description` の上書き）。本文と同じ GUI エディタで、見出し（H3/H4）・太字・斜体・改行が使えます |
 | `japaneseText` | — | 日本語全文（本章 7） |
 | `contentSections` | ○ | 本文ブロック（本章 6） |
+
+> ヒーロー画像の下にあったキャプション行（`FIG. 00 / ARCHIVE`）は撤去しました。
+> 画像の説明は `heroImage` の代替テキスト（`heroTitle` から自動生成）だけです。
+
+> `order` を空欄のまま Keystatic で Save すると、ファイルには `order: .nan` と書き出されます。
+> これは「未入力」と同じ意味として読み込み時に無視されます（`src/content.config.ts`）。
+
+### テキスト欄の Markdown 対応（全ページ共通）
+
+**Keystatic のテキスト欄はすべて同じ GUI（WYSIWYG）エディタです。**
+太字・斜体・取り消し線・リンク・コード・改行（Shift+Enter）が使え、
+見出しを選べる欄では H3/H4 で文字サイズを変えられます。
+
+| 欄 | 改行 | 太字 / 斜体 | 見出し |
+| --- | --- | --- | --- |
+| 記事 `title` / `description` | ○ | ○ | — |
+| 記事 `heroTitle` / `heroSubtitle` | ○ | ○ | ○（`heroTitle`） |
+| 記事 `japaneseText` / `bodyText` | ○ | ○ | ○ |
+| 記事内カルタ（`karutaTitle` / `titleJp` / `titleEn` / `bodyJp` / `bodyEn`） | ○ | ○ | — |
+| 画像 `caption` | ○ | ○ | — |
+| 用語集 `description` | ○ | ○ | — |
+| ポータル（FUSUMA / Prologue / Featured / Bundle / ニュースレター） | ○ | ○ | — |
+| Folio（デッキ名 / カード名 / カード説明） | ○ | ○ | — |
+| カルタ（見出し / 説明 / カード本文） | ○ | ○ | — |
+| About & Contact | ○ | ○ | — |
+| サイトタイトル / フッター文言 | ○ | ○ | — |
+
+`heroTitle` に見出し（`### 見出し`）を入れると、その見出しレベルがそのまま
+文字サイズになります（`src/utils/richText.ts` の `richTextToHtmlHeading()`）。
+見出しを入れない場合は既定の見出しサイズ（`text-2xl`〜`text-4xl`）になります。
+
+#### 改行の扱い（重要）
+
+GUI エディタの改行は 2 種類あり、保存形式が異なります。
+
+| 操作 | 保存される形 | 表示 |
+| --- | --- | --- |
+| **Enter**（段落を分ける） | 空行 | 別の段落（`<p>`） |
+| **Shift+Enter**（同じ段落内で改行） | 行末の `\` | 同じ段落内で改行（`<br>`） |
+
+Keystatic は複数行を YAML の folded scalar（`>`）で保存するため、
+`\` の直後に空白が入った状態（`...です。\ `）で書き出されることがあります。
+これは読み込み時に「強制改行」として解釈し直します
+（`src/utils/richText.ts` の `normalizeKeystaticText()`）。
+この正規化は**すべてのテキスト欄に共通**なので、どの欄でも改行の見え方は同じです。
+
+> 行頭の空白を保持するために Keystatic が挿入する `&#x20;` も同じ場所で除去します。
 
 ---
 
@@ -135,6 +183,12 @@ order（入力があればその値） → 無ければ 公開日（pubDate）�
 | 元に戻す | もう一度押すと「前後のみ」に戻ります |
 | ボタンが出る条件 | 記事数が **12件以上** のときだけ（現在6件なので非表示） |
 
+> **ビュートランジション対応**: 記事ページの Index ドロワー / 日本語ドロワー /
+> カルタのカルーセル / 用語集の注釈は、`ClientRouter` によるクライアント遷移
+> （記事内リンクからの移動）でも動くよう、`astro:page-load` のたびに
+> 現在の DOM へ再バインドします（`data-*-bound` で二重バインドを防止）。
+> ポータルの FUSUMA ヒーローも同様です（`public/scripts/fusuma-hero.js`）。
+
 ---
 
 ## 9. Folio（Anthology & Archives）
@@ -145,7 +199,8 @@ order（入力があればその値） → 無ければ 公開日（pubDate）�
 | 表示の決まり方 | **編集したカードだけがそのまま表示されます**。記事からの自動補完は行いません |
 | 空デッキ | カード未設定のデッキは非表示 |
 | カード項目 | `title` / `description`（概要） / `article`（記事パス）。`CHAPTER 01` は並びから自動生成 |
-| 操作 | 下部タイトルにホバー／タッチ → 最前面へ（イメージ＋タイトル表示）／上部イメージにホバー → 内容要約を表示 |
+| 操作 | カード全体（下部タイトル・上部イメージ・要約のいずれも）をタップ／クリックすると記事へ移動します（`Read More` と同じリンク） |
+| 通読時間 | カード右下は記事の通読所要時間（`N min read`）を自動表示します。記事ページ上部と同じ値です（`src/utils/readTime.ts`） |
 | 参照パス | `src/content/blog/...mdx` は **日付付き／日付なしの両方**を解釈します |
 
 ---

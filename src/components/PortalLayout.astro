@@ -6,6 +6,7 @@ import { getEntry, getCollection } from 'astro:content';
 import { timestamp } from '../utils/date';
 import { permalinkOf } from '../utils/postOrder';
 import { getUiLabels } from '../utils/uiLabels';
+import { richTextToHtmlInline } from '../utils/richText';
 import config from '../content/config/config.json';
 import '../styles/global.css';
 
@@ -76,6 +77,18 @@ const slideCount = slides.length;
 // 襖が開いた瞬間に必ず見せるテキスト（fusumaTexts の1件目）。
 // 画像は出さず暗転させた状態で表示するため、画像とは独立に渡す。
 const openingText = textEntries[0] ?? { title: '', subtitle: '' };
+
+// ヒーローのテキストは Markdown（**太字** / *斜体* / 改行）を解釈して表示する。
+// 素のテキストだと `**` がそのまま見え、改行も潰れるため。
+// 切り替えは fusuma-hero.js が行うので、JS へは HTML 文字列で渡す。
+const heroTitleHtml = (value: unknown) => richTextToHtmlInline(value);
+const slidesJson = JSON.stringify(
+  slides.map((s) => ({ title: heroTitleHtml(s.title), subtitle: heroTitleHtml(s.subtitle) })),
+);
+const openingJson = JSON.stringify({
+  title: heroTitleHtml(openingText.title),
+  subtitle: heroTitleHtml(openingText.subtitle),
+});
 ---
 
 <!DOCTYPE html>
@@ -100,7 +113,7 @@ const openingText = textEntries[0] ?? { title: '', subtitle: '' };
     
     <main id="main-content" class="py-8 sm:py-12 md:py-16">
       <div class="flex flex-col w-full">
-      <section id="hero-container" role="region" aria-roledescription="carousel" aria-label="Portal hero" class="relative w-full max-w-[1200px] mx-auto aspect-[3/2] bg-[#070714] rounded-sm overflow-hidden shadow-2xl flex items-center justify-center select-none" data-slide-count={slideCount} data-slides-json={JSON.stringify(slides.map((s) => ({ title: s.title || '', subtitle: s.subtitle || '' })))} data-opening-json={JSON.stringify({ title: openingText.title || '', subtitle: openingText.subtitle || '' })}>
+      <section id="hero-container" role="region" aria-roledescription="carousel" aria-label="Portal hero" class="relative w-full max-w-[1200px] mx-auto aspect-[3/2] bg-[#070714] rounded-sm overflow-hidden shadow-2xl flex items-center justify-center select-none" data-slide-count={slideCount} data-slides-json={slidesJson} data-opening-json={openingJson}>
         <div id="fusuma-wrapper" class="absolute inset-0 z-40 pointer-events-none transition-all duration-1000">
           <div id="fusuma-left-door" class="fusuma-panel fusuma-left">
             <div class="fusuma-handle-left"></div>
@@ -131,8 +144,8 @@ const openingText = textEntries[0] ?? { title: '', subtitle: '' };
 
         <div id="hero-text-block" class="hero-text-block active absolute inset-0 z-30 flex flex-col items-center justify-center text-center p-6 sm:p-12 pointer-events-none">
           <div class="relative flex flex-col items-center max-w-3xl px-4">
-            <h2 id="hero-slide-title" class="relative text-3xl sm:text-4xl md:text-6xl font-bold mb-4 text-white font-serif tracking-tight drop-shadow-xl hero-title leading-tight">{firstSlide?.title}</h2>
-            <p id="hero-slide-subtitle" class="relative text-lg md:text-xl max-w-2xl mx-auto text-[#f0edea] italic font-serif leading-relaxed drop-shadow-md hero-subtitle">{firstSlide?.subtitle}</p>
+            <h2 id="hero-slide-title" class="relative text-3xl sm:text-4xl md:text-6xl font-bold mb-4 text-white font-serif tracking-tight drop-shadow-xl hero-title leading-tight" set:html={heroTitleHtml(firstSlide?.title)}></h2>
+            <p id="hero-slide-subtitle" class="relative text-lg md:text-xl max-w-2xl mx-auto text-[#f0edea] italic font-serif leading-relaxed drop-shadow-md hero-subtitle" set:html={heroTitleHtml(firstSlide?.subtitle)}></p>
           </div>
         </div>
 

@@ -11,7 +11,16 @@ const blog = defineCollection({
     title: z.string(),
     // 表示順（No.）。未入力なら公開日の昇順で自動採番（src/utils/postOrder.ts）。
     // 入れ替えたい場合はこの値だけ変更する（同じ数字は後続にずれる）。
-    order: z.number().optional(),
+    //
+    // 空欄のまま Keystatic で Save すると、number フィールドは YAML に
+    // `order: .nan` として書き出される（js-yaml は NaN を .nan で表現する）。
+    // これは Zod の z.number() が弾くため、そのままでは記事が 1 件も
+    // 読み込めずビルドが失敗する。NaN は「未入力」と同じ意味なので
+    // ここで undefined に正規化する。
+    order: z.preprocess(
+      (v) => (typeof v === 'number' && !Number.isFinite(v) ? undefined : v),
+      z.number().optional(),
+    ),
     description: z.string().optional(),
     pubDate: z.coerce.date().optional(),
     updatedDate: z.coerce.date().optional(),
@@ -240,7 +249,6 @@ const labels = defineCollection({
       tocFooter: z.string().optional(),
       prevLabel: z.string().optional(),
       nextLabel: z.string().optional(),
-      figLabel: z.string().optional(),
       editorialName: z.string().optional(),
       editorialByline: z.string().optional(),
       readSuffix: z.string().optional(),
@@ -268,7 +276,6 @@ const labels = defineCollection({
       chapterPrefix: z.string().optional(),
       pageCategory: z.string().optional(),
       bundleEpisodeLabel: z.string().optional(),
-      pageRange: z.string().optional(),
     }).optional(),
     karuta: z.object({
       cardFolioLabel: z.string().optional(),

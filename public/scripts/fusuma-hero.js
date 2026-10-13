@@ -22,8 +22,15 @@
  * 以降のサイクルは通常どおり画像とテキストを1対1で巡回する。
  */
 (function () {
+  // ビュートランジション（ClientRouter）対応:
+  // このスクリプトは初回しか実行されないため、クライアント遷移後は
+  // 新しい DOM に対して再初期化する必要がある。data-fusuma-bound で
+  // 二重初期化（タイマーの二重起動）を防ぐ。
+  function initFusuma() {
   try {
     var container = document.getElementById('hero-container');
+    if (container && container.getAttribute('data-fusuma-bound') === '1') return;
+    if (container) container.setAttribute('data-fusuma-bound', '1');
     var wrapper = document.getElementById('fusuma-wrapper');
     var textBlock = document.getElementById('hero-text-block');
     var titleEl = document.getElementById('hero-slide-title');
@@ -90,13 +97,15 @@
     }
     function setText(i) {
       var s = data[i] || {};
-      if (titleEl) titleEl.textContent = s.title || '';
-      if (subtitleEl) subtitleEl.textContent = s.subtitle || '';
+      // タイトル/サブタイトルは Markdown を HTML 化した文字列で渡される
+      // （**太字** / *斜体* / 改行）。textContent だとタグが文字として出るため innerHTML を使う。
+      if (titleEl) titleEl.innerHTML = s.title || '';
+      if (subtitleEl) subtitleEl.innerHTML = s.subtitle || '';
     }
     // オープニング用: 画像を出さず、固定テキストだけを暗転の上に表示する。
     function setOpeningText() {
-      if (titleEl) titleEl.textContent = opening.title || '';
-      if (subtitleEl) subtitleEl.textContent = opening.subtitle || '';
+      if (titleEl) titleEl.innerHTML = opening.title || '';
+      if (subtitleEl) subtitleEl.innerHTML = opening.subtitle || '';
     }
     // 襖が開いた瞬間の演出。画像は一切出さず、暗転＋固定テキストのみ。
     // テキストが全表示されたら通常のサイクル（step）へ引き継ぐ。
@@ -234,4 +243,8 @@
   } catch (err) {
     console.error('Fusuma hero script error', err);
   }
+  }
+
+  initFusuma();
+  document.addEventListener('astro:page-load', initFusuma);
 })();

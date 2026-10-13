@@ -3,6 +3,7 @@ import { getEntry, getCollection } from 'astro:content';
 import config from '../content/config/config.json';
 import { timestamp } from '../utils/date';
 import { permalinkOf } from '../utils/postOrder';
+import { richTextToHtmlInline } from '../utils/richText';
 
 // 新ポータル準拠: Home / Latest Writing(最新記事へ) / About & Contact + BiScèneロゴ
 // 既存テキスト・画像の書き換えなし。リンク先のみ既存データから解決する。
@@ -41,7 +42,7 @@ const resolveHref = (href: string) => (href === '/latest' ? latestContentUrl : h
 <header class="flex justify-between items-center py-6 border-b border-gray-200">
   <div class="flex items-center gap-6">
     <h1 class="text-2xl font-bold text-gray-900">
-      <a href="/" class="hover:text-[#A36A4F] transition-colors">{siteTitle || '間　MA (Vide Signifiant)'}</a>
+      <a href="/" class="hover:text-[#A36A4F] transition-colors" set:html={richTextToHtmlInline(siteTitle || '間　MA (Vide Signifiant)')} />
     </h1>
   </div>
   <nav class="hidden md:flex items-center space-x-8 text-sm font-medium">
