@@ -67,6 +67,38 @@ for (const file of walk(CONTENT_DIR)) {
 const missing = [];
 const malformed = [];
 const nfd = [];
+const caseMismatch = [];
+
+/**
+ * パスの各セグメントが「実際のファイル名と大文字小文字まで一致するか」を検証する。
+ *
+ * macOS / Windows のファイルシステムは大文字小文字を区別しないため、
+ * `/images/Karuta/foo.webp` と `/images/karuta/foo.webp` はどちらも
+ * ローカルでは開けてしまう。しかし本番の Cloudflare Pages（Linux）は
+ * 区別するため、404 になる。ローカルで気づけない壊れ方なのでここで検出する。
+ */
+function findCaseMismatch(ref) {
+  const segments = ref.split('/').filter(Boolean); // ['images', 'Karuta', 'foo.webp']
+  let dir = PUBLIC_DIR;
+  for (const seg of segments) {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir);
+    } catch {
+      return null; // ディレクトリが無い場合は missing 側で報告される
+    }
+    if (entries.includes(seg)) {
+      dir = path.join(dir, seg);
+      continue;
+    }
+    // 大文字小文字だけが違う候補を探す
+    const lower = seg.toLowerCase();
+    const alt = entries.find((e) => e.toLowerCase() === lower);
+    if (alt) return { segment: seg, actual: alt };
+    return null;
+  }
+  return null;
+}
 
 for (const r of refs) {
   if (BAD_CHARS_RE.test(r.ref)) {
@@ -78,6 +110,8 @@ for (const r of refs) {
     missing.push(r);
     continue;
   }
+  const mismatch = findCaseMismatch(r.ref);
+  if (mismatch) caseMismatch.push({ ...r, ...mismatch });
   // macOS は日本語ファイル名を NFD（分解形式）で保存することがある。
   // 参照側が NFC（合成形式）だと、見た目は同じでもバイト列が違い
   // 404 になる（実際に発生した）。ここで検出して正規化を促す。
@@ -143,6 +177,18 @@ if (nfd.length > 0) {
     console.log(`      ${r.file}:${r.line}`);
   }
   console.log('\n対処: 参照側を NFC に正規化してください。\n');
+}
+
+if (caseMismatch.length > 0) {
+  failed = true;
+  console.log(`FAIL: 大文字小文字が実際のファイル名と一致しません（${caseMismatch.length} 件）:`);
+  for (const r of caseMismatch) {
+    console.log(`  - ${r.ref}`);
+    console.log(`      ${r.file}:${r.line}`);
+    console.log(`      "${r.segment}" ではなく "${r.actual}" です`);
+  }
+  console.log('\n対処: macOS では区別されませんが、本番の Cloudflare Pages（Linux）は');
+  console.log('      大文字小文字を区別するため 404 になります。実際の名前に合わせてください。\n');
 }
 
 if (failed) process.exit(1);
