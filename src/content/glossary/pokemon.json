@@ -1,8 +1,8 @@
 {
   "slug": "pokemon",
-  "term": "Pokémon",
-  "reading": "ポケモン",
-  "description": "（ダミー）日本発のキャラクターフレンチャイズ。",
+  "term": "Pokémon / Pocket Monsters",
+  "reading": "ポケットモンスター / ポケモン",
+  "description": "Global media franchise functioning as a Shintō OS manifestation.",
   "caseSensitive": false,
   "excludeSpellings": []
 }

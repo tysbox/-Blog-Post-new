@@ -1,8 +1,8 @@
 {
   "slug": "shinto-os",
-  "term": "Shinto OS",
-  "reading": "シントウ・オーエス",
-  "description": "神道を文化の基層OSとして捉える本サイト独自の枠組み（外来文化を受容し続ける仕組み）。",
-  "caseSensitive": true,
+  "term": "Shintō OS",
+  "reading": "神道OS",
+  "description": "Japan's unwritten cultural operating system governing harmony and relations.",
+  "caseSensitive": false,
   "excludeSpellings": []
 }

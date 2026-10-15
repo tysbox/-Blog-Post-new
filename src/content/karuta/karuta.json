@@ -4,27 +4,27 @@
   "cards": [
     {
       "number": "1",
-      "tag": "Milliad of Spirits",
+      "tag": "Miryad of Spirits",
       "romaji": "Yaoyorozu no Kami",
       "titleJp": "八百万の神",
       "titleEn": "Animistic Belief",
       "image": "/images/IMG_0581_DxO.webp",
       "alt": "Ancient cryptomeria forest and gravel approach at Emperor Jimmu Mausoleum",
       "folioId": "FOLIO 01",
-      "bodyJp": "「数え切れないほど無数に存在する自然界の神」古代の表現。",
-      "bodyEn": "The animistic belief that countless spirits inhabit every natural element, animal, landscape, and even everyday physical objects across the world."
+      "bodyJp": "「数え切れないほど無数に存在する自然界の神」古代の表現。\n",
+      "bodyEn": "The animistic belief that countless spirits inhabit every natural element, animal, landscape, and even everyday physical objects across the world.\n"
     },
     {
       "number": "2",
       "tag": "A Water Pavilion",
-      "romaji": "Chōzuba",
-      "titleJp": "手水場",
+      "romaji": "Chōzuya",
+      "titleJp": "手水屋",
       "titleEn": "Visitors Purification",
-      "image": "/images/IMG_0603_DxO.webp",
+      "image": "/images/1-2H 手水場.webp'",
       "alt": "Natural granite water basin chouzuya filled with spring water and ladles",
       "folioId": "FOLIO 02",
-      "bodyJp": "川や海で全身を洗い清めた古代の禊を、手と口のみに凝縮した設備。",
-      "bodyEn": "A water pavilion at shrine entrances where visitors purify their hands and mouths, distilling ancient full-body river bathing rituals into modern symbolic gestures."
+      "bodyJp": "川や海で全身を洗い清めた古代の禊を、手と口のみに凝縮した設備。\n",
+      "bodyEn": "A water pavilion at shrine entrances where visitors purify their hands and mouths, distilling ancient full-body river bathing rituals into modern symbolic gestures.\n"
     },
     {
       "number": "3",
@@ -35,8 +35,8 @@
       "image": "/images/IMG_0553_DxO_DxO.webp",
       "alt": "Expansive sacred white gravel path with towering trees leading toward the torii gate at Kashihara Jingu",
       "folioId": "FOLIO 03",
-      "bodyJp": "参道の中央は神様の通り道とされるため、敬意を払い端を歩く不文律。",
-      "bodyEn": "The quiet etiquette of walking along path edges because the center is considered the unseen sacred corridor reserved for the deities."
+      "bodyJp": "参道の中央は神様の通り道とされるため、敬意を払い端を歩く不文律。\n",
+      "bodyEn": "The quiet etiquette of walking along path edges because the center is considered the unseen sacred corridor reserved for the deities.\n"
     },
     {
       "number": "4",
@@ -44,11 +44,9 @@
       "romaji": "Shinbutsu-shūgō",
       "titleJp": "神仏習合",
       "titleEn": "A Blend of Shinto and Buddhism",
-      "image": "",
-      "alt": "",
       "folioId": "FOLIO 04",
-      "bodyJp": "明治の神仏分離以前は、僧侶が神社を管理し神前で読経していた。",
-      "bodyEn": "A historical blending of Shinto and Buddhism where native spirits and foreign Buddhas coexisted harmoniously rather than competing for dominance."
+      "bodyJp": "明治の神仏分離以前は、僧侶が神社を管理し神前で読経していた。\n",
+      "bodyEn": "A historical blending of Shinto and Buddhism where native spirits and foreign Buddhas coexisted harmoniously rather than competing for dominance.\n"
     },
     {
       "number": "5",
@@ -56,11 +54,9 @@
       "romaji": "Honji Suijakusetsu",
       "titleJp": "本地垂迹説",
       "titleEn": "Buddas as Shinto Deities",
-      "image": "",
-      "alt": "",
       "folioId": "FOLIO 05",
-      "bodyJp": "日本の神々は、民を救うため仏が仮の姿で現れた化身とみなされた。",
-      "bodyEn": "The medieval Japanese concept proposing that indigenous Shinto deities were actually compassionate earthly incarnations of universal Buddhas to guide people."
+      "bodyJp": "日本の神々は、民を救うため仏が仮の姿で現れた化身とみなされた。\n",
+      "bodyEn": "The medieval Japanese concept proposing that indigenous Shinto deities were actually compassionate earthly incarnations of universal Buddhas to guide people.\n"
     },
     {
       "number": "6",
@@ -68,11 +64,9 @@
       "romaji": "Kegare",
       "titleJp": "穢れ",
       "titleEn": "State of Disharmony",
-      "image": "",
-      "alt": "",
       "folioId": "FOLIO 06",
-      "bodyJp": "道徳的悪ではなく、「気枯れ」すなわち生命力が衰えた状態を指す。",
-      "bodyEn": "Not moral sin or absolute evil, but a temporary state of disharmony, exhaustion, or stagnation that requires restoration through cleansing."
+      "bodyJp": "道徳的悪ではなく、「気枯れ」すなわち生命力が衰えた状態を指す。\n",
+      "bodyEn": "Not moral sin or absolute evil, but a temporary state of disharmony, exhaustion, or stagnation that requires restoration through cleansing.\n"
     },
     {
       "number": "7",
@@ -80,11 +74,9 @@
       "romaji": "Tsukumogami",
       "titleJp": "付喪神",
       "titleEn": "Hundred Years of Use.",
-      "image": "",
-      "alt": "",
       "folioId": "FOLIO 07",
-      "bodyJp": "百年経た道具に魂が宿る信仰。物を粗末にせず供養する文化の源流。",
-      "bodyEn": "Ancient folklore where household tools and utensils acquire souls and come alive after reaching one hundred years of continuous dedicated use."
+      "bodyJp": "百年経た道具に魂が宿る信仰。物を粗末にせず供養する文化の源流。\n",
+      "bodyEn": "Ancient folklore where household tools and utensils acquire souls and come alive after reaching one hundred years of continuous dedicated use.\n"
     }
   ]
 }

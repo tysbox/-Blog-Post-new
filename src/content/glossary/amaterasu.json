@@ -1,0 +1,8 @@
+{
+  "slug": "amaterasu",
+  "term": "Amaterasu",
+  "reading": "天照 [Amaterasu]",
+  "description": "The sun goddess in Japanese mythology, defined by relational bounds.",
+  "caseSensitive": false,
+  "excludeSpellings": []
+}
