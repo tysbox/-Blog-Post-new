@@ -84,6 +84,13 @@ export function validateKaruta(cards, { max = 100 } = {}) {
     if (image && !image.startsWith('/')) {
       warnings.push(`${row} 行目: 画像パスは "/images/..." のように / から始めてください`);
     }
+    // 引用符・余分な空白は「ファイル名が一致しない」= 画像が出ない原因になる。
+    // エラーにせず警告にすると見落とされるため、ここでは保存を止める。
+    if (image && /["']|\s$|\s{2,}|\u3000/.test(image)) {
+      errors.push(
+        `${row} 行目: 画像パスに引用符または余分な空白が含まれています（${JSON.stringify(image)}）`,
+      );
+    }
   });
 
   if (cards.length > max) {

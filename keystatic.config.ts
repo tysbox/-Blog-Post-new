@@ -25,12 +25,25 @@ import { config, fields, collection, singleton } from '@keystatic/core';
  * `_template` を使用・保存する（`fields.blocks` は `_type` を書いてしまうため未使用）。
  */
 
+// --- 画像パスの共通バリデーション ---
+// 画像パスは手入力のため、次の「気づきにくい壊れ方」が実際に発生した:
+//   ・末尾に引用符が混入する（/images/foo.webp'）→ ファイル名が一致せず 404
+//   ・余分な空白が入る（/images/foo  bar.webp）→ 同上
+//   ・日本語ファイル名を NFD で保存すると NFC の参照と一致せず 404
+// いずれもエラーが出ないため「編集したのに反映されない」という誤解を招く。
+// ここで入力時に弾き、保存されないようにする。
+const IMAGE_PATH_PATTERN = {
+  regex: /^\/images\/[^"'\s\u3000]+$/,
+  message:
+    '画像パスは /images/ファイル名.webp の形式で入力してください（引用符・空白は使えません）',
+};
+
 // --- 画像グリッドの1アイテム (Tina の imageGrid テンプレートの images) ---
 const imageItem = fields.object({
 	src: fields.text({
 		label: '画像 (src)',
 		description: '例: /images/IMG_0581_DxO.webp',
-		validation: { isRequired: true },
+		validation: { isRequired: true, pattern: IMAGE_PATH_PATTERN },
 	}),
 	label: fields.text({ label: 'ラベル (label)' }),
 	caption: fields.mdx.inline({ label: 'キャプション (caption)', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
@@ -131,6 +144,7 @@ export default config({
         heroImage: fields.text({
           label: 'ヒーロー画像 (Hero Image)',
           description: '例: /images/IMG_0581_DxO.webp',
+          validation: { pattern: IMAGE_PATH_PATTERN },
         }),
 
         // タイトルは Markdown が使えるため、レンダリング側で解釈される。
@@ -263,6 +277,7 @@ export default config({
                 image: fields.text({
                   label: '画像',
                   description: '例: /images/IMG_0581_DxO.webp',
+                  validation: { pattern: IMAGE_PATH_PATTERN },
                 }),
                 alt: fields.text({ label: '代替テキスト (alt)' }),
                 folioId: fields.text({ label: 'Folios ID', description: '例: FOLIO 01' }),
@@ -371,6 +386,7 @@ export default config({
                 image: fields.text({
                   label: '画像',
                   description: '例: /images/IMG_0581_DxO.webp',
+                  validation: { pattern: IMAGE_PATH_PATTERN },
                 }),
               }),
               {
@@ -513,7 +529,7 @@ export default config({
       schema: {
         siteTitle: fields.mdx.inline({ label: 'サイトタイトル', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
 
-        lpLogo: fields.text({ label: 'LPロゴ画像', description: '例: /images/IMG_0581_DxO.webp' }),
+        lpLogo: fields.text({ label: 'LPロゴ画像', description: '例: /images/IMG_0581_DxO.webp', validation: { pattern: IMAGE_PATH_PATTERN } }),
         lpUrl: fields.text({ label: 'LPリンク先URL' }),
 
         footerText: fields.mdx.inline({ label: 'フッター文言', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
@@ -600,6 +616,7 @@ export default config({
             image: fields.text({
               label: '画像',
               description: '例: /images/IMG_0581_DxO.webp',
+              validation: { pattern: IMAGE_PATH_PATTERN },
             }),
             alt: fields.text({ label: '代替テキスト (alt)' }),
             folioId: fields.text({ label: 'Folio ID', description: '例: FOLIO 01' }),
