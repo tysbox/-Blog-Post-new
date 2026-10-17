@@ -545,6 +545,13 @@ export default config({
      * フロントページ下部のデッキを独立編集する。
      * ※「編集したカード＝そのまま表示」にするため、記事からの自動補完は行わない。
      *   デッキの段数（CSS の nth-child 1〜4）＝最大4枚。
+     *
+     * カードは「記事を選ぶだけ」で追加できる:
+     *   - `article` は Keystatic の relationship フィールド（ブログ記事の一覧から選択）。
+     *     保存値はスラッグ文字列（例: `2025-12-15-shinto-as-japanese-cultural-os-pt2`）。
+     *     従来の `src/content/blog/....mdx` 形式の値もそのまま読み込めます。
+     *   - `title` / `description` は空欄のままでOK。空欄の場合は選択した記事の
+     *     タイトル・概要を自動で表示します（カード名だけ変えたい時はここへ入力）。
      */
     folio: singleton({
       label: 'Folio（Collected Volumes & Archives）',
@@ -560,19 +567,38 @@ export default config({
               options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
             }),
             badge: fields.mdx.inline({ label: 'バッジ', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
+            maxCards: fields.number({
+              label: 'カードの最大枚数',
+              description:
+                'このデッキに積めるカードの枚数（1〜6、既定: 4）。増やすと本の厚みが増れ、ホバーでより下まで展開されます。',
+              defaultValue: 4,
+              validation: { min: 1, max: 6 },
+            }),
             chapters: fields.array(
               fields.object({
-                title: fields.mdx.inline({ label: 'カード名', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
-                description: fields.mdx.inline({ label: 'カード説明', description: 'GUIエディタです。B（太字）/ I（斜体）/ 改行が使えます。', options: { bold: true, italic: true, strikethrough: true, link: true, code: true } }),
-                article: fields.text({
-                  label: '記事パス',
-                  description: '例: src/content/blog/shinto-as-japanese-cultural-os-pt1.mdx',
+                article: fields.relationship({
+                  label: '記事',
+                  description:
+                    'ブログ記事の一覧から選ぶだけですぐに反映されます。タイトル・説明は空欄なら記事の内容を自動で使います。',
+                  collection: 'blog',
+                }),
+                title: fields.mdx.inline({
+                  label: 'カード名（空欄なら記事タイトル）',
+                  description:
+                    'GUIエディタです。空欄のままなら選択した記事のタイトルを自動で表示します。例: Vol. I • Shinto as Cultural OS',
+                  options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
+                }),
+                description: fields.mdx.inline({
+                  label: 'カード説明（空欄なら記事の概要）',
+                  description:
+                    'GUIエディタです。空欄のままなら選択した記事の概要を自動で表示します。',
+                  options: { bold: true, italic: true, strikethrough: true, link: true, code: true },
                 }),
               }),
               {
-                label: 'カード（最大4枚）',
+                label: 'カード',
                 description:
-                  'デッキの段数に合わせて最大4枚。指定したカードだけがそのまま表示されます（記事からの自動補完は行いません）。',
+                  '記事を選ぶだけで追加でき、タイトル・説明は空欄なら記事の内容を自動で使います。表示されるのは上の「カードの最大枚数」までのぶんだけです。',
               },
             ),
           }),

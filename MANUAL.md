@@ -32,13 +32,18 @@
 | 対象 | パス | 備考 |
 | --- | --- | --- |
 | ブログ記事 | `src/content/blog/*.mdx` | 本章 3〜8 が該当 |
-| フロントページ | `src/content/portal/home.json` | FUSUMA・注目記事・Bundle・ニュースレター |
+| フロントページ | `src/content/portal/home.json` | FUSUMA・注目記事・Bundle・ニュースレター。本章 10 |
 | Folio | `src/content/folio/folio.json` | 本章 9 |
-| Karuta | `src/content/karuta/karuta.json` | 全記事共通のカルタ |
-| About / Contact | `src/content/global/about.json` | |
-| ヘッダー・フッター | `src/content/global/config.json` | |
-| SEO / Archive / SNS | `src/content/config/config.json` | |
-| 静的設定 | `src/content/settings/site.json` | レイアウトが直接読む |
+| Karuta | `src/content/karuta/karuta.json` | 全記事共通のカルタ。本章 11 |
+| 用語集 | `src/content/glossary/*.json` | 記事内の注釈。本章 12 |
+| About / Contact | `src/content/global/about.json` | 本章 13 |
+| ヘッダー・フッター | `src/content/global/config.json` | 本章 13 |
+| SEO / ナビゲーション | `src/content/config/config.json` | 本章 13 |
+| UI ラベル | `src/content/labels/ui.json` | 見出し・ボタン文言。本章 13 |
+
+> **管理画面の開き方**: `npm run dev` 起動後、`http://127.0.0.1:4321/keystatic` を開きます。
+> 左の一覧から上記の対象を選び、編集して **Save** を押すと即反映されます（ブラウザの再読込は不要）。
+> 各編集画面の右上 **Preview** ボタンで、変更前のサイトを確認できます。
 
 ---
 
@@ -195,17 +200,20 @@ order（入力があればその値） → 無ければ 公開日（pubDate）�
 
 | 項目 | 内容 |
 | --- | --- |
-| 編集 | `folio/folio.json` の `volumes[].chapters[]`（1デッキ最大 **4枚**） |
-| 表示の決まり方 | **編集したカードだけがそのまま表示されます**。記事からの自動補完は行いません |
+| 編集 | `folio/folio.json` の `volumes[].chapters[]`。1デッキの最大枚数は `volumes[].maxCards`（**1〜6**、既定 **4**） |
+| カードの追加 | **記事を選ぶだけ**。「カード」の `Add` → `記事` をドロップダウンで選択 → `Add`。タイトル・説明の入力は不要です |
+| 表示の決まり方 | **編集したカードだけがそのまま表示されます**。記事からの自動補完（カードの自動追加）は行いません |
 | 空デッキ | カード未設定のデッキは非表示 |
-| カード項目 | `title` / `description`（概要） / `article`（記事パス）。`CHAPTER 01` は並びから自動生成 |
+| カード項目 | `article`（記事。必須）／`title`（カード名）／`description`（カード説明）。`CHAPTER 01` は並びから自動生成 |
+| 最大枚数 | デッキごとに `maxCards`（1〜6）を指定。増やすと本の厚みが増え、ホバーでより下まで展開されます（CSS の `nth-child(1..6)` と連動） |
+| タイトル・説明の自動入力 | `title` / `description` を **空欄のまま** にすると、選択した記事のタイトル・概要を自動で表示します。カード名だけ変えたい時は `title` だけ入力します（`description` は空欄なら記事の概要を使います） |
 | 操作 | カード全体（下部タイトル・上部イメージ・要約のいずれも）をタップ／クリックすると記事へ移動します（`Read More` と同じリンク） |
 | 通読時間 | カード右下は記事の通読所要時間（`N min read`）を自動表示します。記事ページ上部と同じ値です（`src/utils/readTime.ts`） |
-| 参照パス | `src/content/blog/...mdx` は **日付付き／日付なしの両方**を解釈します |
+| 参照パス | `article` は Keystatic のドロップダウンが記事のスラッグ（例: `2025-12-25-shinto-as-japanese-cultural-os-pt2`）を保存します。従来の `src/content/blog/...mdx` 形式の値も **日付付き／日付なしの両方**を解釈します |
 
 ---
 
-## 10. ポータル（FUSUMA ヒーロー）
+## 10. フロントページ（ポータル）
 
 | 項目 | 内容 |
 | --- | --- |
@@ -220,7 +228,66 @@ order（入力があればその値） → 無ければ 公開日（pubDate）�
 
 ---
 
-## 11. デザインのカラー（役割）
+## 11. Karuta（空間語彙のカルタ）
+
+| 項目 | 内容 |
+| --- | --- |
+| 編集 | `karuta/karuta.json` の `cards[]`（上限 **100枚**） |
+| 表示 | **全ブログ記事共通**。1ページ3枚のカルーセル（`perPage` で変更可） |
+| カード項目 | `number`（番号）／`tag`（タグ）／`romaji`（ローマ字）／`titleJp`（日本語タイトル）／`titleEn`（英語タイトル）／`image`（画像）／`alt`（代替テキスト）／`folioId`（Folio ID）／`bodyJp`（本文日本語）／`bodyEn`（本文英語） |
+| 表面の文字 | 日本語タイトルの **最初の1文字を自動表示**（本物のカルタ様式）。`kanjiNum` 欄は廃止済み |
+| 画像パス | `/images/ファイル名.webp` 形式。引用符・全角スペース・連続した空白は使えません |
+| 件数が多い時 | `npm run sheet` のスプレッドシート型エディタで一括編集できます（本章 16） |
+
+---
+
+## 12. 用語集（Glossary）
+
+| 項目 | 内容 |
+| --- | --- |
+| 編集 | `glossary/*.json`（**1用語 = 1ファイル**。ファイル名がスラッグになります） |
+| 表示 | 記事本文の用語に注釈として表示されます |
+| 項目 | `term`（用語）／`reading`（よみ）／`definition`（定義）／`seeAlso`（関連語） |
+| ファイル名 | 英小文字のハイフン区切りを推奨（例: `kegare.json`）。`slug` フィールドと一致させる必要があります |
+| 件数が多い時 | `npm run sheet` のスプレッドシート型エディタで一括編集できます（本章 16） |
+
+---
+
+## 13. About / ヘッダー・フッター / SEO / UI ラベル
+
+### About & Contact（`global/about.json`）
+
+| 項目 | 内容 |
+| --- | --- |
+| 編集 | `mainTitle`／`subTitle`／`aboutAuthorTitle`／`aboutAuthorText`／`aboutBlogTitle`／`aboutBlogText`／`contactTitle` |
+| 表示 | `/about` ページ |
+| 入力形式 | テキスト欄は **GUI エディタ**（B 太字 / I 斜体 / 改行が使えます） |
+
+### ヘッダー・フッター（`global/config.json`）
+
+| 項目 | 内容 |
+| --- | --- |
+| 編集 | `siteTitle`（サイトタイトル）／`lpLogo`（LPロゴ画像）／`lpUrl`（LPリンク先）／`footerText`（フッター文言） |
+| 表示 | 全ページのヘッダー・フッター |
+
+### SEO / ナビゲーション（`config/config.json`）
+
+| 項目 | 内容 |
+| --- | --- |
+| 編集 | `seo.title`（サイト既定タイトル）／`seo.description`（サイト既定説明）／`seo.ogImage`（OG画像） |
+| 既定値の役割 | 記事ごとにタイトル・概要がない場合に使われます |
+
+### UI ラベル（`labels/ui.json`）
+
+| 項目 | 内容 |
+| --- | --- |
+| 編集 | `article`（記事ページ）／`archive`（ブログ一覧）／`portal`（ポータル）／`karuta`（カルタ）／`footer`（フッター）／`contact`（問い合わせ） |
+| 役割 | 画面に出す **見出し・ボタン文言**をまとめて管理します |
+| 例 | 「続きを読む」ボタンの文字を変えたい → `portal.readMoreLabel` |
+
+---
+
+## 14. デザインのカラー（役割）
 
 | 用途 | カラー |
 | --- | --- |
@@ -235,7 +302,7 @@ order（入力があればその値） → 無ければ 公開日（pubDate）�
 
 ---
 
-## 12. 守るべき不変条件
+## 15. 守るべき不変条件
 
 1. **公開 URL `/blog/<slug>/` は変えない**（日付接頭辞はファイル名だけに持たせる）
 2. **ファイル名と `slug` フィールドは常に一致**させる
@@ -245,7 +312,7 @@ order（入力があればその値） → 無ければ 公開日（pubDate）�
 
 ---
 
-## 13. 開発・検証
+## 16. 開発・検証
 
 ```sh
 npm run dev        # 開発サーバー（管理画面つき）

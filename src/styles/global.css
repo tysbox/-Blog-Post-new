@@ -408,16 +408,19 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 /* ==========================================================================
    Book stack deck — /tmp/ma-portal/src/index.css 準拠
    ========================================================================== */
+/* カード枚数に応じて高さを変える（--deck-cards は index.astro が枚数から算出）。
+   折りたたみ時: 1枚の高さ(360px) + 積み上げ分(16px × (枚数-1)) + 余白 */
 .book-deck-container {
 	position: relative;
 	width: 100%;
 	margin: 0 auto;
-	height: 570px;
+	--deck-cards: 4;
+	height: calc(360px + 16px * (var(--deck-cards) - 1) + 60px);
 	transition: height 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 @media (min-width: 768px) {
 	.book-deck-container {
-		height: 590px;
+		height: calc(360px + 16px * (var(--deck-cards) - 1) + 80px);
 	}
 }
 
@@ -457,9 +460,22 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 	left: 48px;
 	box-shadow: 0 8px 16px -4px rgba(60, 45, 35, 0.08), 0 3px 5px -2px rgba(60, 45, 35, 0.03);
 }
+.book-page-card:nth-child(5) {
+	z-index: 5;
+	top: 64px;
+	left: 64px;
+	box-shadow: 0 8px 16px -4px rgba(60, 45, 35, 0.07), 0 3px 5px -2px rgba(60, 45, 35, 0.03);
+}
+.book-page-card:nth-child(6) {
+	z-index: 1;
+	top: 80px;
+	left: 80px;
+	box-shadow: 0 8px 16px -4px rgba(60, 45, 35, 0.06), 0 3px 5px -2px rgba(60, 45, 35, 0.02);
+}
 
+/* 展開時: 1枚の高さ(360px) + 展開分(95px × (枚数-1)) + 余白 */
 .book-deck-container:hover {
-	height: 790px;
+	height: calc(360px + 95px * (var(--deck-cards) - 1) + 60px);
 }
 .book-deck-container:hover .book-page-card:nth-child(1) {
 	transform: translateY(0) translateX(0);
@@ -476,6 +492,14 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 .book-deck-container:hover .book-page-card:nth-child(4) {
 	transform: translateY(285px) translateX(-12px);
 	box-shadow: 0 10px 20px -4px rgba(60, 45, 35, 0.12), 0 4px 8px -2px rgba(60, 45, 35, 0.05);
+}
+.book-deck-container:hover .book-page-card:nth-child(5) {
+	transform: translateY(380px) translateX(-16px);
+	box-shadow: 0 10px 20px -4px rgba(60, 45, 35, 0.1), 0 4px 8px -2px rgba(60, 45, 35, 0.04);
+}
+.book-deck-container:hover .book-page-card:nth-child(6) {
+	transform: translateY(475px) translateX(-20px);
+	box-shadow: 0 10px 20px -4px rgba(60, 45, 35, 0.09), 0 4px 8px -2px rgba(60, 45, 35, 0.03);
 }
 
 /* 展開時に手前のカードで隠れるタイトルが読めるよう、半行ぶん下方へ寄せる

@@ -49,6 +49,8 @@ type DeckVolume = {
   title: string;
   badge: string;
   foliosCountText: string;
+  /** このデッキに積めるカードの最大枚数（CSS の積み上げ段数に対応） */
+  maxCards: number;
   chapters: DeckChapter[];
 };
 
@@ -140,21 +142,30 @@ const newsletter = {
 // --- Anthology & Folios（セクション5）---
 // Folio は独立編集ページ（src/content/folio/folio.json）を参照する。
 // ※ 表示は「編集した内容そのもの」だけに一致させる：
-//   記事からの自動補完は行わない（Keystatic に無いカードが
+//   カードの自動追加は行わない（Keystatic に無いカードが
 //   サイトに出る＝編集画面と表示の不整合になるため）。
-//   デッキの段数（CSS の nth-child 1〜4）に合わせて最大4枚。
+//   デッキごとの最大枚数は volumes[].maxCards（1〜6、既定4）。
+//   CSS の .book-page-card:nth-child(1..6) と展開位置がこの枚数に対応する。
+// ※ title / description が空欄のカードは、選択された記事の
+//   タイトル・概要を自動で表示する（「記事を選ぶだけ」運用のため）。
 const folioEntry = await getEntry('folio', 'folio');
 const folioData: any = folioEntry?.data || {};
-const MAX_CARDS = 4; // CSS .book-page-card:nth-child(1..4) の段数
+const MAX_CARDS = 6; // CSS .book-page-card:nth-child(1..6) の段数
+const DEFAULT_MAX_CARDS = 4;
 
 const configuredVolumes = Array.isArray(folioData.volumes) ? folioData.volumes : [];
 const volumes: DeckVolume[] = configuredVolumes
   .map((v: any, vi: number) => {
-    const cards = (v.chapters ?? []).slice(0, MAX_CARDS);
+    const maxCards = Math.min(
+      MAX_CARDS,
+      Math.max(1, Number(v.maxCards) || DEFAULT_MAX_CARDS),
+    );
+    const cards = (v.chapters ?? []).slice(0, maxCards);
     return {
       title: v.title || `Vol. ${['I', 'II', 'III'][vi] || vi + 1}`,
       badge: v.badge || '',
       foliosCountText: `${cards.length} ${L.foliosSuffix}`,
+      maxCards,
       chapters: cards.map((c: any, ci: number) => {
         const id = normalizeId(c.article);
         const entry = id ? byId.get(id) : null;
@@ -260,7 +271,7 @@ const volumes: DeckVolume[] = configuredVolumes
         <span class="text-xs uppercase tracking-[0.2em] text-[#865138] font-bold">{L.anthologyLabel}</span>
         <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mt-1 font-serif">{L.anthologyHeading}</h3>
       </div>
-      <p class="text-xs text-gray-400 mt-2 md:mt-0 font-serif">{L.anthologyHint}</p>
+      <p class="text-xs text-gray-400 mt-2 md:mt-0 font-serif whitespace-pre-line">{L.anthologyHint}</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-16">
@@ -280,7 +291,7 @@ const volumes: DeckVolume[] = configuredVolumes
             <span class="text-xs px-2 py-0.5 bg-[#f0edea] text-gray-600 rounded">{volume.foliosCountText}</span>
           </div>
 
-          <div class="book-deck-container w-4/5 mx-auto">
+          <div class="book-deck-container w-4/5 mx-auto" style={`--deck-cards: ${volume.maxCards};`}>
             {volume.chapters.map((chapter, itemIdx) => {
               const CardTag = chapter.href ? 'a' : 'div';
               return (

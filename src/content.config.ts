@@ -173,6 +173,9 @@ const folio = defineCollection({
     volumes: z.array(z.object({
       title: z.string().optional(),
       badge: z.string().optional(),
+      // このデッキに積めるカードの最大枚数（1〜6、既定4）。
+      // CSS の .book-page-card:nth-child(1..6) と展開位置がこの枚数に対応する。
+      maxCards: z.number().optional(),
       chapters: z.array(z.object({
         title: z.string().optional(),
         description: z.string().optional(),

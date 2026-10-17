@@ -7,6 +7,7 @@ import { richTextToHtmlInline, stripMarkdown } from '../../utils/richText';
 import { permalinkOf } from '../../utils/postOrder';
 import config from '../../content/config/config.json';
 import { timestamp, formatYear } from '../../utils/date';
+import { readMinutesOf } from '../../utils/readTime';
 import { getUiLabels } from '../../utils/uiLabels';
 
 // UI ラベル（Keystatic「UI ラベル」で編集可能）
@@ -20,10 +21,9 @@ const posts = (await getCollection('blog')).sort(
 
 const [lead, ...rest] = posts;
 
-const readMinutes = (p: (typeof posts)[number]) => {
-  const chars = (p.data.description || '').replace(/\s+/g, '').length;
-  return Math.max(1, Math.round(chars / 700));
-};
+// 通読時間は src/utils/readTime.ts の readMinutesOf() に集約。
+// ここで独自計算（description 基準など）を追加しないこと（記事上部・Folio とずれるため）。
+const readMinutes = (p: (typeof posts)[number]) => readMinutesOf(p);
 ---
 
 <BlogPost title={config.seo?.title || '間 MA (Vide Signifiant)'} description={config.seo?.description}>

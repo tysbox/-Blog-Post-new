@@ -82,6 +82,11 @@ const headingJp = (() => {
 // 旧 JapaneseAccordion コンポーネントと同じく Markdown を解釈する（生の `###` / `**` が
 // 文字として出るのを防ぐ）。加えて Keystatic は複数行を YAML の folded scalar（>）で
 // 保存するため日本語の文中に「折り返し→空白」が混入するので、日本語文字間の空白のみ除去する。
+// 順序が重要: 空白除去は Markdown 段階で行う。HTML 出力後に適用すると
+// `title="日本 語"` のような属性値の空白まで落ちてしまう。
+// また Keystatic の残骸（`&#x20;` / `\-` / ハードブレークの表記ゆれ）は
+// richTextToHtml() 内部の normalizeKeystaticText() が先に正規化するため、
+// インデントが残ったまま空白除去が走ることはない。
 const japaneseHtml = (() => {
   const raw = post.data.japaneseText;
   if (typeof raw !== 'string' || !raw.trim()) return '';
@@ -154,7 +159,7 @@ const indexRange = `${L.tocAllArticles} · ${indexArticles.length}`;
 // 読了時間（本文の文字数ベース）
 ---
 
-<BlogPost title={headingPlain} description={description}>
+<BlogPost title={headingPlain} description={subtitlePlain}>
   {/* Article Header Meta & Main Title — App.tsx L158-225 */}
   <section class="max-w-4xl mx-auto w-full px-6 md:px-12 lg:px-0 pt-8 pb-6">
     <div class="flex flex-col space-y-3">
@@ -269,7 +274,7 @@ const indexRange = `${L.tocAllArticles} · ${indexArticles.length}`;
           set:html={japaneseHtml}
         />
       ) : (
-        <p class="font-serif text-sm text-[#865138] mb-4">
+        <p class="font-serif text-sm text-[#865138] mb-4 whitespace-pre-line">
           {L.japaneseEmpty}
         </p>
       )}
