@@ -46,15 +46,7 @@ function normalizeKeystaticText(value: string): string {
     // `\` + 改行 + インデント → 強制改行。markdoc format() の出力形式。
     // インデントを残すと marked が 4 スペースをコードブロックと誤認し、
     // 改行が `<br>` ではなく別ブロックになってしまうため除去する。
-    .replace(/\\\n[ \t]+/g, '\\\n')
-    // 空行（1行開ける / 空段落）：Keystatic は保存・再読込の際に空段落を
-    // 自動でマージ・削除するため、ファイル上の連続改行を hard break の
-    // 連なりに正規化して、HTML 側で確実に <br> として反映させる。
-    // 例: "A\n\n\nB"（空行1つ）→ "A\\\n\\\nB" → marked で <br><br>
-    .replace(/\n{3,}/g, (match) => {
-      const breaks = '\\\n'.repeat(match.length - 1);
-      return breaks;
-    });
+    .replace(/\\\\n[ \\t]+/g, '\\\\n');
 }
 
 function normalizeInlineText(value: string): string {
@@ -118,8 +110,8 @@ export function richTextToMarkdown(content: unknown): string {
 
       return renderInlineNode(child).trimEnd();
     })
-    .filter(Boolean)
-    .join('\n\n');
+    .join(chr(10)+chr(10))
+
 }
 
 export function richTextToHtml(content: unknown): string {
