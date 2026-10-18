@@ -1,0 +1,13 @@
+diff --git a/node_modules/@keystatic/core/dist/keystatic-core-ui.js b/node_modules/@keystatic/core/dist/keystatic-core-ui.js
+index 2f8809b..df80ff7 100644
+--- a/node_modules/@keystatic/core/dist/keystatic-core-ui.js
++++ b/node_modules/@keystatic/core/dist/keystatic-core-ui.js
+@@ -1844,7 +1844,7 @@ function serializeEntryToFiles(args) {
+     extraFiles
+   } = serializeProps(args.state, object(args.schema), (_args$slug = args.slug) === null || _args$slug === void 0 ? void 0 : _args$slug.field, (_args$slug2 = args.slug) === null || _args$slug2 === void 0 ? void 0 : _args$slug2.value, true);
+   const dataFormat = args.format.data;
+-  let dataContent = textEncoder.encode(dataFormat === 'json' ? JSON.stringify(stateWithExtraFilesRemoved, null, 2) + '\n' : dump(stateWithExtraFilesRemoved));
++  let dataContent = textEncoder.encode(dataFormat === 'json' ? JSON.stringify(stateWithExtraFilesRemoved, null, 2) + '\n' : dump(stateWithExtraFilesRemoved, { defaultStringType: "literal", defaultKeyType: "plain" }));
+   if (args.format.contentField) {
+     const filename = `${args.format.contentField.path.join('/')}${args.format.contentField.contentExtension}`;
+     let contents;

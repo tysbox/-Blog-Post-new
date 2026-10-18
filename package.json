@@ -15,6 +15,7 @@
     "deps:localize": "bash ./scripts/externalize-node-modules.sh --restore",
     "backup:icloud": "bash ./scripts/sync-icloud-backup.sh",
     "preinstall": "node ./scripts/check-node-version.mjs",
+    "postinstall": "patch-package",
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1",
     "dev:keystatic": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1",
     "edit": "bash ./scripts/start-editing.sh",
@@ -44,6 +45,7 @@
   },
   "devDependencies": {
     "@types/node": "22.18.12",
+    "patch-package": "^8.0.1",
     "prettier": "3.7.4"
   }
 }
