@@ -3,6 +3,7 @@
 // 既存テキスト（label / caption）は変更しない。
 // ※ 画像左上の自動ナンバリング（FIG. xx）は撤去。label / caption は
 //   Keystatic で空欄なら非表示のまま（描画はデータ有无で判定）。
+import { richTextToHtmlInline } from '../../utils/richText';
 interface ImageItem {
   src: string;
   label?: string;
@@ -37,7 +38,7 @@ const list = (Array.isArray(images) ? images : []).filter(Boolean);
         </div>
         <div class="flex flex-col space-y-1">
           {img.label && <span class="font-sans text-xs font-semibold text-[#1b1c1a]">{img.label}</span>}
-          {img.caption && <span class="font-serif text-xs text-[#51443d] leading-relaxed">{img.caption}</span>}
+          {img.caption && <span class="font-serif text-xs text-[#51443d] leading-relaxed" set:html={richTextToHtmlInline(img.caption)} />}
         </div>
       </div>
     ))}
