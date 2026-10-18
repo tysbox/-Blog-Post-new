@@ -61,7 +61,11 @@ const posts: Post[] = allPosts
     description: p.data.description,
     heroImage: p.data.heroImage || undefined,
     href: `/blog/${permalinkOf(p.id)}`,
-    ts: timestamp(p.data.updatedDate, p.data.pubDate),
+    // 「最新」の選定は公開日 (pubDate) 基準とする。
+    // updatedDate（Keystatic で一度でも編集すると付く）でソートすると、
+    // 古い記事を編集しただけで Bundle / Featured の「最新 2 記事」に
+    // 昇り込んでしまい、期待と外れるため。
+    ts: timestamp(p.data.pubDate),
     readMinutes: readMinutesOf(p),
   }))
   .sort((a, b) => b.ts - a.ts);
