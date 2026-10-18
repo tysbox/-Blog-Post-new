@@ -17,10 +17,14 @@ import { permalinkOf } from '../utils/postOrder';
  * （Keystatic の一覧が slug 昇順＝日付順で並ぶため。see src/utils/postOrder.ts）。
  * URL は従来どおり日付なしの slug を使う。
  */
+// プレビューデプロイ時はドラフトも含めてすべて表示し、本番では非公開にする
 export async function getStaticPaths() {
-	const posts = (await getCollection('blog')).filter(
-		(post) => !post.data.draft,
-	);
+	const isPreview = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'master';
+	const posts = isPreview
+		? await getCollection('blog')
+		: (await getCollection('blog')).filter(
+			(post) => !post.data.draft,
+		);
 
 	// `/{slug}` → `/blog/{slug}` の308リダイレクト。ファイル名の日付接頭辞は
 	// URL に出さない（ファイル名だけが日付付きにして Keystatic の一覧を日付順に並べる）。

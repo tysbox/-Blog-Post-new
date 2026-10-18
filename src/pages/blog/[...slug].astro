@@ -18,10 +18,12 @@ import { readMinutesOf } from '../../utils/readTime';
 import { getUiLabels } from '../../utils/uiLabels';
 import { getGlossary, annotateGlossary } from '../../utils/glossary';
 
+// プレビューデプロイ時はドラフトも含めてすべて表示し、本番では非公開にする
 export async function getStaticPaths() {
-  const posts = (await getCollection('blog')).filter(
-    (post) => !post.data.draft,
-  );
+  const isPreview = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'master';
+  const posts = isPreview
+    ? await getCollection('blog')
+    : (await getCollection('blog')).filter((post) => !post.data.draft);
 
   // 前後の記事ナビは【日付ではなく Index（章順）】に従う。
   // Index と同じ並び = src/utils/postOrder.ts（order 値 → 無ければ公開日の昇順）。
@@ -132,8 +134,13 @@ const readMinutes = readMinutesOf(post);
 // 記事数が増えてもドロワーが溢れないよう、既定は「現在位置の前後5件」のみ表示し、
 // 「すべて表示」で全件をスクロールさせる（50記事でも破綻しない設計）。
 const INDEX_WINDOW = 5;
+// Index（目次）: 表示順（order → 無ければ公開日の昇順）に沿って全記事を列挙する。
+// プレビュー時はドラフトも含める。
+const isPreviewPage = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'master';
 const allPosts = orderPosts(
-  (await getCollection('blog')).filter((post) => !post.data.draft),
+  isPreviewPage
+    ? await getCollection('blog')
+    : (await getCollection('blog')).filter((post) => !post.data.draft),
 );
 const currentIndex = Math.max(
   0,

@@ -19,9 +19,12 @@ const LA = labels.article;
 const homePage = await getEntry('portal', 'home');
 const pageData: any = homePage?.data || {};
 
-const allPosts = (await getCollection('blog')).filter(
-  (p) => !p.data.draft,
-);
+// プレビューデプロイ時はドラフトも含めてすべて表示し、本番では非公開にする
+const isPreview = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'master';
+
+const allPosts = (isPreview
+  ? await getCollection('blog')
+  : (await getCollection('blog')).filter((p) => !p.data.draft));
 
 type Post = {
   id: string;

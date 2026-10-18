@@ -27,9 +27,12 @@ if (lpLogo) {
   }
 }
 
-const allPosts = (await getCollection('blog')).filter(
-  (post) => !post.data.draft,
-);
+// プレビューデプロイ時はドラフトも含めてすべて表示し、本番では非公開にする
+const isPreview = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'master';
+
+const allPosts = (isPreview
+  ? await getCollection('blog')
+  : (await getCollection('blog')).filter((post) => !post.data.draft));
 const sortedContent = allPosts
   .map((post) => ({
     date: timestamp(post.data.updatedDate, post.data.pubDate),

@@ -15,11 +15,13 @@ const labels = await getUiLabels();
 const L = labels.archive;
 const LA = labels.article;
 
-const posts = (await getCollection('blog'))
-  .filter((post) => !post.data.draft)
-  .sort(
-    (a, b) => timestamp(b.data.pubDate) - timestamp(a.data.pubDate),
-  );
+// プレビューデプロイ時はドラフトも含めてすべて表示し、本番では非公開にする
+const isPreview = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'master';
+
+const allPosts = await getCollection('blog');
+const posts = (isPreview ? allPosts : allPosts.filter((post) => !post.data.draft)).sort(
+  (a, b) => timestamp(b.data.pubDate) - timestamp(a.data.pubDate),
+);
 
 const [lead, ...rest] = posts;
 

@@ -31,9 +31,12 @@ const navLinks = (config?.navLinks ?? []).filter((l) => l?.label && l?.href);
 const links = (config?.socialLinks ?? []).filter((l) => l?.label);
 
 // Latest Writing = 最新の記事へ
-const allPosts = (await getCollection('blog')).filter(
-  (post) => !post.data.draft,
-);
+// プレビューデプロイ時はドラフトも含めてすべて表示し、本番では非公開にする
+const isPreview = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'master';
+
+const allPosts = (isPreview
+  ? await getCollection('blog')
+  : (await getCollection('blog')).filter((post) => !post.data.draft));
 const latestUrl = (() => {
   const sorted = [...allPosts].sort(
     (a, b) =>
