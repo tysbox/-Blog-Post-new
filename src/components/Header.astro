@@ -27,7 +27,9 @@ if (lpLogo) {
   }
 }
 
-const allPosts = await getCollection('blog');
+const allPosts = (await getCollection('blog')).filter(
+  (post) => !post.data.draft,
+);
 const sortedContent = allPosts
   .map((post) => ({
     date: timestamp(post.data.updatedDate, post.data.pubDate),

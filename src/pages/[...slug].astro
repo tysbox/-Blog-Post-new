@@ -18,7 +18,9 @@ import { permalinkOf } from '../utils/postOrder';
  * URL は従来どおり日付なしの slug を使う。
  */
 export async function getStaticPaths() {
-	const posts = await getCollection('blog');
+	const posts = (await getCollection('blog')).filter(
+		(post) => !post.data.draft,
+	);
 
 	// `/{slug}` → `/blog/{slug}` の308リダイレクト。ファイル名の日付接頭辞は
 	// URL に出さない（ファイル名だけが日付付きにして Keystatic の一覧を日付順に並べる）。

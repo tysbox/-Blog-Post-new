@@ -15,9 +15,11 @@ const labels = await getUiLabels();
 const L = labels.archive;
 const LA = labels.article;
 
-const posts = (await getCollection('blog')).sort(
-  (a, b) => timestamp(b.data.pubDate) - timestamp(a.data.pubDate),
-);
+const posts = (await getCollection('blog'))
+  .filter((post) => !post.data.draft)
+  .sort(
+    (a, b) => timestamp(b.data.pubDate) - timestamp(a.data.pubDate),
+  );
 
 const [lead, ...rest] = posts;
 

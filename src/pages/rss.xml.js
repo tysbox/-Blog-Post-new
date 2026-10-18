@@ -4,7 +4,9 @@ import { permalinkOf } from '../utils/postOrder';
 import config from '../content/config/config.json'
 
 export async function GET(context) {
-	const posts = await getCollection('blog');
+	const posts = (await getCollection('blog')).filter(
+		(post) => !post.data.draft,
+	);
 	return rss({
 		title: config.seo.title,
 		description: config.seo.description,

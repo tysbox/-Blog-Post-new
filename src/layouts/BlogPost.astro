@@ -31,7 +31,9 @@ const navLinks = (config?.navLinks ?? []).filter((l) => l?.label && l?.href);
 const links = (config?.socialLinks ?? []).filter((l) => l?.label);
 
 // Latest Writing = 最新の記事へ
-const allPosts = await getCollection('blog');
+const allPosts = (await getCollection('blog')).filter(
+  (post) => !post.data.draft,
+);
 const latestUrl = (() => {
   const sorted = [...allPosts].sort(
     (a, b) =>

@@ -19,7 +19,9 @@ const LA = labels.article;
 const homePage = await getEntry('portal', 'home');
 const pageData: any = homePage?.data || {};
 
-const allPosts = await getCollection('blog');
+const allPosts = (await getCollection('blog')).filter(
+  (p) => !p.data.draft,
+);
 
 type Post = {
   id: string;

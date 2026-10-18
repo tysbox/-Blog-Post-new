@@ -19,7 +19,9 @@ import { getUiLabels } from '../../utils/uiLabels';
 import { getGlossary, annotateGlossary } from '../../utils/glossary';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog');
+  const posts = (await getCollection('blog')).filter(
+    (post) => !post.data.draft,
+  );
 
   // 前後の記事ナビは【日付ではなく Index（章順）】に従う。
   // Index と同じ並び = src/utils/postOrder.ts（order 値 → 無ければ公開日の昇順）。
@@ -130,7 +132,9 @@ const readMinutes = readMinutesOf(post);
 // 記事数が増えてもドロワーが溢れないよう、既定は「現在位置の前後5件」のみ表示し、
 // 「すべて表示」で全件をスクロールさせる（50記事でも破綻しない設計）。
 const INDEX_WINDOW = 5;
-const allPosts = orderPosts(await getCollection('blog'));
+const allPosts = orderPosts(
+  (await getCollection('blog')).filter((post) => !post.data.draft),
+);
 const currentIndex = Math.max(
   0,
   allPosts.findIndex((o) => o.post.id === post.id),

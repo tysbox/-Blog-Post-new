@@ -40,7 +40,9 @@ const siteTitle = globalConfig?.data?.siteTitle || '間　MA (Vide Signifiant)';
 const seoTitle = config.seo?.title || siteTitle;
 
 // "Latest Writing" は Blog の最新記事へ解決する。
-const allPosts = await getCollection('blog');
+const allPosts = (await getCollection('blog')).filter(
+  (post) => !post.data.draft,
+);
 const latestUrl = (() => {
   const sorted = [...allPosts].sort(
     (a, b) =>

@@ -9,6 +9,8 @@ const blog = defineCollection({
     // rename されて URL が変わってしまうため、専用の slug を分けている。
     slug: z.string().optional(),
     title: z.string(),
+    // 下書きフラグ。true の場合、一覧・詳細・RSS から除外して非公開にする。
+    draft: z.boolean().optional(),
     // 表示順（No.）。未入力なら公開日の昇順で自動採番（src/utils/postOrder.ts）。
     // 入れ替えたい場合はこの値だけ変更する（同じ数字は後続にずれる）。
     //

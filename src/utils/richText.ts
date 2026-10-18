@@ -34,13 +34,6 @@ type RichTextNode = {
  * 正規化し、エスケープ残骸を除去する。これで GUI エディタで入れた改行が
  * どの欄（日本語本文 / 英語本文 / 見出し / キャプション / 新規ページ含む）
  * でも同じように反映される。
- *
- * さらに「空の見出し」（`####` + 半角/全角空白のみの行）を空行ギャップ
- * （`&nbsp;` の段落）に置き換える。Keystatic の GUI では真っ白な段落が
- * 保存されないため、改行→空白→改行で空行を作ると `#### 　 ` のような
- * 「中身が空白だけの見出し」として保存される。marked はこれを `<h4></h4>`
- * にするが、中身が空だと高さ 0（Tailwind preflight が margin 0 のため）で
- * 見た目の隙間にならない。`&nbsp;` 段落なら確実に 1 行分の隙間になる。
  */
 function normalizeKeystaticText(value: string): string {
   return value
@@ -53,28 +46,15 @@ function normalizeKeystaticText(value: string): string {
     // `\` + 改行 + インデント → 強制改行。markdoc format() の出力形式。
     // インデントを残すと marked が 4 スペースをコードブロックと誤認し、
     // 改行が `<br>` ではなく別ブロックになってしまうため除去する。
-    .replace(/\\\\n[ \\t]+/g, '\\\\n')
-    // バックスラッシュだけの行（空行に化けた残骸）→ 空行ギャップ。
-    // Keystatic の保存・再読込を繰り返すうちに、空行試行が `\` や `\\` だけの
-    // 行に化けることがある。そのままでは `<p>\</p>` として文字が見えてしまう
-    // ため、他の空行表現と同じ `&nbsp;` ギャップに揃える。
-    .replace(/^[ \t\u3000]*(?:\\\\|\\)+[ \t\u3000]*$/gm, '&nbsp;')
-    // 段落末尾のハードブレーク（`\` + 改行 + 空行）→ 改行だけを残す。
-    // 段落の最後の改行は表示に影響しないため、`\` が文字として
-    // 漏れるのを防ぐ（title / description / heroSubtitle の末尾で発生）。
-    .replace(/\\\n(?=\n)/g, '\n')
-    // 末尾に残ったハードブレーク・バックスラッシュ・空白を除去。
-    // 「最後の行で改行した」意図が `\` として HTML に漏れるのを防ぐ。
-    .replace(/(\\[\s\u3000]*)+$/g, '')
-    // 空の見出し（`####` + 半角/全角空白のみの行）→ 空行ギャップ。
-    // Keystatic GUI では真っ白な段落が保存できないため、「改行→空白→改行」で
-    // 作った空行が「中身が空白だけの見出し」として保存される。marked はこれを
-    // `<h4></h4>` にするが、中身が空だと高さ 0（Tailwind preflight が margin 0 の
-    // ため）で隙間にならない。`&nbsp;` の段落なら確実に 1 行分の隙間になる。
-    .replace(/^[ \t]{0,3}#{1,6}[ \t\u3000]*$/gm, '&nbsp;')
-    // 3 行以上連なる改行（空行の連なり）→ 空行 1 本ごとに `&nbsp;` 段落を挟む。
-    // これでエディタで開けた空行の数だけ HTML にも隙間が入る。
-    .replace(/\n{3,}/g, (m) => '\n\n' + '&nbsp;\n\n'.repeat(m.length - 2));
+    .replace(/\\\n[ \t]+/g, '\\\n')
+    // 空行（1行開ける / 空段落）：Keystatic は保存・再読込の際に空段落を
+    // 自動でマージ・削除するため、ファイル上の連続改行を hard break の
+    // 連なりに正規化して、HTML 側で確実に <br> として反映させる。
+    // 例: "A\n\n\nB"（空行1つ）→ "A\\\n\\\nB" → marked で <br><br>
+    .replace(/\n{3,}/g, (match) => {
+      const breaks = '\\\n'.repeat(match.length - 1);
+      return breaks;
+    });
 }
 
 function normalizeInlineText(value: string): string {
@@ -138,8 +118,8 @@ export function richTextToMarkdown(content: unknown): string {
 
       return renderInlineNode(child).trimEnd();
     })
-    .join('\n\n')
-
+    .filter(Boolean)
+    .join('\n\n');
 }
 
 export function richTextToHtml(content: unknown): string {
@@ -230,7 +210,6 @@ export function stripMarkdown(content: unknown): string {
     .replace(/^[ \t]{0,3}(?:[-*_] *){3,}$/gm, '') // 区切り線
     .replace(/[*_`~]/g, '')                   // 強調・コード
     .replace(/\\/g, '')                       // ハードブレークの `\` 残骸
-    .replace(/&nbsp;/g, ' ')                   // 空行ギャップの `&nbsp;`
     .replace(/\s+/g, ' ')                     // 改行・連続空白を 1 つに畳む
     .trim();
 }
