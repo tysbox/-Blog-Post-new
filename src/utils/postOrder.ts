@@ -13,6 +13,30 @@ export function permalinkOf(id: string): string {
 }
 
 /**
+ * Keystatic の記事参照（relationship）が取り得るキーの一覧。
+ *
+ * Keystatic は参照を「ファイル名（拡張子なし）」で保存するが、Astro の glob
+ * ローダーは frontmatter に `slug` があればそれをエントリ id にする
+ * （node_modules/astro/dist/content/loaders/glob.js の generateIdDefault）。
+ * 両者が一致しない記事（例: slug が大文字・ファイル名が小文字）では、
+ * ファイル名で引いても解決できずカードが空になる。
+ * そのため id とファイル名の両方（＋日付接頭辞なし）を登録する。
+ */
+export function referenceKeysOf(entry: { id: string; filePath?: string }): string[] {
+  const keys = new Set<string>();
+  const add = (value?: string) => {
+    if (!value) return;
+    const base = String(value).split('/').pop()!.replace(/\.(mdx|md|json)$/, '');
+    if (!base) return;
+    keys.add(base);
+    keys.add(permalinkOf(base));
+  };
+  add(entry.id);
+  add(entry.filePath);
+  return [...keys];
+}
+
+/**
  * 記事の「表示順（No.）」を決める唯一の場所。
  *
  * 優先順位:

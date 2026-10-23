@@ -9,7 +9,8 @@ import { getEntry, getCollection } from 'astro:content';
 import { timestamp } from '../utils/date';
 import { readMinutesOf } from '../utils/readTime';
 import { richTextToHtmlInline, stripMarkdown } from '../utils/richText';
-import { permalinkOf } from '../utils/postOrder';
+import { permalinkOf, referenceKeysOf } from '../utils/postOrder';
+import { isPreviewMode } from '../utils/previewMode';
 import { getUiLabels } from '../utils/uiLabels';
 
 const labels = await getUiLabels();
@@ -19,8 +20,9 @@ const LA = labels.article;
 const homePage = await getEntry('portal', 'home');
 const pageData: any = homePage?.data || {};
 
-// プレビューデプロイ時はドラフトも含めてすべて表示し、本番では非公開にする
-const isPreview = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'master';
+// ローカル開発とプレビューデプロイではドラフトも含めてすべて表示し、本番では非公開にする
+// （判定は src/utils/previewMode.ts に集約。ここに条件式を書かないこと）
+const isPreview = isPreviewMode();
 
 const allPosts = (isPreview
   ? await getCollection('blog')
@@ -75,28 +77,32 @@ const posts: Post[] = allPosts
   }))
   .sort((a, b) => b.ts - a.ts);
 
-// 記事参照は「日付付き id」と「日付なし（従来スラグ）」の両方を受け付ける。
+// 記事参照の解決表。Keystatic は参照を「ファイル名（拡張子なし）」で保存するが、
+// Astro の glob ローダーは frontmatter に slug があればそれをエントリ id にする。
+// 両者が食い違う記事（例: slug が大文字・ファイル名が小文字）はファイル名だけでは
+// 引けずカードが空になるため、id / ファイル名 / 日付接頭辞なしの全表記を登録する。
+const postById = new Map(posts.map((p) => [p.id, p]));
 const byId = new Map<string, Post>();
-posts.forEach((p) => {
-  byId.set(p.id, p);
-  byId.set(permalinkOf(p.id), p);
+allPosts.forEach((entry) => {
+  const post = postById.get(entry.id);
+  if (!post) return;
+  referenceKeysOf(entry).forEach((key) => byId.set(key, post));
 });
 
 // Keystatic の記事参照（文字列 / オブジェクト）を blog エントリへ解決する。
-// ファイル名は `2025-12-08-from-kyoto-to-the-world.mdx` のように日付付きなので、
-// 参照は「日付付き id」と「日付なし（従来スラグ）」の両方で引けるようにする。
+// 参照は「ファイル名」「src/content/blog/....mdx 形式のパス」「日付なしスラグ」の
+// いずれでも書かれ得るため、末尾のファイル名だけを取り出して byId を引く。
 const normalizeId = (value: unknown): string | null => {
   if (!value) return null;
+  let raw: unknown = value;
   if (typeof value === 'object') {
     const o = value as Record<string, unknown>;
     const sys = o.sys as Record<string, unknown> | undefined;
-    const id = o.id || o.value || sys?.filename || sys?.relativePath;
-    return typeof id === 'string' ? id.replace(/\.(mdx|md|json)$/, '') : null;
+    raw = o.id || o.value || sys?.filename || sys?.relativePath;
   }
-  if (typeof value !== 'string') return null;
-  const m = value.match(/^src\/content\/(?:blog|pages)\/(.+)\.(?:mdx|md|json)$/);
-  if (m) return m[1];
-  return value.replace(/\.(mdx|md|json)$/, '');
+  if (typeof raw !== 'string') return null;
+  const base = raw.split('/').pop()!.replace(/\.(mdx|md|json)$/, '');
+  return base || null;
 };
 
 // --- 注目記事（1件）---
@@ -175,19 +181,30 @@ const volumes: DeckVolume[] = configuredVolumes
       badge: v.badge || '',
       foliosCountText: `${cards.length} ${L.foliosSuffix}`,
       maxCards,
-      chapters: cards.map((c: any, ci: number) => {
-        const id = normalizeId(c.article);
-        const entry = id ? byId.get(id) : null;
-        return {
-          chapterNumber: `${L.chapterPrefix} ${String(ci + 1).padStart(2, '0')}`,
-          category: L.pageCategory,
-          title: c.title || entry?.title || '',
-          description: c.description || entry?.description || '',
-          readMinutes: entry?.readMinutes ?? 1,
-          href: entry ? entry.href : null,
-          heroImage: entry?.heroImage ?? null,
-        };
-      }),
+      chapters: cards
+        .map((c: any, ci: number) => {
+          const id = normalizeId(c.article);
+          const entry = id ? byId.get(id) : null;
+          return {
+            chapterNumber: `${L.chapterPrefix} ${String(ci + 1).padStart(2, '0')}`,
+            category: L.pageCategory,
+            title: c.title || entry?.title || '',
+            description: c.description || entry?.description || '',
+            readMinutes: entry?.readMinutes ?? 1,
+            href: entry ? entry.href : null,
+            heroImage: entry?.heroImage ?? null,
+          };
+        })
+        // 記事が解決できないカードは空箱になるため出さない。
+        // 本番では下書き記事が posts から除外されるので、ここで落ちる
+        // （プレビューでは下書きも含まれるため表示される）。
+        // ただし title / description を手入力したカードは記事なしでも表示する。
+        .filter(
+          (chapter: DeckChapter, ci: number) =>
+            chapter.href !== null ||
+            Boolean(cards[ci]?.title) ||
+            Boolean(cards[ci]?.description),
+        ),
     };
   })
   // カード未設定のデッキは見出しだけ残さず非表示（空のデッキを出さない）

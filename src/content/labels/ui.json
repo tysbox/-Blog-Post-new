@@ -39,15 +39,15 @@
     "videSignifiant": "VIDE SIGNIFIANT",
     "skipCarousel": "Skip carousel",
     "foliosSuffix": "Folios",
-    "chapterPrefix": "CHAPTER",
-    "pageCategory": "Page",
-    "bundleEpisodeLabel": "Page • Vol. I Episode 1 Part"
+    "chapterPrefix": "Part",
+    "pageCategory": "↑Summary",
+    "bundleEpisodeLabel": "Page • Vol. I Chapter 1 Part"
   },
   "karuta": {
     "cardFolioLabel": "Card Folio • 空間語彙のカルタ",
-    "heading": "Three Spatial Lexicons: The Sacred Karuta Folio",
-    "hint": "Tap or hover over each consecrated archetype to reveal its spatial mechanics and philosophical gloss.",
-    "hintJp": "(各カルタをクリックまたはホバーすると、空間構造と注釈が開きます)"
+    "heading": "Three Spatial Lexicons: The Sacred Karuta Folio\n",
+    "hint": "Tap or hover over each consecrated archetype to reveal its spatial mechanics and philosophical gloss.\n",
+    "hintJp": "(各カルタをクリックまたはホバーすると、空間構造と注釈が開きます)\n"
   },
   "footer": {
     "journalSectionsLabel": "Journal Sections",

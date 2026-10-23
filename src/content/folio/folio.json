@@ -1,7 +1,7 @@
 {
   "volumes": [
     {
-      "title": "Vol. I • Shinto as Cultural OS\n",
+      "title": "Vol. I • Ch.1 Shinto as Cultural OS\n",
       "badge": "",
       "maxCards": 4,
       "chapters": [
@@ -12,13 +12,35 @@
         },
         {
           "article": "2025-12-25-shinto-as-japanese-cultural-os-pt2",
-          "title": "Episode 1 -- Shinto as Japanese Cultural OS Part2\n",
-          "description": "\\[Episode 1]  Discovering the Cultural OS  Part2\nHow Japanese mythology became a prototype of conduct and purity came to be understood as a process rather than a rule, and how this sensibility shaped a culture capable of both acceptance and resistance.\n\nImage: 手水屋（tyouzuya）A purification pavilion at the shrine entrance\nAt the tyouzuya, visitors ritually cleanse their hands (and mind) before entering the shrine.\n"
+          "title": "",
+          "description": ""
         },
         {
           "article": "2026-01-14-shinto-as-japanese-cultural-os-pt3",
-          "title": "Episode 1 -- Shinto as Japanese Cultural OS Part3\n",
-          "description": "The quiet foundation beneath behavior, values, and everyday life\n"
+          "title": "",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "title": "Vol. I • Ch.2  The Code Beneath the Code\n",
+      "badge": "",
+      "maxCards": 3,
+      "chapters": [
+        {
+          "article": "2026-10-15-before-rules-there-was-a-way-of-being-pt1",
+          "title": "",
+          "description": ""
+        },
+        {
+          "article": "2026-10-16-before-rules-there-was-a-way-of-being-pt2",
+          "title": "",
+          "description": ""
+        },
+        {
+          "article": "2026-10-17-before-rules-there-was-a-way-of-being-pt3",
+          "title": "",
+          "description": ""
         }
       ]
     }
