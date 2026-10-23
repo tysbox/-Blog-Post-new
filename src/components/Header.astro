@@ -3,6 +3,7 @@ import { getEntry, getCollection } from 'astro:content';
 import config from '../content/config/config.json';
 import { timestamp } from '../utils/date';
 import { permalinkOf } from '../utils/postOrder';
+import { isPreviewMode } from '../utils/previewMode';
 import { richTextToHtmlInline } from '../utils/richText';
 
 // 新ポータル準拠: Home / Latest Writing(最新記事へ) / About & Contact + BiScèneロゴ
@@ -27,8 +28,9 @@ if (lpLogo) {
   }
 }
 
-// プレビューデプロイ時はドラフトも含めてすべて表示し、本番では非公開にする
-const isPreview = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'master';
+// ローカル開発とプレビューデプロイではドラフトも含めてすべて表示し、本番では非公開にする
+// （判定は src/utils/previewMode.ts に集約。ここに条件式を書かないこと）
+const isPreview = isPreviewMode();
 
 const allPosts = (isPreview
   ? await getCollection('blog')

@@ -17,10 +17,12 @@ import { orderPosts, permalinkOf } from '../../utils/postOrder';
 import { readMinutesOf } from '../../utils/readTime';
 import { getUiLabels } from '../../utils/uiLabels';
 import { getGlossary, annotateGlossary } from '../../utils/glossary';
+import { isPreviewMode } from '../../utils/previewMode';
 
-// プレビューデプロイ時はドラフトも含めてすべて表示し、本番では非公開にする
+// ローカル開発とプレビューデプロイではドラフトも含めてすべて表示し、本番では非公開にする
+// （判定は src/utils/previewMode.ts に集約。ここに条件式を書かないこと）
 export async function getStaticPaths() {
-  const isPreview = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'master';
+  const isPreview = isPreviewMode();
   const posts = isPreview
     ? await getCollection('blog')
     : (await getCollection('blog')).filter((post) => !post.data.draft);
@@ -135,8 +137,8 @@ const readMinutes = readMinutesOf(post);
 // 「すべて表示」で全件をスクロールさせる（50記事でも破綻しない設計）。
 const INDEX_WINDOW = 5;
 // Index（目次）: 表示順（order → 無ければ公開日の昇順）に沿って全記事を列挙する。
-// プレビュー時はドラフトも含める。
-const isPreviewPage = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'master';
+// プレビュー時（ローカル開発含む）はドラフトも含める。判定は previewMode.ts に集約。
+const isPreviewPage = isPreviewMode();
 const allPosts = orderPosts(
   isPreviewPage
     ? await getCollection('blog')

@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import { permalinkOf } from '../utils/postOrder';
+import { isPreviewMode } from '../utils/previewMode';
 
 /**
  * 旧ルート `/{slug}` → 正本 `/blog/{slug}` への 308 リダイレクト。
@@ -17,9 +18,10 @@ import { permalinkOf } from '../utils/postOrder';
  * （Keystatic の一覧が slug 昇順＝日付順で並ぶため。see src/utils/postOrder.ts）。
  * URL は従来どおり日付なしの slug を使う。
  */
-// プレビューデプロイ時はドラフトも含めてすべて表示し、本番では非公開にする
+// ローカル開発とプレビューデプロイではドラフトも含めてすべて表示し、本番では非公開にする
+// （判定は src/utils/previewMode.ts に集約。ここに条件式を書かないこと）
 export async function getStaticPaths() {
-	const isPreview = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'master';
+	const isPreview = isPreviewMode();
 	const posts = isPreview
 		? await getCollection('blog')
 		: (await getCollection('blog')).filter(

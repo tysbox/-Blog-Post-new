@@ -141,6 +141,19 @@ export default config({
           validation: { isRequired: true },
         }),
 
+        // --- 下書き (draft) ---
+        // Astro 側の Zod スキーマ (src/content.config.ts) には draft があるが、
+        // Keystatic 側のスキーマに無いと frontmatter の `draft: true` が
+        //   Invalid data ... Key on object value "draft" is not allowed
+        // となり、その記事だけでなく blog コレクション一覧の読み込み全体が失敗する。
+        // 結果、管理画面(/keystatic)で記事を開けない（一覧も表示されない）。
+        // そのため必ずここに定義しておくこと（消すと再発する）。
+        draft: fields.checkbox({
+          label: '下書き (Draft)',
+          description:
+            'チェックを入れると本番サイトでは非公開になります（ローカル開発サーバーとプレビューデプロイでは表示されます）。',
+        }),
+
         updatedDate: fields.date({
           label: '更新日 (Last Updated)',
         }),
